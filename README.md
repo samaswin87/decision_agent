@@ -6,9 +6,9 @@ A production-grade, deterministic, explainable, and auditable decision engine fo
 
 Enterprise applications need to make complex decisions based on business rules, but existing solutions fall short:
 
-- **Trailblazer/dry-rb**: Excellent for data pipelines, but lack built-in conflict resolution, confidence scoring, and audit replay
-- **ActiveInteraction**: Rails-dependent, no rule DSL, limited explainability
-- **AI-first frameworks**: Non-deterministic, expensive, opaque, and unsuitable for regulated domains
+- Excellent for data pipelines, but lack built-in conflict resolution, confidence scoring, and audit replay
+- Rails-dependent, no rule DSL, limited explainability
+- Non-deterministic, expensive, opaque, and unsuitable for regulated domains
 
 **DecisionAgent** solves these problems by providing:
 
