@@ -1,0 +1,91 @@
+{
+  "version": "1.0",
+  "ruleset": "hipaa_data_access",
+  "rules": [
+    {
+      "id": "physician_full_access",
+      "if": {
+        "all": [
+          { "field": "user.role", "op": "eq", "value": "physician" },
+          { "field": "patient.assigned_doctor", "op": "eq", "value": "current_user_id" }
+        ]
+      },
+      "then": {
+        "decision": "grant_full_access",
+        "weight": 1.0,
+        "reason": "Physician accessing own patient records"
+      }
+    },
+    {
+      "id": "emergency_override",
+      "if": {
+        "all": [
+          { "field": "access_reason", "op": "eq", "value": "emergency" },
+          { "field": "user.role", "op": "in", "value": ["physician", "nurse"] }
+        ]
+      },
+      "then": {
+        "decision": "grant_emergency_access",
+        "weight": 0.95,
+        "reason": "Emergency access granted - audit required"
+      }
+    },
+    {
+      "id": "administrative_staff_limited",
+      "if": {
+        "all": [
+          { "field": "user.role", "op": "eq", "value": "admin_staff" },
+          { "field": "data_type", "op": "eq", "value": "billing" }
+        ]
+      },
+      "then": {
+        "decision": "grant_limited_access",
+        "weight": 0.7,
+        "reason": "Administrative staff accessing billing data only"
+      }
+    },
+    {
+      "id": "external_researcher",
+      "if": {
+        "all": [
+          { "field": "user.role", "op": "eq", "value": "researcher" },
+          { "field": "patient.consent_research", "op": "eq", "value": true },
+          { "field": "data_anonymized", "op": "eq", "value": true }
+        ]
+      },
+      "then": {
+        "decision": "grant_anonymized_access",
+        "weight": 0.8,
+        "reason": "Research access to anonymized data with patient consent"
+      }
+    },
+    {
+      "id": "suspicious_access_pattern",
+      "if": {
+        "any": [
+          { "field": "access_count_last_hour", "op": "gte", "value": 50 },
+          { "field": "different_patients_last_hour", "op": "gte", "value": 20 }
+        ]
+      },
+      "then": {
+        "decision": "deny_and_flag",
+        "weight": 1.0,
+        "reason": "Suspicious access pattern detected - security review required"
+      }
+    },
+    {
+      "id": "after_hours_access",
+      "if": {
+        "all": [
+          { "field": "time_of_day", "op": "in", "value": ["night", "weekend"] },
+          { "field": "user.scheduled_shift", "op": "eq", "value": false }
+        ]
+      },
+      "then": {
+        "decision": "require_justification",
+        "weight": 0.6,
+        "reason": "After-hours access requires documented justification"
+      }
+    }
+  ]
+}

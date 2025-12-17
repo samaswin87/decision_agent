@@ -1,0 +1,87 @@
+{
+  "version": "1.0",
+  "ruleset": "redmine_issue_triage",
+  "rules": [
+    {
+      "id": "critical_issue",
+      "if": {
+        "all": [
+          { "field": "priority", "op": "eq", "value": "critical" },
+          { "field": "hours_inactive", "op": "gte", "value": 2 }
+        ]
+      },
+      "then": {
+        "decision": "escalate_immediately",
+        "weight": 1.0,
+        "reason": "Critical issue inactive for 2+ hours"
+      }
+    },
+    {
+      "id": "high_priority_stale",
+      "if": {
+        "all": [
+          { "field": "priority", "op": "eq", "value": "high" },
+          { "field": "hours_inactive", "op": "gte", "value": 4 }
+        ]
+      },
+      "then": {
+        "decision": "notify_manager",
+        "weight": 0.8,
+        "reason": "High priority issue inactive for 4+ hours"
+      }
+    },
+    {
+      "id": "blocked_issue",
+      "if": {
+        "all": [
+          { "field": "status", "op": "eq", "value": "blocked" },
+          { "field": "hours_inactive", "op": "gte", "value": 8 }
+        ]
+      },
+      "then": {
+        "decision": "review_blockers",
+        "weight": 0.7,
+        "reason": "Issue blocked for extended period"
+      }
+    },
+    {
+      "id": "unassigned_urgent",
+      "if": {
+        "all": [
+          { "field": "assignee", "op": "blank" },
+          { "field": "priority", "op": "in", "value": ["high", "critical"] }
+        ]
+      },
+      "then": {
+        "decision": "auto_assign",
+        "weight": 0.9,
+        "reason": "Urgent issue requires assignment"
+      }
+    },
+    {
+      "id": "customer_escalation",
+      "if": {
+        "any": [
+          { "field": "customer_escalated", "op": "eq", "value": true },
+          { "field": "complaints", "op": "gte", "value": 3 }
+        ]
+      },
+      "then": {
+        "decision": "escalate_to_support_lead",
+        "weight": 0.95,
+        "reason": "Customer escalation detected"
+      }
+    },
+    {
+      "id": "normal_flow",
+      "if": {
+        "field": "status", "op": "eq", "value": "open"
+      },
+      "then": {
+        "decision": "continue_monitoring",
+        "weight": 0.3,
+        "reason": "Issue in normal state"
+      }
+    }
+  ]
+}
