@@ -14,16 +14,6 @@ It is designed for **enterprise**, **healthcare**, and **long-lived systems** wh
 
 ## Why decision_agent?
 
-Most existing approaches fall short:
-
-| Approach | Problem |
-|--------|--------|
-| Service objects | No confidence, no explanation |
-| Rule engines | No decision abstraction, no replay |
-| Workflow engines | Heavy, state-centric |
-| AI-first agents | Non-deterministic, unsafe |
-| Trailblazer / dry-rb | No audit or confidence model |
-
 `decision_agent` combines the best ideas while fixing these gaps.
 
 ---
