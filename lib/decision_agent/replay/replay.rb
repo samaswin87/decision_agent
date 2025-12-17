@@ -78,7 +78,8 @@ module DecisionAgent
           decision: evaluation.decision,
           weight: evaluation.weight,
           reason: evaluation.reason,
-          name: evaluation.evaluator_name
+          name: evaluation.evaluator_name,
+          metadata: evaluation.metadata
         )
       end
     end

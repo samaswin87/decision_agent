@@ -9,6 +9,7 @@ require_relative "decision_agent/evaluators/base"
 require_relative "decision_agent/evaluators/static_evaluator"
 require_relative "decision_agent/evaluators/json_rule_evaluator"
 
+require_relative "decision_agent/dsl/schema_validator"
 require_relative "decision_agent/dsl/rule_parser"
 require_relative "decision_agent/dsl/condition_evaluator"
 

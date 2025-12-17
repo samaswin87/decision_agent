@@ -4,54 +4,31 @@ module DecisionAgent
   module Dsl
     class RuleParser
       def self.parse(json_string)
-        data = JSON.parse(json_string)
+        data = parse_json(json_string)
 
-        validate_structure!(data)
+        # Use comprehensive schema validator
+        SchemaValidator.validate!(data)
 
         data
       rescue JSON::ParserError => e
-        raise InvalidRuleDslError, "Invalid JSON: #{e.message}"
+        raise InvalidRuleDslError, "Invalid JSON syntax: #{e.message}\n\n" \
+                                   "Please ensure your JSON is properly formatted. " \
+                                   "Common issues:\n" \
+                                   "  - Missing or extra commas\n" \
+                                   "  - Unquoted keys or values\n" \
+                                   "  - Unmatched brackets or braces"
       end
 
       private
 
-      def self.validate_structure!(data)
-        unless data.is_a?(Hash)
-          raise InvalidRuleDslError, "Root must be a hash"
-        end
-
-        unless data["version"]
-          raise InvalidRuleDslError, "Missing 'version' field"
-        end
-
-        unless data["rules"].is_a?(Array)
-          raise InvalidRuleDslError, "Missing or invalid 'rules' array"
-        end
-
-        data["rules"].each_with_index do |rule, idx|
-          validate_rule!(rule, idx)
-        end
-      end
-
-      def self.validate_rule!(rule, idx)
-        unless rule.is_a?(Hash)
-          raise InvalidRuleDslError, "Rule at index #{idx} must be a hash"
-        end
-
-        unless rule["id"]
-          raise InvalidRuleDslError, "Rule at index #{idx} missing 'id'"
-        end
-
-        unless rule["if"]
-          raise InvalidRuleDslError, "Rule '#{rule['id']}' missing 'if' clause"
-        end
-
-        unless rule["then"]
-          raise InvalidRuleDslError, "Rule '#{rule['id']}' missing 'then' clause"
-        end
-
-        unless rule["then"]["decision"]
-          raise InvalidRuleDslError, "Rule '#{rule['id']}' missing 'then.decision'"
+      def self.parse_json(input)
+        if input.is_a?(String)
+          JSON.parse(input)
+        elsif input.is_a?(Hash)
+          # Already parsed, convert to string keys for consistency
+          JSON.parse(JSON.generate(input))
+        else
+          raise InvalidRuleDslError, "Expected JSON string or Hash, got #{input.class}"
         end
       end
     end
