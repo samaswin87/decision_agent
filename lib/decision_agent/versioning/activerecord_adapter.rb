@@ -1,10 +1,12 @@
 require_relative "adapter"
+require_relative "file_storage_adapter"
 
 module DecisionAgent
   module Versioning
     # ActiveRecord-based version storage adapter for Rails applications
     # Requires ActiveRecord models to be set up in the Rails app
     class ActiveRecordAdapter < Adapter
+      include StatusValidator
       def initialize
         unless defined?(ActiveRecord)
           raise DecisionAgent::ConfigurationError,
@@ -16,6 +18,10 @@ module DecisionAgent
         # Use a transaction with pessimistic locking to prevent race conditions
         version = nil
 
+        # Validate status if provided
+        status = metadata[:status] || "active"
+        validate_status!(status)
+
         rule_version_class.transaction do
           # Lock the last version for this rule to prevent concurrent reads
           # This ensures only one thread can calculate the next version number at a time
@@ -26,8 +32,10 @@ module DecisionAgent
           next_version_number = last_version ? last_version.version_number + 1 : 1
 
           # Deactivate previous active versions
-          rule_version_class.where(rule_id: rule_id, status: "active")
-                           .update_all(status: "archived")
+          # Use update! instead of update_all to trigger validations
+          rule_version_class.where(rule_id: rule_id, status: "active").find_each do |v|
+            v.update!(status: "archived")
+          end
 
           # Create new version
           version = rule_version_class.create!(
@@ -36,7 +44,7 @@ module DecisionAgent
             content: content.to_json,
             created_by: metadata[:created_by] || "system",
             changelog: metadata[:changelog] || "Version #{next_version_number}",
-            status: metadata[:status] || "active"
+            status: status
           )
         end
 
@@ -78,9 +86,12 @@ module DecisionAgent
 
           # Deactivate all other versions for this rule within the same transaction
           # The lock ensures only one thread can perform this operation at a time
+          # Use update! instead of update_all to trigger validations
           rule_version_class.where(rule_id: version.rule_id, status: "active")
                            .where.not(id: version_id)
-                           .update_all(status: "archived")
+                           .find_each do |v|
+            v.update!(status: "archived")
+          end
 
           # Activate this version
           version.update!(status: "active")
@@ -102,11 +113,22 @@ module DecisionAgent
       end
 
       def serialize_version(version)
+        # Parse JSON content with proper error handling
+        parsed_content = begin
+          JSON.parse(version.content)
+        rescue JSON::ParserError => e
+          raise DecisionAgent::ValidationError,
+                "Invalid JSON in version #{version.id} for rule #{version.rule_id}: #{e.message}"
+        rescue TypeError, NoMethodError => e
+          raise DecisionAgent::ValidationError,
+                "Invalid content in version #{version.id} for rule #{version.rule_id}: content is nil or not a string"
+        end
+
         {
           id: version.id,
           rule_id: version.rule_id,
           version_number: version.version_number,
-          content: JSON.parse(version.content),
+          content: parsed_content,
           created_by: version.created_by,
           created_at: version.created_at,
           changelog: version.changelog,

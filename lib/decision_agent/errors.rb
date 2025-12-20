@@ -71,4 +71,7 @@ module DecisionAgent
       super(message)
     end
   end
+
+  # Alias for backward compatibility and clearer naming
+  ConfigurationError = InvalidConfigurationError
 end

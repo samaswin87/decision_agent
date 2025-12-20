@@ -29,9 +29,12 @@ class RuleVersion < ApplicationRecord
   def activate!
     transaction do
       # Deactivate all other versions for this rule
+      # Use update! instead of update_all to trigger validations
       self.class.where(rule_id: rule_id, status: 'active')
                 .where.not(id: id)
-                .update_all(status: 'archived')
+                .find_each do |v|
+        v.update!(status: 'archived')
+      end
 
       # Activate this version
       update!(status: 'active')
