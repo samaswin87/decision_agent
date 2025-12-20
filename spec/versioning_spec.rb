@@ -707,5 +707,73 @@ RSpec.describe "DecisionAgent Versioning System" do
         end
       end
     end
+
+    describe "status validation" do
+      let(:rule_id) { "test_status_rule" }
+      let(:rule_content) do
+        {
+          version: "1.0",
+          ruleset: "test",
+          rules: [{ id: "test", if: { field: "x", op: "eq", value: 1 }, then: { decision: "approve", weight: 0.8, reason: "Test" } }]
+        }
+      end
+
+      it "rejects invalid status values when creating versions" do
+        expect {
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content,
+            metadata: { status: "banana" }
+          )
+        }.to raise_error(DecisionAgent::ValidationError, /Invalid status 'banana'/)
+
+        expect {
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content,
+            metadata: { status: "pending" }
+          )
+        }.to raise_error(DecisionAgent::ValidationError, /Invalid status 'pending'/)
+
+        expect {
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content,
+            metadata: { status: "deleted" }
+          )
+        }.to raise_error(DecisionAgent::ValidationError, /Invalid status 'deleted'/)
+      end
+
+      it "accepts valid status values" do
+        v1 = adapter.create_version(
+          rule_id: rule_id,
+          content: rule_content,
+          metadata: { status: "draft" }
+        )
+        expect(v1[:status]).to eq("draft")
+
+        v2 = adapter.create_version(
+          rule_id: "rule_002",
+          content: rule_content,
+          metadata: { status: "active" }
+        )
+        expect(v2[:status]).to eq("active")
+
+        v3 = adapter.create_version(
+          rule_id: "rule_003",
+          content: rule_content,
+          metadata: { status: "archived" }
+        )
+        expect(v3[:status]).to eq("archived")
+      end
+
+      it "uses default status 'active' when not provided" do
+        version = adapter.create_version(
+          rule_id: rule_id,
+          content: rule_content
+        )
+        expect(version[:status]).to eq("active")
+      end
+    end
   end
 end

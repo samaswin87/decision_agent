@@ -4,9 +4,22 @@ require "fileutils"
 
 module DecisionAgent
   module Versioning
+    # Status validation shared by adapters
+    module StatusValidator
+      VALID_STATUSES = %w[draft active archived].freeze
+
+      def validate_status!(status)
+        unless VALID_STATUSES.include?(status)
+          raise DecisionAgent::ValidationError,
+                "Invalid status '#{status}'. Must be one of: #{VALID_STATUSES.join(', ')}"
+        end
+      end
+    end
     # File-based version storage adapter for non-Rails applications
     # Stores versions as JSON files in a directory structure
     class FileStorageAdapter < Adapter
+      include StatusValidator
+
       attr_reader :storage_path
 
       # Initialize with a storage directory
@@ -16,7 +29,11 @@ module DecisionAgent
         # Per-rule mutex for better concurrency - allows different rules to be processed in parallel
         @rule_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
         @rule_mutexes_lock = Mutex.new  # Protects the hash itself
+        # Index cache: version_id => rule_id mapping for O(1) lookups
+        @version_index = {}
+        @version_index_lock = Mutex.new
         FileUtils.mkdir_p(@storage_path)
+        load_version_index
       end
 
       def create_version(rule_id:, content:, metadata: {})
@@ -32,10 +49,14 @@ module DecisionAgent
         versions = list_versions_unsafe(rule_id: rule_id)
         next_version_number = versions.empty? ? 1 : versions.first[:version_number] + 1
 
+        # Validate status if provided
+        status = metadata[:status] || "active"
+        validate_status!(status)
+
         # Deactivate previous active versions
         versions.each do |v|
           if v[:status] == "active"
-            update_version_status_unsafe(v[:id], "archived")
+            update_version_status_unsafe(v[:id], "archived", rule_id)
           end
         end
 
@@ -49,7 +70,7 @@ module DecisionAgent
           created_by: metadata[:created_by] || "system",
           created_at: Time.now.utc.iso8601,
           changelog: metadata[:changelog] || "Version #{next_version_number}",
-          status: metadata[:status] || "active"
+          status: status
         }
 
         # Write to file
@@ -67,15 +88,15 @@ module DecisionAgent
       end
 
       def get_version(version_id:)
-        # For get_version, we need to find the rule_id first to get the right lock
-        # Fall back to reading without specific lock for this edge case
-        version = all_versions_unsafe.find { |v| v[:id] == version_id }
-        return nil unless version
+        # Use index to find rule_id quickly - O(1) instead of O(n)
+        rule_id = get_rule_id_from_index(version_id)
+        return nil unless rule_id
 
         # Now lock on the specific rule
-        with_rule_lock(version[:rule_id]) do
-          # Re-read to ensure we have latest data
-          all_versions_unsafe.find { |v| v[:id] == version_id }
+        with_rule_lock(rule_id) do
+          # Read only this rule's versions
+          versions = list_versions_unsafe(rule_id: rule_id)
+          versions.find { |v| v[:id] == version_id }
         end
       end
 
@@ -94,20 +115,21 @@ module DecisionAgent
       end
 
       def activate_version(version_id:)
-        # First find which rule this version belongs to (without lock)
-        version = all_versions_unsafe.find { |v| v[:id] == version_id }
-        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+        # Use index to find rule_id quickly - O(1) instead of O(n)
+        rule_id = get_rule_id_from_index(version_id)
+        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless rule_id
 
         # Now lock on the specific rule
-        with_rule_lock(version[:rule_id]) do
-          # Re-read to ensure we have latest data
-          version = all_versions_unsafe.find { |v| v[:id] == version_id }
+        with_rule_lock(rule_id) do
+          # Read only this rule's versions
+          versions = list_versions_unsafe(rule_id: rule_id)
+          version = versions.find { |v| v[:id] == version_id }
           raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
 
           # Deactivate all other versions for this rule
-          list_versions_unsafe(rule_id: version[:rule_id]).each do |v|
+          versions.each do |v|
             if v[:id] != version_id && v[:status] == "active"
-              update_version_status_unsafe(v[:id], "archived")
+              update_version_status_unsafe(v[:id], "archived", rule_id)
             end
           end
 
@@ -120,14 +142,15 @@ module DecisionAgent
       end
 
       def delete_version(version_id:)
-        # First find which rule this version belongs to (without lock)
-        version = all_versions_unsafe.find { |v| v[:id] == version_id }
-        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+        # Use index to find rule_id quickly - O(1) instead of O(n)
+        rule_id = get_rule_id_from_index(version_id)
+        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless rule_id
 
         # Now lock on the specific rule
-        with_rule_lock(version[:rule_id]) do
-          # Re-read to ensure we have latest data
-          version = all_versions_unsafe.find { |v| v[:id] == version_id }
+        with_rule_lock(rule_id) do
+          # Read only this rule's versions
+          versions = list_versions_unsafe(rule_id: rule_id)
+          version = versions.find { |v| v[:id] == version_id }
           raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
 
           # Prevent deletion of active versions
@@ -136,12 +159,14 @@ module DecisionAgent
           end
 
           # Delete the file
-          rule_dir = File.join(@storage_path, sanitize_filename(version[:rule_id]))
+          rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
           filename = "#{version[:version_number]}.json"
           filepath = File.join(rule_dir, filename)
 
           if File.exist?(filepath)
             File.delete(filepath)
+            # Remove from index
+            remove_from_index(version_id)
             true
           else
             false
@@ -176,8 +201,17 @@ module DecisionAgent
         versions
       end
 
-      def update_version_status_unsafe(version_id, status)
-        version = all_versions_unsafe.find { |v| v[:id] == version_id }
+      def update_version_status_unsafe(version_id, status, rule_id = nil)
+        # Validate status first
+        validate_status!(status)
+
+        # Use provided rule_id or look it up from index
+        rule_id ||= get_rule_id_from_index(version_id)
+        return unless rule_id
+
+        # Read only this rule's versions
+        versions = list_versions_unsafe(rule_id: rule_id)
+        version = versions.find { |v| v[:id] == version_id }
         return unless version
 
         version[:status] = status
@@ -197,6 +231,8 @@ module DecisionAgent
         begin
           File.write(temp_file, JSON.pretty_generate(version))
           File.rename(temp_file, filepath)
+          # Update index after successful write
+          add_to_index(version[:id], version[:rule_id])
         ensure
           # Clean up temp file if rename failed
           File.delete(temp_file) if File.exist?(temp_file)
@@ -216,6 +252,41 @@ module DecisionAgent
       def with_rule_lock(rule_id)
         mutex = @rule_mutexes_lock.synchronize { @rule_mutexes[rule_id] }
         mutex.synchronize { yield }
+      end
+
+      # Index management methods for O(1) version_id -> rule_id lookups
+      # This prevents the need to scan all 50,000 files when looking up a single version
+
+      def load_version_index
+        @version_index_lock.synchronize do
+          return unless Dir.exist?(@storage_path)
+
+          Dir.glob(File.join(@storage_path, "*", "*.json")).each do |file|
+            version = JSON.parse(File.read(file), symbolize_names: true)
+            @version_index[version[:id]] = version[:rule_id]
+          rescue JSON::ParserError
+            # Skip corrupted files
+            next
+          end
+        end
+      end
+
+      def get_rule_id_from_index(version_id)
+        @version_index_lock.synchronize do
+          @version_index[version_id]
+        end
+      end
+
+      def add_to_index(version_id, rule_id)
+        @version_index_lock.synchronize do
+          @version_index[version_id] = rule_id
+        end
+      end
+
+      def remove_from_index(version_id)
+        @version_index_lock.synchronize do
+          @version_index.delete(version_id)
+        end
       end
     end
   end
