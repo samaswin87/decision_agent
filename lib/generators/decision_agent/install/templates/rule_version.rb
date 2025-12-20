@@ -51,8 +51,11 @@ class RuleVersion < ApplicationRecord
   def set_next_version_number
     return if version_number.present?
 
+    # Use pessimistic locking to prevent race conditions when calculating version numbers
+    # Lock the last version record to ensure only one thread can read and increment at a time
     last_version = self.class.where(rule_id: rule_id)
                              .order(version_number: :desc)
+                             .lock
                              .first
 
     self.version_number = last_version ? last_version.version_number + 1 : 1
