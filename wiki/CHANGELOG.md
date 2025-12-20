@@ -7,11 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2] - 2025-01-15
 
+### Added
+
+- Version management system with FileStorageAdapter and ActiveRecordAdapter
+- Rule versioning with changelog support and activation/rollback capabilities
+- Web UI for rule building, version management, and visualization
+- Rails generator for easy installation (`rails generate decision_agent:install`)
+- Comprehensive versioning examples and documentation
+
 ### Fixed
 
 - Fixed race condition in FileStorageAdapter causing JSON parsing errors during concurrent version creation
 - Added atomic file writes to prevent corrupted version files when multiple threads write simultaneously
 - Added Ruby 4.0 compatibility workaround for Bundler::ORIGINAL_ENV in web server
+
+### Changed
+
+- Dropped Ruby 2.7 support, now requires Ruby 3.0 or higher
 
 ## [0.1.1] - 2025-01-15
 
