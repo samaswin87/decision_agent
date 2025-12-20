@@ -20,7 +20,18 @@ class CreateDecisionAgentTables < ActiveRecord::Migration[7.0]
       t.timestamps
     end
 
+    # ✅ CRITICAL: Unique constraint prevents duplicate version numbers per rule
+    # This protects against race conditions in concurrent version creation
     add_index :rule_versions, [:rule_id, :version_number], unique: true
+
+    # Index for efficient queries by rule_id and status
     add_index :rule_versions, [:rule_id, :status]
+
+    # Optional: Partial unique index for PostgreSQL to enforce one active version per rule
+    # Uncomment if using PostgreSQL:
+    # add_index :rule_versions, [:rule_id, :status],
+    #           unique: true,
+    #           where: "status = 'active'",
+    #           name: 'index_rule_versions_one_active_per_rule'
   end
 end

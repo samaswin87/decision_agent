@@ -13,12 +13,14 @@ module DecisionAgent
       # @param storage_path [String] Path to store version files (default: ./versions)
       def initialize(storage_path: "./versions")
         @storage_path = storage_path
-        @mutex = Mutex.new
+        # Per-rule mutex for better concurrency - allows different rules to be processed in parallel
+        @rule_mutexes = Hash.new { |h, k| h[k] = Mutex.new }
+        @rule_mutexes_lock = Mutex.new  # Protects the hash itself
         FileUtils.mkdir_p(@storage_path)
       end
 
       def create_version(rule_id:, content:, metadata: {})
-        @mutex.synchronize do
+        with_rule_lock(rule_id) do
           create_version_unsafe(rule_id: rule_id, content: content, metadata: metadata)
         end
       end
@@ -59,33 +61,46 @@ module DecisionAgent
       public
 
       def list_versions(rule_id:, limit: nil)
-        @mutex.synchronize do
+        with_rule_lock(rule_id) do
           list_versions_unsafe(rule_id: rule_id, limit: limit)
         end
       end
 
       def get_version(version_id:)
-        @mutex.synchronize do
+        # For get_version, we need to find the rule_id first to get the right lock
+        # Fall back to reading without specific lock for this edge case
+        version = all_versions_unsafe.find { |v| v[:id] == version_id }
+        return nil unless version
+
+        # Now lock on the specific rule
+        with_rule_lock(version[:rule_id]) do
+          # Re-read to ensure we have latest data
           all_versions_unsafe.find { |v| v[:id] == version_id }
         end
       end
 
       def get_version_by_number(rule_id:, version_number:)
-        @mutex.synchronize do
+        with_rule_lock(rule_id) do
           versions = list_versions_unsafe(rule_id: rule_id)
           versions.find { |v| v[:version_number] == version_number }
         end
       end
 
       def get_active_version(rule_id:)
-        @mutex.synchronize do
+        with_rule_lock(rule_id) do
           versions = list_versions_unsafe(rule_id: rule_id)
           versions.find { |v| v[:status] == "active" }
         end
       end
 
       def activate_version(version_id:)
-        @mutex.synchronize do
+        # First find which rule this version belongs to (without lock)
+        version = all_versions_unsafe.find { |v| v[:id] == version_id }
+        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+
+        # Now lock on the specific rule
+        with_rule_lock(version[:rule_id]) do
+          # Re-read to ensure we have latest data
           version = all_versions_unsafe.find { |v| v[:id] == version_id }
           raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
 
@@ -105,7 +120,13 @@ module DecisionAgent
       end
 
       def delete_version(version_id:)
-        @mutex.synchronize do
+        # First find which rule this version belongs to (without lock)
+        version = all_versions_unsafe.find { |v| v[:id] == version_id }
+        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+
+        # Now lock on the specific rule
+        with_rule_lock(version[:rule_id]) do
+          # Re-read to ensure we have latest data
           version = all_versions_unsafe.find { |v| v[:id] == version_id }
           raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
 
@@ -188,6 +209,13 @@ module DecisionAgent
 
       def sanitize_filename(name)
         name.to_s.gsub(/[^a-zA-Z0-9_-]/, "_")
+      end
+
+      # Get or create a mutex for a specific rule_id
+      # This allows different rules to be processed in parallel
+      def with_rule_lock(rule_id)
+        mutex = @rule_mutexes_lock.synchronize { @rule_mutexes[rule_id] }
+        mutex.synchronize { yield }
       end
     end
   end

@@ -102,11 +102,22 @@ module DecisionAgent
       end
 
       def serialize_version(version)
+        # Parse JSON content with proper error handling
+        parsed_content = begin
+          JSON.parse(version.content)
+        rescue JSON::ParserError => e
+          raise DecisionAgent::ValidationError,
+                "Invalid JSON in version #{version.id} for rule #{version.rule_id}: #{e.message}"
+        rescue TypeError, NoMethodError => e
+          raise DecisionAgent::ValidationError,
+                "Invalid content in version #{version.id} for rule #{version.rule_id}: content is nil or not a string"
+        end
+
         {
           id: version.id,
           rule_id: version.rule_id,
           version_number: version.version_number,
-          content: JSON.parse(version.content),
+          content: parsed_content,
           created_by: version.created_by,
           created_at: version.created_at,
           changelog: version.changelog,
