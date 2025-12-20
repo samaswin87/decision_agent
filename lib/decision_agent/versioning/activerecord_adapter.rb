@@ -13,25 +13,32 @@ module DecisionAgent
       end
 
       def create_version(rule_id:, content:, metadata: {})
-        # Get the next version number for this rule
-        last_version = rule_version_class.where(rule_id: rule_id)
-                                        .order(version_number: :desc)
-                                        .first
-        next_version_number = last_version ? last_version.version_number + 1 : 1
+        # Use a transaction with pessimistic locking to prevent race conditions
+        version = nil
 
-        # Deactivate previous active versions
-        rule_version_class.where(rule_id: rule_id, status: "active")
-                         .update_all(status: "archived")
+        rule_version_class.transaction do
+          # Lock the last version for this rule to prevent concurrent reads
+          # This ensures only one thread can calculate the next version number at a time
+          last_version = rule_version_class.where(rule_id: rule_id)
+                                          .order(version_number: :desc)
+                                          .lock
+                                          .first
+          next_version_number = last_version ? last_version.version_number + 1 : 1
 
-        # Create new version
-        version = rule_version_class.create!(
-          rule_id: rule_id,
-          version_number: next_version_number,
-          content: content.to_json,
-          created_by: metadata[:created_by] || "system",
-          changelog: metadata[:changelog] || "Version #{next_version_number}",
-          status: metadata[:status] || "active"
-        )
+          # Deactivate previous active versions
+          rule_version_class.where(rule_id: rule_id, status: "active")
+                           .update_all(status: "archived")
+
+          # Create new version
+          version = rule_version_class.create!(
+            rule_id: rule_id,
+            version_number: next_version_number,
+            content: content.to_json,
+            created_by: metadata[:created_by] || "system",
+            changelog: metadata[:changelog] || "Version #{next_version_number}",
+            status: metadata[:status] || "active"
+          )
+        end
 
         serialize_version(version)
       end
@@ -63,15 +70,21 @@ module DecisionAgent
       end
 
       def activate_version(version_id:)
-        version = rule_version_class.find(version_id)
+        version = nil
 
-        # Deactivate all other versions for this rule
-        rule_version_class.where(rule_id: version.rule_id, status: "active")
-                         .where.not(id: version_id)
-                         .update_all(status: "archived")
+        rule_version_class.transaction do
+          # Find and lock the version to activate
+          version = rule_version_class.lock.find(version_id)
 
-        # Activate this version
-        version.update!(status: "active")
+          # Deactivate all other versions for this rule within the same transaction
+          # The lock ensures only one thread can perform this operation at a time
+          rule_version_class.where(rule_id: version.rule_id, status: "active")
+                           .where.not(id: version_id)
+                           .update_all(status: "archived")
+
+          # Activate this version
+          version.update!(status: "active")
+        end
 
         serialize_version(version)
       end

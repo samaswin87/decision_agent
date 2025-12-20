@@ -54,22 +54,14 @@ module DecisionAgent
         @adapter.get_active_version(rule_id: rule_id)
       end
 
-      # Rollback to a previous version (activate it)
+      # Rollback to a previous version (activate it without creating a duplicate)
       # @param version_id [String, Integer] The version to rollback to
       # @param performed_by [String] User performing the rollback
       # @return [Hash] The activated version
       def rollback(version_id:, performed_by: "system")
-        version = @adapter.activate_version(version_id: version_id)
-
-        # Create an audit trail of the rollback
-        save_version(
-          rule_id: version[:rule_id],
-          rule_content: version[:content],
-          created_by: performed_by,
-          changelog: "Rolled back to version #{version[:version_number]}"
-        )
-
-        version
+        # Simply activate the previous version without creating a duplicate
+        # The version history already contains the full record
+        @adapter.activate_version(version_id: version_id)
       end
 
       # Compare two versions
