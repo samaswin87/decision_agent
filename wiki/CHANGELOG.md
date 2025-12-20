@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-01-15
+
+### Fixed
+
+- Fixed race condition in FileStorageAdapter causing JSON parsing errors during concurrent version creation
+- Added atomic file writes to prevent corrupted version files when multiple threads write simultaneously
+- Added Ruby 4.0 compatibility workaround for Bundler::ORIGINAL_ENV in web server
+
+## [0.1.1] - 2025-01-15
+
+### Added
+
+- Version management system with FileStorageAdapter
+- Rule versioning with changelog support
+- Version activation and rollback capabilities
+- Web UI for rule building and management
+
 ## [0.1.0] - 2025-01-15
 
 ### Added

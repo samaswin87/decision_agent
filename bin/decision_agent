@@ -29,6 +29,11 @@ def print_help
 end
 
 def start_web_ui(port = 4567)
+  # Ruby 4.0 compatibility: Puma expects Bundler::ORIGINAL_ENV which was removed
+  if defined?(Bundler) && !Bundler.const_defined?(:ORIGINAL_ENV)
+    Bundler.const_set(:ORIGINAL_ENV, ENV.to_h.dup)
+  end
+
   puts "🎯 Starting DecisionAgent Rule Builder..."
   puts "📍 Server: http://localhost:#{port}"
   puts "⚡️ Press Ctrl+C to stop"
