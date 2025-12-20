@@ -55,7 +55,7 @@ The Web UI provides:
 - 📚 **Example templates** - Pre-built rule sets to get started
 - ✨ **No coding required** - Perfect for business analysts and domain experts
 
-See [WEB_UI.md](WEB_UI.md) for detailed documentation.
+See [WEB_UI.md](wiki/WEB_UI.md) for detailed documentation.
 
 <img width="1602" height="770" alt="Screenshot 2025-12-19 at 3 06 07 PM" src="https://github.com/user-attachments/assets/6ee6859c-f9f2-4f93-8bff-923986ccb1bc" />
 

@@ -310,12 +310,12 @@ end
 1. **Start with Example 1** - Understand the basics
 2. **Choose your framework** - Rails (Example 2) or Sinatra (Example 3)
 3. **Explore advanced features** - Example 4 for production patterns
-4. **Read the full docs** - [VERSIONING.md](../VERSIONING.md)
+4. **Read the full docs** - [VERSIONING.md](../wiki/VERSIONING.md)
 
 ## Support
 
-- Documentation: [VERSIONING.md](../VERSIONING.md)
-- API Reference: [VERSIONING.md#api-reference](../VERSIONING.md#api-reference)
+- Documentation: [VERSIONING.md](../wiki/VERSIONING.md)
+- API Reference: [VERSIONING.md#api-reference](../wiki/VERSIONING.md#api-reference)
 - Issues: [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
 
 ## License

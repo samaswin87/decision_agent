@@ -78,9 +78,9 @@ RSpec.describe "DecisionAgent Versioning System" do
       end
 
       it "returns all versions for a rule ordered by version number descending" do
-        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
-        v3 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         versions = adapter.list_versions(rule_id: rule_id)
 
@@ -102,7 +102,7 @@ RSpec.describe "DecisionAgent Versioning System" do
       end
 
       it "returns the correct version by ID" do
-        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
         v2 = adapter.create_version(rule_id: rule_id, content: rule_content.merge(version: "2.0"))
 
         loaded = adapter.get_version(version_id: v2[:id])
@@ -265,7 +265,7 @@ RSpec.describe "DecisionAgent Versioning System" do
     describe "#rollback" do
       it "activates a previous version and creates new version" do
         v1 = manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "v1")
-        v2 = manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "v2")
+        manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "v2")
 
         rolled_back = manager.rollback(version_id: v1[:id], performed_by: "admin")
 
@@ -287,10 +287,10 @@ RSpec.describe "DecisionAgent Versioning System" do
 
         expect(history[:rule_id]).to eq(rule_id)
         expect(history[:total_versions]).to eq(2)
-        expect(history[:active_version]).to be_present
+        expect(history[:active_version]).not_to be_nil
         expect(history[:versions]).to be_an(Array)
-        expect(history[:created_at]).to be_present
-        expect(history[:updated_at]).to be_present
+        expect(history[:created_at]).not_to be_nil
+        expect(history[:updated_at]).not_to be_nil
       end
     end
 
@@ -472,8 +472,8 @@ RSpec.describe "DecisionAgent Versioning System" do
     describe "rollback scenarios" do
       it "creates proper audit trail on rollback" do
         v1 = manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "Version 1")
-        v2 = manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "Version 2")
-        v3 = manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "Version 3")
+        manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "Version 2")
+        manager.save_version(rule_id: rule_id, rule_content: rule_content, changelog: "Version 3")
 
         manager.rollback(version_id: v1[:id], performed_by: "admin")
 
@@ -488,7 +488,7 @@ RSpec.describe "DecisionAgent Versioning System" do
       it "handles multiple consecutive rollbacks" do
         v1 = manager.save_version(rule_id: rule_id, rule_content: rule_content)
         v2 = manager.save_version(rule_id: rule_id, rule_content: rule_content)
-        v3 = manager.save_version(rule_id: rule_id, rule_content: rule_content)
+        manager.save_version(rule_id: rule_id, rule_content: rule_content)
 
         # Rollback to v1
         manager.rollback(version_id: v1[:id], performed_by: "user1")

@@ -13,10 +13,19 @@ module DecisionAgent
       # @param storage_path [String] Path to store version files (default: ./versions)
       def initialize(storage_path: "./versions")
         @storage_path = storage_path
+        @mutex = Mutex.new
         FileUtils.mkdir_p(@storage_path)
       end
 
       def create_version(rule_id:, content:, metadata: {})
+        @mutex.synchronize do
+          create_version_unsafe(rule_id: rule_id, content: content, metadata: metadata)
+        end
+      end
+
+      private
+
+      def create_version_unsafe(rule_id:, content:, metadata: {})
         # Get the next version number
         versions = list_versions(rule_id: rule_id)
         next_version_number = versions.empty? ? 1 : versions.first[:version_number] + 1
@@ -47,6 +56,8 @@ module DecisionAgent
         version
       end
 
+      public
+
       def list_versions(rule_id:, limit: nil)
         versions = []
         rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
@@ -76,21 +87,23 @@ module DecisionAgent
       end
 
       def activate_version(version_id:)
-        version = get_version(version_id: version_id)
-        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+        @mutex.synchronize do
+          version = get_version(version_id: version_id)
+          raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
 
-        # Deactivate all other versions for this rule
-        list_versions(rule_id: version[:rule_id]).each do |v|
-          if v[:id] != version_id && v[:status] == "active"
-            update_version_status(v[:id], "archived")
+          # Deactivate all other versions for this rule
+          list_versions(rule_id: version[:rule_id]).each do |v|
+            if v[:id] != version_id && v[:status] == "active"
+              update_version_status(v[:id], "archived")
+            end
           end
+
+          # Activate this version
+          version[:status] = "active"
+          write_version_file(version)
+
+          version
         end
-
-        # Activate this version
-        version[:status] = "active"
-        write_version_file(version)
-
-        version
       end
 
       private

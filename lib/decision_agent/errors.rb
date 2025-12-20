@@ -59,4 +59,16 @@ module DecisionAgent
       super("Weight must be between 0.0 and 1.0, got: #{weight}")
     end
   end
+
+  class NotFoundError < Error
+    def initialize(message = "Resource not found")
+      super(message)
+    end
+  end
+
+  class ValidationError < Error
+    def initialize(message = "Validation failed")
+      super(message)
+    end
+  end
 end
