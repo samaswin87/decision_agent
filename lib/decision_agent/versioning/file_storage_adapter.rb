@@ -106,6 +106,30 @@ module DecisionAgent
         end
       end
 
+      def delete_version(version_id:)
+        @mutex.synchronize do
+          version = get_version(version_id: version_id)
+          raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless version
+
+          # Prevent deletion of active versions
+          if version[:status] == "active"
+            raise DecisionAgent::ValidationError, "Cannot delete active version. Please activate another version first."
+          end
+
+          # Delete the file
+          rule_dir = File.join(@storage_path, sanitize_filename(version[:rule_id]))
+          filename = "#{version[:version_number]}.json"
+          filepath = File.join(rule_dir, filename)
+
+          if File.exist?(filepath)
+            File.delete(filepath)
+            true
+          else
+            false
+          end
+        end
+      end
+
       private
 
       def all_versions

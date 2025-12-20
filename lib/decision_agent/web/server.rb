@@ -12,7 +12,7 @@ module DecisionAgent
       # Enable CORS for API calls
       before do
         headers["Access-Control-Allow-Origin"] = "*"
-        headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+        headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
         headers["Access-Control-Allow-Headers"] = "Content-Type"
       end
 
@@ -351,6 +351,32 @@ module DecisionAgent
             status 404
             { error: "One or both versions not found" }.to_json
           end
+
+        rescue => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # Delete a version
+      delete "/api/versions/:version_id" do
+        content_type :json
+
+        begin
+          version_id = params[:version_id]
+
+          version_manager.delete_version(version_id: version_id)
+
+          status 200
+          { success: true, message: "Version deleted successfully" }.to_json
+
+        rescue DecisionAgent::NotFoundError => e
+          status 404
+          { error: e.message }.to_json
+
+        rescue DecisionAgent::ValidationError => e
+          status 422
+          { error: e.message }.to_json
 
         rescue => e
           status 500

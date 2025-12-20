@@ -66,6 +66,13 @@ module DecisionAgent
         }
       end
 
+      # Delete a specific version
+      # @param version_id [String, Integer] The version to delete
+      # @return [Boolean] True if deleted successfully
+      def delete_version(version_id:)
+        raise NotImplementedError, "#{self.class} must implement #delete_version"
+      end
+
       private
 
       # Calculate differences between two content hashes

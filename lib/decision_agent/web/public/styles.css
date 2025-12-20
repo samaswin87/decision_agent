@@ -229,6 +229,15 @@ textarea.input {
     background: #059669;
 }
 
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
 .btn-sm {
     padding: 5px 10px;
     font-size: 12px;

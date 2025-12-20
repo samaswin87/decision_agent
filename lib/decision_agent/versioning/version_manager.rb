@@ -99,6 +99,13 @@ module DecisionAgent
         }
       end
 
+      # Delete a specific version
+      # @param version_id [String, Integer] The version to delete
+      # @return [Boolean] True if deleted successfully
+      def delete_version(version_id:)
+        @adapter.delete_version(version_id: version_id)
+      end
+
       private
 
       def default_adapter
