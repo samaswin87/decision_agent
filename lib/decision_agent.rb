@@ -30,5 +30,11 @@ require_relative "decision_agent/versioning/adapter"
 require_relative "decision_agent/versioning/file_storage_adapter"
 require_relative "decision_agent/versioning/version_manager"
 
+require_relative "decision_agent/monitoring/metrics_collector"
+require_relative "decision_agent/monitoring/prometheus_exporter"
+require_relative "decision_agent/monitoring/alert_manager"
+require_relative "decision_agent/monitoring/monitored_agent"
+# dashboard_server has additional dependencies (faye/websocket) - require it explicitly when needed
+
 module DecisionAgent
 end

@@ -1,0 +1,28 @@
+# Prometheus configuration for DecisionAgent monitoring
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'decision-agent-monitor'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - localhost:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # DecisionAgent metrics
+  - job_name: 'decision_agent'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+          - 'localhost:4568'  # DashboardServer metrics endpoint
+    metrics_path: '/metrics'
+    scheme: 'http'

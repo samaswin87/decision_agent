@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Example 3: Complete Sinatra Application with Versioning
 #
 # This example demonstrates how to build a complete Sinatra app
@@ -7,6 +8,7 @@
 # Run: ruby examples/03_sinatra_app.rb
 # Visit: http://localhost:4567
 
+require 'bundler/setup'
 require 'sinatra/base'
 require 'json'
 require 'decision_agent'

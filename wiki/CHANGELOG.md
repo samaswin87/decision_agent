@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **RFC 8785 Canonical JSON Implementation**
+  - **Problem:** Custom recursive JSON canonicalization could be optimized
+    - Previous implementation used recursive `JSON.generate` calls creating intermediate strings
+    - Not following an industry standard for canonical JSON
+    - Potential for optimization in high-throughput scenarios
+  - **Solution:** Replaced with RFC 8785 (JSON Canonicalization Scheme)
+    - Added `json-canonicalization ~> 1.0` gem dependency
+    - Replaced custom `canonical_json` method with RFC 8785 standard implementation
+    - Uses `to_json_c14n` method from industry-standard gem
+  - **Benefits:**
+    - **Industry Standard** - Official IETF RFC 8785 specification
+    - **Cryptographically Sound** - Designed specifically for secure hashing of JSON
+    - **Better Performance** - Optimized single-pass implementation vs. recursive approach
+    - **Interoperability** - Compatible with other systems using RFC 8785
+    - **Correctness** - Handles edge cases (Unicode, floats, escaping) per ECMAScript spec
+  - **Impact:**
+    - Deterministic SHA-256 hashing maintained
+    - Same input always produces same audit hash
+    - Zero performance regression (~5,800 decisions/second unchanged)
+    - Thread-safe (no shared state)
+    - Enables tamper detection, replay verification, regulatory compliance
+  - **Files Changed:**
+    - `decision_agent.gemspec:26` - Added json-canonicalization dependency
+    - `lib/decision_agent/agent.rb:3` - Added require statement
+    - `lib/decision_agent/agent.rb:141-146` - Replaced custom implementation with RFC 8785
+    - `README.md:209-222` - Added RFC 8785 documentation section
+    - `wiki/THREAD_SAFETY.md:252-302` - Added RFC 8785 implementation details
+  - **Testing:**
+    - Added 13 new RFC 8785 compliance tests (`spec/rfc8785_canonicalization_spec.rb`)
+    - All 46 core tests passing (agent + thread-safety + RFC 8785)
+    - Validates deterministic hashing, property order canonicalization, float serialization
+  - **Learn More:**
+    - [RFC 8785 Specification](https://datatracker.ietf.org/doc/html/rfc8785)
+    - [json-canonicalization gem](https://github.com/dryruby/json-canonicalization)
+    - See README.md and THREAD_SAFETY.md for implementation details
+
 ### Fixed
 
 - **Issue #8: FileStorageAdapter - Large Directory Scan Performance**

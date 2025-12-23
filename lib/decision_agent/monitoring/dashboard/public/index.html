@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecisionAgent Monitoring Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="header">
+            <h1>DecisionAgent Monitoring</h1>
+            <div class="header-info">
+                <span id="connection-status" class="status-badge disconnected">Disconnected</span>
+                <span id="last-update">Never</span>
+            </div>
+        </header>
+
+        <div class="alert-bar" id="alert-bar" style="display: none;">
+            <div class="alert-content">
+                <span class="alert-icon">⚠️</span>
+                <span id="alert-message"></span>
+                <button class="alert-close" onclick="closeAlertBar()">×</button>
+            </div>
+        </div>
+
+        <div class="metrics-grid">
+            <!-- Summary Cards -->
+            <div class="metric-card">
+                <div class="metric-label">Total Decisions</div>
+                <div class="metric-value" id="total-decisions">0</div>
+                <div class="metric-change" id="decisions-change">--</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Avg Confidence</div>
+                <div class="metric-value" id="avg-confidence">0.00</div>
+                <div class="metric-change" id="confidence-change">--</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Success Rate</div>
+                <div class="metric-value" id="success-rate">0%</div>
+                <div class="metric-change" id="success-change">--</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">P95 Latency</div>
+                <div class="metric-value" id="p95-latency">0ms</div>
+                <div class="metric-change" id="latency-change">--</div>
+            </div>
+
+            <div class="metric-card error-card">
+                <div class="metric-label">Total Errors</div>
+                <div class="metric-value" id="total-errors">0</div>
+                <div class="metric-change" id="errors-change">--</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Active Alerts</div>
+                <div class="metric-value" id="active-alerts">0</div>
+                <div class="metric-change" id="alerts-change">--</div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <!-- Decision Throughput Chart -->
+            <div class="chart-card">
+                <h3>Decision Throughput</h3>
+                <canvas id="throughput-chart"></canvas>
+            </div>
+
+            <!-- Confidence Distribution -->
+            <div class="chart-card">
+                <h3>Decision Distribution</h3>
+                <canvas id="distribution-chart"></canvas>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="chart-card">
+                <h3>Performance (P95/P99 Latency)</h3>
+                <canvas id="performance-chart"></canvas>
+            </div>
+
+            <!-- Error Rate -->
+            <div class="chart-card">
+                <h3>Error Rate Over Time</h3>
+                <canvas id="error-chart"></canvas>
+            </div>
+        </div>
+
+        <div class="data-grid">
+            <!-- Alerts Table -->
+            <div class="data-card">
+                <div class="data-header">
+                    <h3>Active Alerts</h3>
+                    <button class="btn-small" onclick="refreshAlerts()">Refresh</button>
+                </div>
+                <div class="table-container">
+                    <table id="alerts-table">
+                        <thead>
+                            <tr>
+                                <th>Severity</th>
+                                <th>Rule</th>
+                                <th>Message</th>
+                                <th>Triggered</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-tbody">
+                            <tr>
+                                <td colspan="5" class="no-data">No active alerts</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Decisions -->
+            <div class="data-card">
+                <div class="data-header">
+                    <h3>System Metrics</h3>
+                </div>
+                <div class="system-metrics" id="system-metrics">
+                    <div class="system-metric">
+                        <span class="metric-name">Evaluators Active:</span>
+                        <span class="metric-val" id="evaluators-count">0</span>
+                    </div>
+                    <div class="system-metric">
+                        <span class="metric-name">Metrics Stored:</span>
+                        <span class="metric-val" id="metrics-stored">0</span>
+                    </div>
+                    <div class="system-metric">
+                        <span class="metric-name">Version:</span>
+                        <span class="metric-val" id="agent-version">--</span>
+                    </div>
+                    <div class="system-metric">
+                        <span class="metric-name">WebSocket Clients:</span>
+                        <span class="metric-val" id="ws-clients">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom KPI Form -->
+        <div class="kpi-section">
+            <h3>Register Custom KPI</h3>
+            <form id="kpi-form" onsubmit="registerKPI(event)">
+                <div class="form-group">
+                    <input type="text" id="kpi-name" placeholder="KPI Name" required>
+                    <input type="number" id="kpi-value" placeholder="Value" step="0.01" required>
+                    <button type="submit" class="btn-primary">Register KPI</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

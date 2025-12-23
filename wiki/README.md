@@ -12,6 +12,11 @@ Welcome to the DecisionAgent documentation wiki.
 - [**Versioning System**](VERSIONING.md) - Rule version control, rollback, and history
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
+- [**Web UI Rails Integration**](WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+
+### Monitoring & Analytics
+- [**Monitoring & Analytics**](MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
+- [**Monitoring Architecture**](MONITORING_ARCHITECTURE.md) - System architecture and design
 
 ### Performance & Thread-Safety
 - [**Performance & Thread-Safety Summary**](PERFORMANCE_AND_THREAD_SAFETY.md) - Executive summary, benchmarks, and production readiness
@@ -33,7 +38,12 @@ wiki/
 ├── Core Features
 │   ├── VERSIONING.md               - Rule version control and management
 │   ├── WEB_UI.md                   - Web interface user guide
-│   └── WEB_UI_SETUP.md             - Web interface setup
+│   ├── WEB_UI_SETUP.md             - Web interface setup
+│   └── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
+│
+├── Monitoring & Analytics
+│   ├── MONITORING_AND_ANALYTICS.md - Real-time monitoring, metrics, and alerting
+│   └── MONITORING_ARCHITECTURE.md  - System architecture and design
 │
 ├── Performance & Thread-Safety
 │   ├── PERFORMANCE_AND_THREAD_SAFETY.md  - Executive summary and benchmarks

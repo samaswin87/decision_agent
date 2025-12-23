@@ -1,0 +1,28 @@
+{
+  "id": "pricing_001_canary_v1",
+  "rule_id": "pricing_001_canary",
+  "version_number": 1,
+  "content": {
+    "version": "1.0",
+    "ruleset": "pricing",
+    "rules": [
+      {
+        "id": "standard_pricing",
+        "if": {
+          "field": "customer_tier",
+          "op": "eq",
+          "value": "standard"
+        },
+        "then": {
+          "decision": "price_95",
+          "weight": 1.0,
+          "reason": "Standard pricing"
+        }
+      }
+    ]
+  },
+  "created_by": "pricing_team",
+  "created_at": "2025-12-21T16:32:16Z",
+  "changelog": "Canary - 5% discount for standard tier",
+  "status": "archived"
+}

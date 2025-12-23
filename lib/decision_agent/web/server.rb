@@ -409,11 +409,19 @@ module DecisionAgent
         errors.empty? ? [error_message] : errors
       end
 
-      # Class method to start the server
+      # Class method to start the server (for CLI usage)
       def self.start!(port: 4567, host: "0.0.0.0")
         set :port, port
         set :bind, host
         run!
+      end
+
+      # Rack interface for mounting in Rails/Rack apps
+      # Example:
+      #   # config/routes.rb
+      #   mount DecisionAgent::Web::Server, at: "/decision_agent"
+      def self.call(env)
+        new.call(env)
       end
     end
   end

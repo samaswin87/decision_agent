@@ -105,9 +105,9 @@ decision.confidence = 0.99  # FrozenError - cannot mutate
 - Sinatra/Rack applications
 
 ✅ **Background Job Processors**
-- Sidekiq (multi-threaded by default)
-- Resque with thread workers
+- Multi-threaded job processors
 - Concurrent job processing
+- Parallel task execution
 
 ✅ **Microservices**
 - Shared agent instances across requests
@@ -150,10 +150,8 @@ end
 ### Example 2: Background Jobs
 
 ```ruby
-class FraudDetectionJob
-  include Sidekiq::Worker
-  sidekiq_options concurrency: 50  # 50 threads
-
+class FraudDetectionJob < ApplicationJob
+  # Shared agent instance across all job executions
   FRAUD_AGENT = DecisionAgent::Agent.new(
     evaluators: [FraudRuleEvaluator.new]
   )
@@ -174,7 +172,7 @@ class FraudDetectionJob
   end
 end
 
-# Sidekiq can process 50 jobs concurrently using shared FRAUD_AGENT
+# Multiple jobs can process concurrently using shared FRAUD_AGENT
 ```
 
 ### Example 3: Concurrent Testing

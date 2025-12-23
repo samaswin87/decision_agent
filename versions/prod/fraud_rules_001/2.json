@@ -1,0 +1,54 @@
+{
+  "id": "fraud_rules_001_v2",
+  "rule_id": "fraud_rules_001",
+  "version_number": 2,
+  "content": {
+    "version": "1.0",
+    "ruleset": "fraud_detection",
+    "rules": [
+      {
+        "id": "high_risk_country",
+        "if": {
+          "field": "country_risk_score",
+          "op": "gt",
+          "value": 0.7
+        },
+        "then": {
+          "decision": "flag",
+          "weight": 0.85,
+          "reason": "High risk country"
+        }
+      },
+      {
+        "id": "unusual_amount",
+        "if": {
+          "field": "amount_deviation",
+          "op": "gt",
+          "value": 3.0
+        },
+        "then": {
+          "decision": "flag",
+          "weight": 0.9,
+          "reason": "Unusual transaction amount"
+        }
+      },
+      {
+        "id": "velocity_check",
+        "if": {
+          "field": "transaction_velocity",
+          "op": "gt",
+          "value": 10
+        },
+        "then": {
+          "decision": "block",
+          "weight": 0.95,
+          "reason": "Too many transactions"
+        }
+      }
+    ]
+  },
+  "created_by": "ops_team",
+  "created_at": "2025-12-21T16:33:35Z",
+  "changelog": "Promoted from dev - Added velocity check",
+  "status": "active"
+}

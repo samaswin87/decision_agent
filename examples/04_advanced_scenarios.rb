@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Example 4: Advanced Versioning Scenarios
 #
 # This example demonstrates advanced use cases:
@@ -8,6 +9,7 @@
 # - Version tagging
 # - Batch operations
 
+require 'bundler/setup'
 require 'decision_agent'
 require 'json'
 

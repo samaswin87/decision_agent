@@ -59,7 +59,11 @@ puts result.explanations  # => ["High value transaction"]
 
 ## Web UI - Visual Rule Builder
 
-Launch the visual rule builder for non-technical users:
+The DecisionAgent Web UI provides a visual interface for building and testing rules.
+
+### Standalone Usage
+
+Launch the visual rule builder:
 
 ```bash
 decision_agent web
@@ -67,7 +71,117 @@ decision_agent web
 
 Open [http://localhost:4567](http://localhost:4567) in your browser.
 
+### Mount in Rails
+
+Add to your `config/routes.rb`:
+
+```ruby
+require 'decision_agent/web/server'
+
+Rails.application.routes.draw do
+  # Mount DecisionAgent Web UI
+  mount DecisionAgent::Web::Server, at: '/decision_agent'
+end
+```
+
+Then visit `http://localhost:3000/decision_agent` in your browser.
+
+**With Authentication:**
+
+```ruby
+authenticate :user, ->(user) { user.admin? } do
+  mount DecisionAgent::Web::Server, at: '/decision_agent'
+end
+```
+
+### Mount in Rack/Sinatra Apps
+
+```ruby
+# config.ru
+require 'decision_agent/web/server'
+
+map '/decision_agent' do
+  run DecisionAgent::Web::Server
+end
+```
+
 <img width="1622" height="820" alt="Screenshot" src="https://github.com/user-attachments/assets/687e9ff6-669a-40f9-be27-085c614392d4" />
+
+See [Web UI Rails Integration Guide](wiki/WEB_UI_RAILS_INTEGRATION.md) for detailed setup instructions.
+
+## Monitoring & Analytics
+
+Real-time monitoring, metrics, and alerting for production environments.
+
+### Quick Start
+
+```ruby
+require 'decision_agent/monitoring/metrics_collector'
+require 'decision_agent/monitoring/dashboard_server'
+
+# Initialize metrics collection
+collector = DecisionAgent::Monitoring::MetricsCollector.new(window_size: 3600)
+
+# Start real-time dashboard
+DecisionAgent::Monitoring::DashboardServer.start!(
+  port: 4568,
+  metrics_collector: collector
+)
+
+# Record decisions
+agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+result = agent.decide(context: { amount: 1500 })
+collector.record_decision(result, context, duration_ms: 25.5)
+```
+
+Open [http://localhost:4568](http://localhost:4568) for the monitoring dashboard.
+
+### Features
+
+- **Real-time Dashboard** - Live metrics with WebSocket updates
+- **Prometheus Export** - Industry-standard metrics format
+- **Intelligent Alerting** - Anomaly detection with customizable rules
+- **Grafana Integration** - Pre-built dashboards and alert rules
+- **Custom KPIs** - Track business-specific metrics
+- **Thread-Safe** - Production-ready performance
+
+### Prometheus & Grafana
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'decision_agent'
+    static_configs:
+      - targets: ['localhost:4568']
+    metrics_path: '/metrics'
+```
+
+Import the pre-built Grafana dashboard from [grafana/decision_agent_dashboard.json](grafana/decision_agent_dashboard.json).
+
+### Alert Management
+
+```ruby
+alert_manager = DecisionAgent::Monitoring::AlertManager.new(
+  metrics_collector: collector
+)
+
+# Add alert rules
+alert_manager.add_rule(
+  name: 'High Error Rate',
+  condition: AlertManager.high_error_rate(threshold: 0.1),
+  severity: :critical
+)
+
+# Register alert handlers
+alert_manager.add_handler do |alert|
+  SlackNotifier.notify("🚨 #{alert[:message]}")
+end
+
+# Start monitoring
+alert_manager.start_monitoring(interval: 60)
+```
+
+See [Monitoring & Analytics Guide](wiki/MONITORING_AND_ANALYTICS.md) for complete documentation.
 
 
 ## Key Features
@@ -87,6 +201,15 @@ Open [http://localhost:4567](http://localhost:4567) in your browser.
 - **Framework Agnostic** - Works with Rails, Sinatra, or standalone
 - **JSON Rule DSL** - Non-technical users can write rules
 - **Visual Rule Builder** - Web UI for rule management
+
+### Monitoring & Observability
+- **Real-time Metrics** - Live dashboard with WebSocket updates (<1 second latency)
+- **Prometheus Export** - Industry-standard metrics format at `/metrics` endpoint
+- **Intelligent Alerting** - Anomaly detection with customizable rules and severity levels
+- **Grafana Integration** - Pre-built dashboards and alert configurations in `grafana/` directory
+- **Custom KPIs** - Track business-specific metrics with thread-safe operations
+- **MonitoredAgent** - Drop-in replacement that auto-records all metrics
+- **AlertManager** - Built-in anomaly detection (error rates, latency spikes, low confidence)
 
 ### Production Ready
 - **Comprehensive Testing** - 90%+ code coverage
@@ -166,6 +289,21 @@ All data structures are deeply frozen to prevent mutation:
 
 This ensures safe concurrent access without race conditions.
 
+### RFC 8785 Canonical JSON
+DecisionAgent uses **RFC 8785 (JSON Canonicalization Scheme)** for deterministic audit hashing:
+
+- **Industry Standard** - Official IETF specification for canonical JSON
+- **Cryptographically Sound** - Ensures deterministic hashing of decision payloads
+- **Reproducible** - Same decision always produces same audit hash
+- **Interoperable** - Compatible with other systems using RFC 8785
+
+Every decision includes a deterministic SHA-256 hash in the audit payload, enabling:
+- Tamper detection in audit logs
+- Exact replay verification
+- Regulatory compliance documentation
+
+Learn more: [RFC 8785 Specification](https://datatracker.ietf.org/doc/html/rfc8785)
+
 ### Performance Benchmark
 Run the included benchmark to verify zero overhead:
 ```bash
@@ -199,6 +337,9 @@ See [THREAD_SAFETY.md](wiki/THREAD_SAFETY.md) for detailed implementation guide 
 - [Versioning System](wiki/VERSIONING.md) - Version control for rules
 - [Web UI](wiki/WEB_UI.md) - Visual rule builder
 - [Web UI Setup](wiki/WEB_UI_SETUP.md) - Setup guide
+- [Web UI Rails Integration](wiki/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+- [Monitoring & Analytics](wiki/MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
+- [Monitoring Architecture](wiki/MONITORING_ARCHITECTURE.md) - System architecture and design
 
 **Performance & Thread-Safety**
 - [Performance & Thread-Safety Summary](wiki/PERFORMANCE_AND_THREAD_SAFETY.md) - Benchmarks and production readiness

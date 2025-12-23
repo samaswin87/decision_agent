@@ -1,0 +1,101 @@
+# Example config.ru - Deploy DecisionAgent Web UI as a Rack application
+#
+# This file shows how to deploy the DecisionAgent Web UI as a standalone
+# Rack application.
+#
+# Usage:
+#   1. Save this file as 'config.ru'
+#   2. Run: rackup config.ru
+#   3. Visit: http://localhost:9292
+
+require 'bundler/setup'
+require 'decision_agent/web/server'
+
+# Option 1: Run DecisionAgent Web UI only
+# ----------------------------------------
+# Uncomment this to run just the Web UI:
+# run DecisionAgent::Web::Server
+
+# Option 2: Mount alongside your main app
+# ----------------------------------------
+# Uncomment this to mount DecisionAgent at /decision_agent
+# and your main app at /
+
+# require './your_app'  # Your Sinatra or other Rack app
+#
+# map '/decision_agent' do
+#   run DecisionAgent::Web::Server
+# end
+#
+# map '/' do
+#   run YourApp
+# end
+
+# Option 3: With authentication middleware
+# -----------------------------------------
+# Protect the Web UI with HTTP Basic Auth:
+
+use Rack::Auth::Basic, "DecisionAgent Admin" do |username, password|
+  # In production, use ENV vars or a secure credential store
+  username == ENV.fetch('DECISION_AGENT_USERNAME', 'admin') &&
+  password == ENV.fetch('DECISION_AGENT_PASSWORD', 'secret')
+end
+
+run DecisionAgent::Web::Server
+
+# Option 4: With custom middleware
+# ---------------------------------
+# Add logging, sessions, or other Rack middleware:
+
+# use Rack::Session::Cookie, secret: ENV['SECRET_KEY_BASE']
+# use Rack::Logger
+#
+# map '/decision_agent' do
+#   run DecisionAgent::Web::Server
+# end
+
+# Deployment Examples
+# -------------------
+
+# Heroku:
+#   1. Add this config.ru to your repo
+#   2. Add Procfile: web: bundle exec rackup config.ru -p $PORT
+#   3. git push heroku main
+
+# Docker:
+#   FROM ruby:3.2
+#   WORKDIR /app
+#   COPY Gemfile* ./
+#   RUN bundle install
+#   COPY . .
+#   EXPOSE 9292
+#   CMD ["bundle", "exec", "rackup", "config.ru", "-o", "0.0.0.0"]
+
+# Kubernetes:
+#   apiVersion: v1
+#   kind: Service
+#   metadata:
+#     name: decision-agent-web
+#   spec:
+#     selector:
+#       app: decision-agent-web
+#     ports:
+#       - port: 80
+#         targetPort: 9292
+
+# Production Considerations:
+# --------------------------
+# 1. Always use authentication in production
+# 2. Use HTTPS/TLS (configure at reverse proxy level)
+# 3. Set strong credentials via environment variables
+# 4. Consider IP whitelisting at firewall/load balancer
+# 5. Use a reverse proxy (nginx, Apache) for SSL termination
+# 6. Enable logging and monitoring
+# 7. Set appropriate CORS headers if needed
+
+# Environment Variables:
+# ---------------------
+# DECISION_AGENT_USERNAME - Basic auth username
+# DECISION_AGENT_PASSWORD - Basic auth password
+# SECRET_KEY_BASE        - Session secret (if using sessions)
+# RACK_ENV               - development, production, test

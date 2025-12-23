@@ -38,6 +38,54 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
+  examples:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+
+    - name: Install dependencies
+      run: bundle install
+
+    - name: Run basic_usage example
+      run: timeout 5 ruby examples/basic_usage.rb
+
+    - name: Run 01_basic_versioning example
+      run: timeout 5 ruby examples/01_basic_versioning.rb
+
+    - name: Run custom_evaluator_example
+      run: timeout 5 ruby examples/custom_evaluator_example.rb
+
+    - name: Run feedback_aware_evaluator example
+      run: timeout 5 ruby examples/feedback_aware_evaluator.rb
+
+    - name: Run conflict_resolution_example
+      run: timeout 5 ruby examples/conflict_resolution_example.rb
+
+    - name: Run json_rules_example
+      run: timeout 5 ruby examples/json_rules_example.rb
+
+    - name: Run replay_example
+      run: timeout 5 ruby examples/replay_example.rb
+
+    - name: Run thread_safe_performance example
+      run: timeout 5 ruby examples/thread_safe_performance.rb
+
+    - name: Run race_condition_demo example
+      run: timeout 5 ruby examples/race_condition_demo.rb
+
+    - name: Run 04_advanced_scenarios example
+      run: timeout 5 ruby examples/04_advanced_scenarios.rb
+
+    - name: Run 05_monitoring_and_analytics example
+      run: timeout 5 ruby examples/05_monitoring_and_analytics.rb
+
   lint:
     runs-on: ubuntu-latest
 
@@ -52,6 +100,9 @@ jobs:
 
     - name: Install dependencies
       run: bundle install
+
+    - name: Run RuboCop (Ruby linter)
+      run: bundle exec rubocop
 
     - name: Check gem can be built
       run: gem build decision_agent.gemspec

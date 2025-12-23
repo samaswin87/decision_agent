@@ -1,0 +1,110 @@
+# Prometheus alert rules for DecisionAgent
+groups:
+  - name: decision_agent_alerts
+    interval: 30s
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(decision_agent_errors_total[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanize }} errors/sec over the last 5 minutes."
+
+      # Low confidence alert
+      - alert: LowDecisionConfidence
+        expr: decision_agent_decision_confidence_avg < 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low decision confidence"
+          description: "Average decision confidence is {{ $value | humanizePercentage }} which is below the threshold of 50%."
+
+      # High latency alert
+      - alert: HighLatency
+        expr: decision_agent_operation_duration_ms_p95 > 1000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High P95 latency detected"
+          description: "P95 latency is {{ $value }}ms, which exceeds the 1000ms threshold."
+
+      # Critical latency alert
+      - alert: CriticalLatency
+        expr: decision_agent_operation_duration_ms_p99 > 5000
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical P99 latency detected"
+          description: "P99 latency is {{ $value }}ms, which is critically high (>5000ms)."
+
+      # Low success rate alert
+      - alert: LowSuccessRate
+        expr: decision_agent_success_rate < 0.9
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low operation success rate"
+          description: "Success rate is {{ $value | humanizePercentage }}, which is below 90%."
+
+      # Critical success rate alert
+      - alert: CriticalSuccessRate
+        expr: decision_agent_success_rate < 0.5
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical operation success rate"
+          description: "Success rate is {{ $value | humanizePercentage }}, which is critically low (<50%)."
+
+      # Decision throughput anomaly
+      - alert: DecisionThroughputAnomaly
+        expr: |
+          abs(
+            rate(decision_agent_decisions_total[5m]) -
+            avg_over_time(rate(decision_agent_decisions_total[5m])[1h:5m])
+          ) > 2 * stddev_over_time(rate(decision_agent_decisions_total[5m])[1h:5m])
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Decision throughput anomaly detected"
+          description: "Decision throughput has deviated significantly from normal patterns."
+
+      # No recent decisions (potential issue)
+      - alert: NoRecentDecisions
+        expr: increase(decision_agent_decisions_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "No decisions recorded recently"
+          description: "No decisions have been made in the last 10 minutes. This may indicate a problem."
+
+      # Error spike
+      - alert: ErrorSpike
+        expr: |
+          rate(decision_agent_errors_total[1m]) >
+          4 * avg_over_time(rate(decision_agent_errors_total[1m])[1h:1m])
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Error spike detected"
+          description: "Error rate has spiked significantly above normal levels."
+
+      # Memory metrics storage warning
+      - alert: HighMetricsStorage
+        expr: sum(decision_agent_metrics_stored) > 100000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of metrics stored in memory"
+          description: "{{ $value }} metrics are currently stored in memory. Consider reducing window_size."

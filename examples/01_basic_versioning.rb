@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 # Example 1: Basic Versioning with File Storage
 #
 # This example demonstrates the core versioning features using
 # the default file storage adapter (no database required).
 
+require 'bundler/setup'
 require 'decision_agent'
 
 puts "=" * 60

@@ -1,5 +1,6 @@
 require "digest"
 require "json"
+require "json/canonicalization"
 
 module DecisionAgent
   class Agent
@@ -138,16 +139,10 @@ module DecisionAgent
       Digest::SHA256.hexdigest(canonical)
     end
 
+    # Uses RFC 8785 (JSON Canonicalization Scheme) for deterministic JSON serialization
+    # This is the industry standard for cryptographic hashing of JSON data
     def canonical_json(obj)
-      case obj
-      when Hash
-        sorted = obj.keys.sort.map { |k| [k.to_s, canonical_json(obj[k])] }.to_h
-        JSON.generate(sorted, quirks_mode: false)
-      when Array
-        JSON.generate(obj.map { |v| canonical_json(v) }, quirks_mode: false)
-      else
-        obj.to_s
-      end
+      obj.to_json_c14n
     end
   end
 end

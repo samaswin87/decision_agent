@@ -1,6 +1,6 @@
-# DecisionAgent Versioning Examples
+# DecisionAgent Examples
 
-This directory contains practical examples demonstrating how to use the DecisionAgent versioning system.
+This directory contains practical examples demonstrating how to use DecisionAgent features including versioning, monitoring, and web UI integration.
 
 ## Examples Overview
 
@@ -97,6 +97,66 @@ ruby examples/04_advanced_scenarios.rb
 ```
 
 **Best for:** Production deployments, enterprise use cases
+
+---
+
+### 5. Rails Web UI Integration ([04_rails_web_ui_integration.rb](04_rails_web_ui_integration.rb))
+
+**What it covers:**
+- Mounting Web UI in Rails applications
+- Authentication and authorization
+- Custom middleware configuration
+- Sinatra/Rack integration
+- Standalone server setup
+- Environment-based configuration
+
+**Run it:**
+```bash
+ruby examples/04_rails_web_ui_integration.rb
+```
+
+**Best for:** Integrating visual rule builder into existing applications
+
+---
+
+### 6. Monitoring and Analytics ([05_monitoring_and_analytics.rb](05_monitoring_and_analytics.rb))
+
+**What it covers:**
+- Real-time metrics collection
+- Prometheus metrics export
+- Alert management and anomaly detection
+- MonitoredAgent usage (automatic metrics recording)
+- Dashboard server setup
+- Custom KPI tracking
+- Grafana integration
+
+**Run it:**
+```bash
+ruby examples/05_monitoring_and_analytics.rb
+```
+
+**Best for:** Production monitoring, observability, and alerting
+
+---
+
+## Additional Utility Examples
+
+These shorter examples demonstrate specific features:
+
+- **[basic_usage.rb](basic_usage.rb)** - Simple decision making with evaluators
+- **[custom_evaluator_example.rb](custom_evaluator_example.rb)** - Building custom evaluator implementations
+- **[feedback_aware_evaluator.rb](feedback_aware_evaluator.rb)** - Integrating user feedback into decisions
+- **[conflict_resolution_example.rb](conflict_resolution_example.rb)** - Using different scoring strategies
+- **[json_rules_example.rb](json_rules_example.rb)** - Working with JSON-based rule definitions
+- **[replay_example.rb](replay_example.rb)** - Historical decision replay
+- **[thread_safe_performance.rb](thread_safe_performance.rb)** - Performance benchmarking and thread-safety verification
+- **[race_condition_demo.rb](race_condition_demo.rb)** - Demonstrating thread-safe file operations
+
+## Configuration Files
+
+- **[config.ru.example](config.ru.example)** - Rack application configuration template
+- **[healthcare_compliance.json](healthcare_compliance.json)** - Sample healthcare ruleset
+- **[high_priority_rules.json](high_priority_rules.json)** - Sample high-priority rules
 
 ---
 
