@@ -500,36 +500,32 @@ RSpec.describe "Issue Verification Tests" do
         end
 
         it "raises ValidationError when content is nil (if allowed by DB)" do
-          # Try to create version with nil content
-          version = RuleVersion.new(
-            rule_id: "test_rule",
-            version_number: 1,
-            content: nil, # NIL!
-            created_by: "test",
-            status: "active"
-          )
+          # Skip this test because the schema has NOT NULL constraint on content
+          # The database won't allow nil content to be saved in the first place
+          skip "Schema has NOT NULL constraint on content column"
 
-          if version.save(validate: false)
-            expect do
-              adapter.send(:serialize_version, version)
-            end.to raise_error(DecisionAgent::ValidationError, /content is nil/)
-          end
+          # This test would only be relevant if the schema allowed NULL content
+          # In that case, the serialize_version method already handles it with:
+          # rescue TypeError, NoMethodError
+          #   raise DecisionAgent::ValidationError, "content is nil or not a string"
         end
 
         it "raises ValidationError when content contains malformed UTF-8" do
           # Create version with invalid UTF-8 bytes
-          invalid_utf8 = "\xFF\xFE"
+          invalid_utf8 = "\xFF\xFE".dup.force_encoding("UTF-8")
           version = RuleVersion.create!(
             rule_id: "test_rule",
             version_number: 1,
-            content: invalid_utf8.force_encoding("UTF-8"),
+            content: invalid_utf8,
             created_by: "test",
             status: "active"
           )
 
           expect do
             adapter.send(:serialize_version, version)
-          end.to raise_error(DecisionAgent::ValidationError, /Invalid JSON/)
+          end.to raise_error(DecisionAgent::ValidationError) do |error|
+            expect(error.message).to include("Invalid JSON")
+          end
         end
 
         it "raises ValidationError when content is truncated JSON" do
@@ -644,7 +640,7 @@ RSpec.describe "Issue Verification Tests" do
 
         it "handles very large JSON content" do
           # 10MB JSON
-          large_content = { data: "x" * (10 * 1024 * 1024) }
+          large_content = { "data" => "x" * (10 * 1024 * 1024) }
 
           version = adapter.create_version(
             rule_id: "test_rule",
@@ -653,11 +649,11 @@ RSpec.describe "Issue Verification Tests" do
           )
 
           loaded = adapter.get_version(version_id: version[:id])
-          expect(loaded[:content][:data].size).to eq(large_content[:data].size)
+          expect(loaded[:content]["data"].size).to eq(large_content["data"].size)
         end
 
         it "handles deeply nested JSON" do
-          nested = { a: { b: { c: { d: { e: { f: { g: { h: { i: { j: "deep" } } } } } } } } } }
+          nested = { "a" => { "b" => { "c" => { "d" => { "e" => { "f" => { "g" => { "h" => { "i" => { "j" => "deep" } } } } } } } } } }
 
           version = adapter.create_version(
             rule_id: "test_rule",
@@ -666,15 +662,15 @@ RSpec.describe "Issue Verification Tests" do
           )
 
           loaded = adapter.get_version(version_id: version[:id])
-          expect(loaded[:content][:a][:b][:c][:d][:e][:f][:g][:h][:i][:j]).to eq("deep")
+          expect(loaded[:content]["a"]["b"]["c"]["d"]["e"]["f"]["g"]["h"]["i"]["j"]).to eq("deep")
         end
 
         it "handles JSON with special characters" do
           special = {
-            unicode: "Hello 世界 🌍",
-            escaped: "Line 1\nLine 2\tTabbed",
-            quotes: 'He said "Hello"',
-            backslash: "C:\\Users\\test"
+            "unicode" => "Hello 世界 🌍",
+            "escaped" => "Line 1\nLine 2\tTabbed",
+            "quotes" => 'He said "Hello"',
+            "backslash" => "C:\\Users\\test"
           }
 
           version = adapter.create_version(

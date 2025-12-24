@@ -4,7 +4,7 @@ Gem::Specification.new do |spec|
   spec.name          = "decision_agent"
   spec.version       = DecisionAgent::VERSION
   spec.authors       = ["Sam Aswin"]
-  spec.email         = ["samaswin87@gmail.com"]
+  spec.email         = ["samaswin@gmail.com"]
 
   spec.summary       = "Deterministic, explainable, auditable decision engine for Ruby"
   spec.description   = "A production-grade decision agent that provides deterministic rule evaluation, conflict resolution, and full audit replay capabilities. Framework-agnostic and AI-optional."
