@@ -1,6 +1,15 @@
 require "sinatra/base"
 require "json"
-require "faye/websocket"
+
+# Faye/WebSocket is optional for real-time features
+begin
+  require "faye/websocket"
+  WEBSOCKET_AVAILABLE = true
+rescue LoadError
+  WEBSOCKET_AVAILABLE = false
+  warn "Warning: faye-websocket gem not found. Real-time dashboard features will be disabled."
+  warn "Install with: gem install faye-websocket"
+end
 
 module DecisionAgent
   module Monitoring
@@ -59,6 +68,8 @@ module DecisionAgent
         end
 
         def broadcast_to_clients(message)
+          return unless WEBSOCKET_AVAILABLE
+
           json_message = message.to_json
           @websocket_clients.each do |client|
             client.send(json_message) if client.ready_state == Faye::WebSocket::API::OPEN
@@ -83,6 +94,8 @@ module DecisionAgent
 
       # WebSocket endpoint for real-time updates
       get "/ws" do
+        halt 503, { error: "WebSocket support not available. Install faye-websocket gem." }.to_json unless WEBSOCKET_AVAILABLE
+
         if Faye::WebSocket.websocket?(request.env)
           ws = Faye::WebSocket.new(request.env)
 

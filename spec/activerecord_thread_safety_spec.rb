@@ -9,8 +9,14 @@ if defined?(ActiveRecord)
     before(:all) do
       ActiveRecord::Base.establish_connection(
         adapter: "sqlite3",
-        database: ":memory:"
+        database: "file::memory:?cache=shared",
+        timeout: 10_000,
+        pool: 110 # Support 100 thread test + some overhead
       )
+
+      # Enable WAL mode and busy timeout for better concurrency
+      ActiveRecord::Base.connection.execute("PRAGMA journal_mode=WAL")
+      ActiveRecord::Base.connection.execute("PRAGMA busy_timeout=10000")
 
       # Create the schema
       ActiveRecord::Schema.define do
@@ -99,6 +105,20 @@ if defined?(ActiveRecord)
       }
     end
 
+    # Helper method to retry on SQLite busy exceptions (concurrency limitation)
+    def with_retry(max_retries: 3, &block)
+      retries = 0
+      begin
+        block.call
+      rescue ActiveRecord::StatementInvalid => e
+        raise unless e.message.include?("database is locked") && retries < max_retries
+
+        retries += 1
+        sleep(0.01 * retries) # Exponential backoff
+        retry
+      end
+    end
+
     describe "concurrent version creation" do
       it "prevents duplicate version numbers with pessimistic locking" do
         thread_count = 20
@@ -109,11 +129,13 @@ if defined?(ActiveRecord)
         # Spawn multiple threads creating versions concurrently
         thread_count.times do |i|
           threads << Thread.new do
-            version = adapter.create_version(
-              rule_id: rule_id,
-              content: rule_content.merge(thread_id: i),
-              metadata: { created_by: "thread_#{i}" }
-            )
+            version = with_retry do
+              adapter.create_version(
+                rule_id: rule_id,
+                content: rule_content.merge(thread_id: i),
+                metadata: { created_by: "thread_#{i}" }
+              )
+            end
             mutex.synchronize { results << version }
           end
         end
@@ -141,11 +163,13 @@ if defined?(ActiveRecord)
 
         thread_count.times do |i|
           threads << Thread.new do
-            adapter.create_version(
-              rule_id: rule_id,
-              content: rule_content,
-              metadata: { created_by: "thread_#{i}" }
-            )
+            with_retry do
+              adapter.create_version(
+                rule_id: rule_id,
+                content: rule_content,
+                metadata: { created_by: "thread_#{i}" }
+              )
+            end
           rescue StandardError => e
             mutex.synchronize { errors << e }
           end
@@ -172,11 +196,13 @@ if defined?(ActiveRecord)
 
         thread_count.times do |i|
           threads << Thread.new do
-            version = adapter.create_version(
-              rule_id: rule_id,
-              content: rule_content,
-              metadata: { created_by: "thread_#{i}" }
-            )
+            version = with_retry do
+              adapter.create_version(
+                rule_id: rule_id,
+                content: rule_content,
+                metadata: { created_by: "thread_#{i}" }
+              )
+            end
             mutex.synchronize { successes << version }
           rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
             # These errors are acceptable - they mean the unique constraint caught duplicates
@@ -221,11 +247,13 @@ if defined?(ActiveRecord)
           threads << if i % 3 == 0
                        # Write thread
                        Thread.new do
-                         version = adapter.create_version(
-                           rule_id: rule_id,
-                           content: rule_content,
-                           metadata: { created_by: "writer_#{i}" }
-                         )
+                         version = with_retry do
+                           adapter.create_version(
+                             rule_id: rule_id,
+                             content: rule_content,
+                             metadata: { created_by: "writer_#{i}" }
+                           )
+                         end
                          write_mutex.synchronize { write_results << version }
                        end
                      else
@@ -261,11 +289,13 @@ if defined?(ActiveRecord)
 
         thread_count.times do |i|
           threads << Thread.new do
-            adapter.create_version(
-              rule_id: rule_id,
-              content: rule_content,
-              metadata: { created_by: "thread_#{i}", status: "active" }
-            )
+            with_retry do
+              adapter.create_version(
+                rule_id: rule_id,
+                content: rule_content,
+                metadata: { created_by: "thread_#{i}", status: "active" }
+              )
+            end
           end
         end
 
@@ -294,11 +324,13 @@ if defined?(ActiveRecord)
         rule_ids.each do |rid|
           5.times do |version_index|
             threads << Thread.new do
-              version = adapter.create_version(
-                rule_id: rid,
-                content: rule_content,
-                metadata: { created_by: "creator_#{version_index}" }
-              )
+              version = with_retry do
+                adapter.create_version(
+                  rule_id: rid,
+                  content: rule_content,
+                  metadata: { created_by: "creator_#{version_index}" }
+                )
+              end
               mutex.synchronize do
                 results[rid] ||= []
                 results[rid] << version
@@ -371,11 +403,13 @@ if defined?(ActiveRecord)
       it "prevents multiple active versions with pessimistic locking" do
         # Create 5 versions
         versions = 5.times.map do |i|
-          adapter.create_version(
-            rule_id: rule_id,
-            content: rule_content.merge(version: "#{i + 1}.0"),
-            metadata: { created_by: "setup_#{i}" }
-          )
+          with_retry do
+            adapter.create_version(
+              rule_id: rule_id,
+              content: rule_content.merge(version: "#{i + 1}.0"),
+              metadata: { created_by: "setup_#{i}" }
+            )
+          end
         end
 
         # Try to activate different versions concurrently
@@ -388,7 +422,9 @@ if defined?(ActiveRecord)
           threads << Thread.new do
             # Each thread tries to activate a different version (cycling through versions)
             version_to_activate = versions[i % versions.size]
-            activated = adapter.activate_version(version_id: version_to_activate[:id])
+            activated = with_retry do
+              adapter.activate_version(version_id: version_to_activate[:id])
+            end
             mutex.synchronize { activated_versions << activated }
           end
         end
@@ -411,21 +447,27 @@ if defined?(ActiveRecord)
 
       it "handles race condition when two threads activate different versions simultaneously" do
         # Create 3 versions
-        v1 = adapter.create_version(
-          rule_id: rule_id,
-          content: rule_content.merge(version: "1.0"),
-          metadata: { created_by: "setup" }
-        )
-        v2 = adapter.create_version(
-          rule_id: rule_id,
-          content: rule_content.merge(version: "2.0"),
-          metadata: { created_by: "setup" }
-        )
-        adapter.create_version(
-          rule_id: rule_id,
-          content: rule_content.merge(version: "3.0"),
-          metadata: { created_by: "setup" }
-        )
+        v1 = with_retry do
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content.merge(version: "1.0"),
+            metadata: { created_by: "setup" }
+          )
+        end
+        v2 = with_retry do
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content.merge(version: "2.0"),
+            metadata: { created_by: "setup" }
+          )
+        end
+        with_retry do
+          adapter.create_version(
+            rule_id: rule_id,
+            content: rule_content.merge(version: "3.0"),
+            metadata: { created_by: "setup" }
+          )
+        end
 
         # At this point v3 is active, v1 and v2 are archived
 
@@ -444,19 +486,19 @@ if defined?(ActiveRecord)
         if barrier
           threads << Thread.new do
             barrier.wait
-            adapter.activate_version(version_id: v1[:id])
+            with_retry { adapter.activate_version(version_id: v1[:id]) }
           end
 
           threads << Thread.new do
             barrier.wait
-            adapter.activate_version(version_id: v2[:id])
+            with_retry { adapter.activate_version(version_id: v2[:id]) }
           end
 
           threads.each(&:join)
         else
           # Fallback without barrier - still tests thread safety
-          t1 = Thread.new { adapter.activate_version(version_id: v1[:id]) }
-          t2 = Thread.new { adapter.activate_version(version_id: v2[:id]) }
+          t1 = Thread.new { with_retry { adapter.activate_version(version_id: v1[:id]) } }
+          t2 = Thread.new { with_retry { adapter.activate_version(version_id: v2[:id]) } }
           t1.join
           t2.join
         end
@@ -470,18 +512,22 @@ if defined?(ActiveRecord)
       it "maintains consistency across 100 concurrent activation attempts" do
         # Create 10 versions
         versions = 10.times.map do |i|
-          adapter.create_version(
-            rule_id: rule_id,
-            content: rule_content.merge(version: "#{i + 1}.0"),
-            metadata: { created_by: "setup_#{i}" }
-          )
+          with_retry do
+            adapter.create_version(
+              rule_id: rule_id,
+              content: rule_content.merge(version: "#{i + 1}.0"),
+              metadata: { created_by: "setup_#{i}" }
+            )
+          end
         end
 
         # 100 threads each randomly activating versions
         threads = 100.times.map do
           Thread.new do
             random_version = versions.sample
-            adapter.activate_version(version_id: random_version[:id])
+            with_retry do
+              adapter.activate_version(version_id: random_version[:id])
+            end
             sleep(rand * 0.01) # Small random delay to increase race condition likelihood
           end
         end

@@ -6,6 +6,15 @@ end
 
 require "decision_agent"
 
+# Load ActiveRecord for thread-safety and integration tests
+begin
+  require "active_record"
+  require "sqlite3"
+  require "decision_agent/versioning/activerecord_adapter"
+rescue LoadError
+  # ActiveRecord is optional - tests will be skipped if not available
+end
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
