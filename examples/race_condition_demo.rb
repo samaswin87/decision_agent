@@ -7,16 +7,19 @@
 require "bundler/setup"
 require "active_record"
 require "decision_agent"
+require "decision_agent/versioning/activerecord_adapter"
 
 puts "=" * 80
 puts "RACE CONDITION DEMONSTRATION - ActiveRecordAdapter"
 puts "=" * 80
 puts
 
-# Setup in-memory database
+# Setup in-memory database with shared cache for thread safety
+# Using file::memory:?cache=shared allows multiple threads to access the same in-memory database
 ActiveRecord::Base.establish_connection(
   adapter: "sqlite3",
-  database: ":memory:"
+  database: "file::memory:?cache=shared",
+  timeout: 5000 # 5 second timeout for busy database (default is 0)
 )
 
 # Create schema
