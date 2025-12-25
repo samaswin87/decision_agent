@@ -202,6 +202,13 @@ See [Monitoring & Analytics Guide](wiki/MONITORING_AND_ANALYTICS.md) for complet
 - **JSON Rule DSL** - Non-technical users can write rules
 - **Visual Rule Builder** - Web UI for rule management
 
+### Advanced Rule Operators
+- **String Operators** - `contains`, `starts_with`, `ends_with`, `matches` (regex)
+- **Numeric Operators** - `between`, `modulo` (for A/B testing, sharding)
+- **Date/Time Operators** - `before_date`, `after_date`, `within_days`, `day_of_week`
+- **Collection Operators** - `contains_all`, `contains_any`, `intersects`, `subset_of`
+- **Geospatial Operators** - `within_radius` (Haversine), `in_polygon` (ray casting)
+
 ### Monitoring & Observability
 - **Real-time Metrics** - Live dashboard with WebSocket updates (<1 second latency)
 - **Prometheus Export** - Industry-standard metrics format at `/metrics` endpoint
@@ -246,9 +253,34 @@ rules = {
     then: { decision: "flag_for_review", weight: 0.95, reason: "Suspicious patterns detected" }
   }]
 }
+
+# Advanced operators example
+advanced_rules = {
+  version: "1.0",
+  ruleset: "advanced_validation",
+  rules: [{
+    id: "valid_order",
+    if: {
+      all: [
+        # String: Corporate email domain
+        { field: "email", op: "ends_with", value: "@company.com" },
+        # Numeric: Age in valid range
+        { field: "age", op: "between", value: [18, 65] },
+        # Date: Account created recently
+        { field: "created_at", op: "within_days", value: 30 },
+        # Collection: Has required permissions
+        { field: "permissions", op: "contains_all", value: ["read", "write"] },
+        # Geospatial: Within delivery zone
+        { field: "location", op: "within_radius",
+          value: { center: { lat: 40.7128, lon: -74.0060 }, radius: 25 } }
+      ]
+    },
+    then: { decision: "approve", weight: 0.95, reason: "All validation checks passed" }
+  }]
+}
 ```
 
-See [examples/](examples/) for complete working examples.
+See [examples/](examples/) and [wiki/ADVANCED_OPERATORS.md](wiki/ADVANCED_OPERATORS.md) for complete working examples.
 
 ## Thread-Safety Guarantees
 
@@ -334,7 +366,9 @@ See [THREAD_SAFETY.md](wiki/THREAD_SAFETY.md) for detailed implementation guide 
 - [Examples](examples/README.md)
 
 **Core Features**
+- [Advanced Operators](wiki/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
 - [Versioning System](wiki/VERSIONING.md) - Version control for rules
+- [A/B Testing](wiki/AB_TESTING.md) - Compare rule versions with statistical analysis
 - [Web UI](wiki/WEB_UI.md) - Visual rule builder
 - [Web UI Setup](wiki/WEB_UI_SETUP.md) - Setup guide
 - [Web UI Rails Integration](wiki/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps

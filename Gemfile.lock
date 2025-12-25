@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    decision_agent (0.1.4)
+    decision_agent (0.1.5)
       json-canonicalization (~> 1.0)
       sinatra (~> 3.0)
 

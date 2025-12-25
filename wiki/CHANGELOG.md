@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Advanced Rule DSL Operators**
+  - **Overview:** Comprehensive set of specialized operators for advanced rule conditions
+  - **String Operators:**
+    - `contains` - Check if string contains substring (case-sensitive)
+    - `starts_with` - Check if string starts with prefix (case-sensitive)
+    - `ends_with` - Check if string ends with suffix (case-sensitive)
+    - `matches` - Match string against regular expression pattern
+  - **Numeric Operators:**
+    - `between` - Check if value is between min and max (inclusive, supports array and hash formats)
+    - `modulo` - Check if value modulo divisor equals remainder (useful for A/B testing, sharding)
+  - **Date/Time Operators:**
+    - `before_date` - Check if date is before specified date
+    - `after_date` - Check if date is after specified date
+    - `within_days` - Check if date is within N days from now (past or future)
+    - `day_of_week` - Check if date falls on specified day (supports string and numeric formats)
+  - **Collection Operators:**
+    - `contains_all` - Check if array contains all specified elements
+    - `contains_any` - Check if array contains any of the specified elements
+    - `intersects` - Check if two arrays have common elements
+    - `subset_of` - Check if array is subset of another array
+  - **Geospatial Operators:**
+    - `within_radius` - Check if point is within radius of center (Haversine distance in km)
+    - `in_polygon` - Check if point is inside polygon (ray casting algorithm)
+  - **Features:**
+    - All operators support nested field access via dot notation
+    - Fail-safe design: invalid inputs return false instead of raising errors
+    - Full schema validation support
+    - Thread-safe evaluation
+    - Comprehensive test coverage (41 specs)
+  - **Documentation:**
+    - New wiki page: [ADVANCED_OPERATORS.md](ADVANCED_OPERATORS.md)
+    - Complete examples for each operator
+    - Common use cases and patterns
+    - Migration guide from basic operators
+
 ## [0.1.4] - 2025-12-25
 
 ### Added

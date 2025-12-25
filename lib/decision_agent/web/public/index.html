@@ -160,15 +160,43 @@
                 <div class="field-condition-inputs">
                     <input type="text" class="field-path input-sm" placeholder="field.path">
                     <select class="operator-select input-sm">
-                        <option value="eq">equals (==)</option>
-                        <option value="neq">not equals (!=)</option>
-                        <option value="gt">greater than (>)</option>
-                        <option value="gte">greater or equal (>=)</option>
-                        <option value="lt">less than (<)</option>
-                        <option value="lte">less or equal (<=)</option>
-                        <option value="in">in array</option>
-                        <option value="present">is present</option>
-                        <option value="blank">is blank</option>
+                        <optgroup label="Basic Comparison">
+                            <option value="eq">equals (==)</option>
+                            <option value="neq">not equals (!=)</option>
+                            <option value="gt">greater than (>)</option>
+                            <option value="gte">greater or equal (>=)</option>
+                            <option value="lt">less than (<)</option>
+                            <option value="lte">less or equal (<=)</option>
+                            <option value="in">in array</option>
+                            <option value="present">is present</option>
+                            <option value="blank">is blank</option>
+                        </optgroup>
+                        <optgroup label="String Operators">
+                            <option value="contains">contains substring</option>
+                            <option value="starts_with">starts with</option>
+                            <option value="ends_with">ends with</option>
+                            <option value="matches">matches regex</option>
+                        </optgroup>
+                        <optgroup label="Numeric Operators">
+                            <option value="between">between (range)</option>
+                            <option value="modulo">modulo equals</option>
+                        </optgroup>
+                        <optgroup label="Date/Time Operators">
+                            <option value="before_date">before date</option>
+                            <option value="after_date">after date</option>
+                            <option value="within_days">within N days</option>
+                            <option value="day_of_week">day of week</option>
+                        </optgroup>
+                        <optgroup label="Collection Operators">
+                            <option value="contains_all">contains all</option>
+                            <option value="contains_any">contains any</option>
+                            <option value="intersects">intersects with</option>
+                            <option value="subset_of">is subset of</option>
+                        </optgroup>
+                        <optgroup label="Geospatial Operators">
+                            <option value="within_radius">within radius</option>
+                            <option value="in_polygon">in polygon</option>
+                        </optgroup>
                     </select>
                     <input type="text" class="field-value input-sm" placeholder="value">
                 </div>

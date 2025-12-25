@@ -3,7 +3,14 @@ module DecisionAgent
     # JSON Schema validator for Decision Agent rule DSL
     # Provides comprehensive validation with detailed error messages
     class SchemaValidator
-      SUPPORTED_OPERATORS = %w[eq neq gt gte lt lte in present blank].freeze
+      SUPPORTED_OPERATORS = %w[
+        eq neq gt gte lt lte in present blank
+        contains starts_with ends_with matches
+        between modulo
+        before_date after_date within_days day_of_week
+        contains_all contains_any intersects subset_of
+        within_radius in_polygon
+      ].freeze
 
       CONDITION_TYPES = %w[all any field].freeze
 
