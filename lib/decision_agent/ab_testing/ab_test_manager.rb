@@ -99,7 +99,7 @@ module DecisionAgent
       # @param decision [String] The decision result
       # @param confidence [Float] The confidence score
       def record_decision(assignment_id:, decision:, confidence:)
-        @storage_adapter.update_assignment(assignment_id, decision: decision, confidence: confidence)
+        @storage_adapter.update_assignment(assignment_id, decision_result: decision, confidence: confidence)
       end
 
       # Get results comparison for an A/B test
