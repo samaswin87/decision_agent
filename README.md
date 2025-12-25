@@ -227,6 +227,17 @@ See [Monitoring & Analytics Guide](wiki/MONITORING_AND_ANALYTICS.md) for complet
 
 ## Examples
 
+### Example Application
+
+See the complete working example application: [decision_agent_example](https://github.com/samaswin87/decision_agent_example)
+
+This example demonstrates:
+- Real-world integration patterns
+- Best practices for production usage
+- Complete setup and configuration
+
+### Code Examples
+
 ```ruby
 # Multiple evaluators with conflict resolution
 agent = DecisionAgent::Agent.new(
