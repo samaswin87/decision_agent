@@ -15,6 +15,7 @@ Gem::Specification.new do |spec|
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/samaswin87/decision_agent"
   spec.metadata["changelog_uri"] = "https://github.com/samaswin87/decision_agent/blob/main/CHANGELOG.md"
+  spec.metadata["github_repo"] = "https://github.com/samaswin87/decision_agent"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.glob("{lib,spec,bin}/**/*") + %w[README.md LICENSE.txt]
