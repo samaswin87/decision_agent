@@ -494,7 +494,7 @@ RSpec.describe "Advanced DSL Operators" do
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        event_date = (Time.now + 3 * 24 * 60 * 60).strftime("%Y-%m-%d")
+        event_date = (Time.now + (3 * 24 * 60 * 60)).strftime("%Y-%m-%d")
         context = DecisionAgent::Context.new({ event_date: event_date })
 
         evaluation = evaluator.evaluate(context)
@@ -517,7 +517,7 @@ RSpec.describe "Advanced DSL Operators" do
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        event_date = (Time.now + 30 * 24 * 60 * 60).strftime("%Y-%m-%d")
+        event_date = (Time.now + (30 * 24 * 60 * 60)).strftime("%Y-%m-%d")
         context = DecisionAgent::Context.new({ event_date: event_date })
 
         evaluation = evaluator.evaluate(context)
@@ -588,14 +588,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "permissions", op: "contains_all", value: ["read", "write"] },
+              if: { field: "permissions", op: "contains_all", value: %w[read write] },
               then: { decision: "full_access" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ permissions: ["read", "write", "execute"] })
+        context = DecisionAgent::Context.new({ permissions: %w[read write execute] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -610,7 +610,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "permissions", op: "contains_all", value: ["read", "write"] },
+              if: { field: "permissions", op: "contains_all", value: %w[read write] },
               then: { decision: "full_access" }
             }
           ]
@@ -633,14 +633,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "tags", op: "contains_any", value: ["urgent", "critical"] },
+              if: { field: "tags", op: "contains_any", value: %w[urgent critical] },
               then: { decision: "prioritize" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ tags: ["normal", "urgent"] })
+        context = DecisionAgent::Context.new({ tags: %w[normal urgent] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -655,14 +655,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "tags", op: "contains_any", value: ["urgent", "critical"] },
+              if: { field: "tags", op: "contains_any", value: %w[urgent critical] },
               then: { decision: "prioritize" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ tags: ["normal", "low"] })
+        context = DecisionAgent::Context.new({ tags: %w[normal low] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -678,14 +678,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "user_roles", op: "intersects", value: ["admin", "moderator"] },
+              if: { field: "user_roles", op: "intersects", value: %w[admin moderator] },
               then: { decision: "has_elevated_role" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ user_roles: ["user", "moderator"] })
+        context = DecisionAgent::Context.new({ user_roles: %w[user moderator] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -700,14 +700,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "user_roles", op: "intersects", value: ["admin", "moderator"] },
+              if: { field: "user_roles", op: "intersects", value: %w[admin moderator] },
               then: { decision: "has_elevated_role" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ user_roles: ["user", "guest"] })
+        context = DecisionAgent::Context.new({ user_roles: %w[user guest] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -723,14 +723,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "selected_items", op: "subset_of", value: ["a", "b", "c", "d"] },
+              if: { field: "selected_items", op: "subset_of", value: %w[a b c d] },
               then: { decision: "valid_selection" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ selected_items: ["a", "c"] })
+        context = DecisionAgent::Context.new({ selected_items: %w[a c] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -745,14 +745,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "selected_items", op: "subset_of", value: ["a", "b", "c"] },
+              if: { field: "selected_items", op: "subset_of", value: %w[a b c] },
               then: { decision: "valid_selection" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ selected_items: ["a", "d"] })
+        context = DecisionAgent::Context.new({ selected_items: %w[a d] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -947,7 +947,7 @@ RSpec.describe "Advanced DSL Operators" do
               all: [
                 { field: "email", op: "ends_with", value: "@company.com" },
                 { field: "age", op: "between", value: [18, 65] },
-                { field: "roles", op: "contains_any", value: ["admin", "manager"] }
+                { field: "roles", op: "contains_any", value: %w[admin manager] }
               ]
             },
             then: { decision: "approve" }
@@ -957,10 +957,10 @@ RSpec.describe "Advanced DSL Operators" do
 
       evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
       context = DecisionAgent::Context.new({
-        email: "user@company.com",
-        age: 30,
-        roles: ["user", "admin"]
-      })
+                                             email: "user@company.com",
+                                             age: 30,
+                                             roles: %w[user admin]
+                                           })
 
       evaluation = evaluator.evaluate(context)
 
@@ -979,7 +979,7 @@ RSpec.describe "Advanced DSL Operators" do
               any: [
                 { field: "status", op: "contains", value: "urgent" },
                 { field: "priority", op: "modulo", value: [2, 1] },
-                { field: "tags", op: "intersects", value: ["critical", "emergency"] }
+                { field: "tags", op: "intersects", value: %w[critical emergency] }
               ]
             },
             then: { decision: "escalate" }
@@ -989,10 +989,10 @@ RSpec.describe "Advanced DSL Operators" do
 
       evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
       context = DecisionAgent::Context.new({
-        status: "normal",
-        priority: 7,
-        tags: ["normal"]
-      })
+                                             status: "normal",
+                                             priority: 7,
+                                             tags: ["normal"]
+                                           })
 
       evaluation = evaluator.evaluate(context)
 
