@@ -74,4 +74,30 @@ module DecisionAgent
 
   # Alias for backward compatibility and clearer naming
   ConfigurationError = InvalidConfigurationError
+
+  # Testing-specific errors
+  class ImportError < Error
+    def initialize(message = "Failed to import test scenarios")
+      super
+    end
+  end
+
+  class InvalidTestDataError < Error
+    attr_reader :row_number, :errors
+
+    def initialize(message = "Invalid test data", row_number: nil, errors: [])
+      @row_number = row_number
+      @errors = errors
+      full_message = message.dup
+      full_message += " (row #{row_number})" if row_number
+      full_message += ": #{errors.join(', ')}" if errors.any?
+      super(full_message)
+    end
+  end
+
+  class BatchTestError < Error
+    def initialize(message = "Batch test execution failed")
+      super
+    end
+  end
 end

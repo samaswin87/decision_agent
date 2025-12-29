@@ -1,6 +1,6 @@
-# DecisionAgent Wiki
+# DecisionAgent Documentation
 
-Welcome to the DecisionAgent documentation wiki.
+Welcome to the DecisionAgent documentation.
 
 ## 📚 Documentation Tree
 
@@ -13,6 +13,7 @@ Welcome to the DecisionAgent documentation wiki.
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
 - [**Web UI Rails Integration**](WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+- [**Batch Testing**](BATCH_TESTING.md) - Test rules against large datasets with CSV/Excel import
 
 ### Monitoring & Analytics
 - [**Monitoring & Analytics**](MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
@@ -29,7 +30,7 @@ Welcome to the DecisionAgent documentation wiki.
 ## 📝 Documentation Structure
 
 ```
-wiki/
+docs/
 ├── README.md (this file) - Documentation index and navigation
 │
 ├── Getting Started
@@ -39,7 +40,8 @@ wiki/
 │   ├── VERSIONING.md               - Rule version control and management
 │   ├── WEB_UI.md                   - Web interface user guide
 │   ├── WEB_UI_SETUP.md             - Web interface setup
-│   └── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
+│   ├── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
+│   └── BATCH_TESTING.md            - Batch testing guide with CSV/Excel import
 │
 ├── Monitoring & Analytics
 │   ├── MONITORING_AND_ANALYTICS.md - Real-time monitoring, metrics, and alerting
@@ -70,7 +72,7 @@ For detailed guides on specific topics, see the main [README](../README.md#docum
 To contribute to the documentation:
 
 1. Fork the repository
-2. Edit or add markdown files in the `wiki/` directory
+2. Edit or add markdown files in the `docs/` directory
 3. Update this index if adding new files
 4. Submit a pull request
 

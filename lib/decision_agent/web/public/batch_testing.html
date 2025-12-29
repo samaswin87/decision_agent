@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecisionAgent Batch Testing</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .batch-testing-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step-section {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--hover-bg);
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-imported {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-running {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.3s;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="batch-testing-container">
+        <header>
+            <h1>🧪 DecisionAgent Batch Testing</h1>
+            <p class="subtitle">Test your decision rules against multiple scenarios</p>
+        </header>
+
+        <!-- Step 1: Upload Test Scenarios -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h2>Upload Test Scenarios</h2>
+            </div>
+            <p>Upload a CSV or Excel file with your test scenarios. Required columns: <code>id</code>, context fields. Optional: <code>expected_decision</code>, <code>expected_confidence</code></p>
+            
+            <div class="file-upload-area" id="uploadArea">
+                <p>📁 Drag and drop your CSV/Excel file here, or click to browse</p>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none;">
+            </div>
+
+            <div id="uploadStatus" class="hidden"></div>
+            <div id="uploadProgress" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <p id="progressText" style="text-align: center; margin-top: 10px;">0%</p>
+            </div>
+        </div>
+
+        <!-- Step 2: Configure Rules -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h2>Configure Rules</h2>
+            </div>
+            <p>Paste your rules JSON or import from file</p>
+            
+            <div class="form-group">
+                <label for="rulesJson">Rules JSON:</label>
+                <textarea id="rulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
+            </div>
+
+            <div class="actions">
+                <label for="importRulesFile" class="btn btn-secondary">📁 Import Rules JSON
+                    <input type="file" id="importRulesFile" accept=".json" style="display: none;">
+                </label>
+                <button class="btn btn-secondary" id="validateRulesBtn">✓ Validate Rules</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Run Tests -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h2>Run Batch Test</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="parallelExecution" checked> Parallel execution
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="threadCount">Thread count:</label>
+                <input type="number" id="threadCount" value="4" min="1" max="16" class="input" style="width: 100px;">
+            </div>
+
+            <button class="btn btn-primary" id="runTestBtn" disabled>▶ Run Batch Test</button>
+            <button class="btn btn-secondary" id="resumeTestBtn" disabled>▶ Resume Test</button>
+
+            <div id="runStatus" class="hidden"></div>
+            <div id="runProgress" class="hidden">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="runProgressFill" style="width: 0%"></div>
+                </div>
+                <p id="runProgressText" style="text-align: center; margin-top: 10px;">0%</p>
+            </div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="step-section" id="resultsSection" style="display: none;">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <h2>Test Results</h2>
+            </div>
+
+            <div id="testInfo">
+                <p><strong>Test ID:</strong> <span id="testId"></span></p>
+                <p><strong>Status:</strong> <span id="testStatus" class="status-badge"></span></p>
+            </div>
+
+            <!-- Statistics -->
+            <div id="statisticsSection" class="hidden">
+                <h3>Statistics</h3>
+                <div class="metrics-grid" id="statisticsGrid"></div>
+            </div>
+
+            <!-- Comparison Results -->
+            <div id="comparisonSection" class="hidden">
+                <h3>Comparison Results</h3>
+                <div class="metrics-grid" id="comparisonGrid"></div>
+            </div>
+
+            <!-- Coverage Report -->
+            <div id="coverageSection" class="hidden">
+                <h3>Coverage Report</h3>
+                <div class="metrics-grid" id="coverageGrid"></div>
+            </div>
+
+            <!-- Results Table -->
+            <div id="resultsTableSection" class="hidden">
+                <h3>Detailed Results</h3>
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Scenario ID</th>
+                                <th>Decision</th>
+                                <th>Confidence</th>
+                                <th>Expected Decision</th>
+                                <th>Expected Confidence</th>
+                                <th>Match</th>
+                                <th>Execution Time (ms)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTestId = null;
+        let currentScenarios = null;
+
+        // File upload
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadProgress = document.getElementById('uploadProgress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadStatus.className = 'hidden';
+            uploadProgress.classList.remove('hidden');
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Uploading...';
+
+            fetch('/api/testing/batch/import', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    uploadStatus.className = 'error-message';
+                    uploadStatus.textContent = `Error: ${data.error}`;
+                    uploadProgress.classList.add('hidden');
+                } else {
+                    currentTestId = data.test_id;
+                    currentScenarios = data.scenarios_count;
+                    uploadStatus.className = 'success-message';
+                    uploadStatus.textContent = `Successfully imported ${data.scenarios_count} scenarios. Test ID: ${data.test_id}`;
+                    uploadProgress.classList.add('hidden');
+                    document.getElementById('runTestBtn').disabled = false;
+                    
+                    if (data.errors && data.errors.length > 0) {
+                        uploadStatus.textContent += `\nWarnings: ${data.errors.join(', ')}`;
+                    }
+                }
+            })
+            .catch(error => {
+                uploadStatus.className = 'error-message';
+                uploadStatus.textContent = `Error: ${error.message}`;
+                uploadProgress.classList.add('hidden');
+            });
+        }
+
+        // Import rules JSON
+        document.getElementById('importRulesFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        document.getElementById('rulesJson').value = JSON.stringify(json, null, 2);
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Validate rules
+        document.getElementById('validateRulesBtn').addEventListener('click', () => {
+            const rulesJson = document.getElementById('rulesJson').value;
+            try {
+                JSON.parse(rulesJson);
+                fetch('/api/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(JSON.parse(rulesJson))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        alert('Rules are valid!');
+                    } else {
+                        alert('Validation errors: ' + data.errors.join(', '));
+                    }
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        // Run test
+        document.getElementById('runTestBtn').addEventListener('click', () => {
+            if (!currentTestId) {
+                alert('Please upload test scenarios first');
+                return;
+            }
+
+            const rulesJson = document.getElementById('rulesJson').value;
+            if (!rulesJson.trim()) {
+                alert('Please provide rules JSON');
+                return;
+            }
+
+            try {
+                JSON.parse(rulesJson);
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+                return;
+            }
+
+            const runStatus = document.getElementById('runStatus');
+            const runProgress = document.getElementById('runProgress');
+            const runProgressFill = document.getElementById('runProgressFill');
+            const runProgressText = document.getElementById('runProgressText');
+
+            runStatus.className = 'hidden';
+            runProgress.classList.remove('hidden');
+            runProgressFill.style.width = '0%';
+            runProgressText.textContent = 'Starting...';
+
+            const options = {
+                parallel: document.getElementById('parallelExecution').checked,
+                thread_count: parseInt(document.getElementById('threadCount').value) || 4
+            };
+
+            fetch('/api/testing/batch/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    test_id: currentTestId,
+                    rules: JSON.parse(rulesJson),
+                    options: options
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    runStatus.className = 'error-message';
+                    runStatus.textContent = `Error: ${data.error}`;
+                    runProgress.classList.add('hidden');
+                } else {
+                    runStatus.className = 'success-message';
+                    runStatus.textContent = 'Test completed successfully!';
+                    runProgress.classList.add('hidden');
+                    loadResults(currentTestId);
+                }
+            })
+            .catch(error => {
+                runStatus.className = 'error-message';
+                runStatus.textContent = `Error: ${error.message}`;
+                runProgress.classList.add('hidden');
+            });
+        });
+
+        // Load results
+        function loadResults(testId) {
+            fetch(`/api/testing/batch/${testId}/results`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error loading results: ' + data.error);
+                        return;
+                    }
+
+                    document.getElementById('resultsSection').style.display = 'block';
+                    document.getElementById('testId').textContent = data.test_id;
+                    document.getElementById('testStatus').textContent = data.status;
+                    document.getElementById('testStatus').className = 'status-badge status-' + data.status;
+
+                    // Statistics
+                    if (data.statistics) {
+                        const statsGrid = document.getElementById('statisticsGrid');
+                        statsGrid.innerHTML = `
+                            <div class="metric-card">
+                                <div class="metric-value">${data.statistics.total}</div>
+                                <div class="metric-label">Total Tests</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.statistics.successful}</div>
+                                <div class="metric-label">Successful</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.statistics.failed}</div>
+                                <div class="metric-label">Failed</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${(data.statistics.success_rate * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Success Rate</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.statistics.avg_execution_time_ms.toFixed(2)}ms</div>
+                                <div class="metric-label">Avg Execution Time</div>
+                            </div>
+                        `;
+                        document.getElementById('statisticsSection').classList.remove('hidden');
+                    }
+
+                    // Comparison
+                    if (data.comparison) {
+                        const compGrid = document.getElementById('comparisonGrid');
+                        compGrid.innerHTML = `
+                            <div class="metric-card">
+                                <div class="metric-value">${(data.comparison.accuracy_rate * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Accuracy Rate</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.comparison.matches}</div>
+                                <div class="metric-label">Matches</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.comparison.mismatches}</div>
+                                <div class="metric-label">Mismatches</div>
+                            </div>
+                        `;
+                        document.getElementById('comparisonSection').classList.remove('hidden');
+                    }
+
+                    // Results table
+                    if (data.results && data.results.length > 0) {
+                        const tbody = document.getElementById('resultsTableBody');
+                        tbody.innerHTML = '';
+                        data.results.forEach(result => {
+                            const row = tbody.insertRow();
+                            row.insertCell(0).textContent = result.scenario_id;
+                            row.insertCell(1).textContent = result.decision || 'N/A';
+                            row.insertCell(2).textContent = result.confidence ? result.confidence.toFixed(3) : 'N/A';
+                            row.insertCell(3).textContent = 'N/A'; // Expected decision
+                            row.insertCell(4).textContent = 'N/A'; // Expected confidence
+                            row.insertCell(5).textContent = result.success ? '✓' : '✗';
+                            row.insertCell(6).textContent = result.execution_time_ms.toFixed(2);
+                        });
+                        document.getElementById('resultsTableSection').classList.remove('hidden');
+                    }
+
+                    // Load coverage
+                    loadCoverage(testId);
+                })
+                .catch(error => {
+                    alert('Error loading results: ' + error.message);
+                });
+        }
+
+        // Load coverage
+        function loadCoverage(testId) {
+            fetch(`/api/testing/batch/${testId}/coverage`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        return; // Coverage not available
+                    }
+
+                    if (data.coverage) {
+                        const covGrid = document.getElementById('coverageGrid');
+                        covGrid.innerHTML = `
+                            <div class="metric-card">
+                                <div class="metric-value">${(data.coverage.coverage_percentage * 100).toFixed(1)}%</div>
+                                <div class="metric-label">Coverage</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.coverage.covered_rules}</div>
+                                <div class="metric-label">Covered Rules</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.coverage.total_rules}</div>
+                                <div class="metric-label">Total Rules</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value">${data.coverage.untested_rules.length}</div>
+                                <div class="metric-label">Untested Rules</div>
+                            </div>
+                        `;
+                        document.getElementById('coverageSection').classList.remove('hidden');
+                    }
+                })
+                .catch(() => {
+                    // Coverage not available, ignore
+                });
+        }
+    </script>
+</body>
+</html>
+
