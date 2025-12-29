@@ -23,7 +23,13 @@ jobs:
         ruby-version: ${{ matrix.ruby-version }}
 
     - name: Install bundler
-      run: gem install bundler:4.0.3
+      run: |
+        if [[ "${{ matrix.ruby-version }}" == "3.0" ]] || [[ "${{ matrix.ruby-version }}" == "3.1" ]]; then
+          gem install bundler:2.4.22
+          bundle update --bundler
+        else
+          gem install bundler:4.0.3
+        fi
 
     - name: Install dependencies
       run: bundle install
