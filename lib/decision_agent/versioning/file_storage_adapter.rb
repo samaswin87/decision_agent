@@ -139,79 +139,91 @@ module DecisionAgent
       end
 
       def delete_version(version_id:)
-        # Use index to find rule_id quickly - O(1) instead of O(n)
+        # Wrap entire method to ensure all errors are handled gracefully
         begin
-          rule_id = get_rule_id_from_index(version_id)
-        rescue StandardError
-          # If index lookup fails, version doesn't exist
-          raise DecisionAgent::NotFoundError, "Version not found: #{version_id}"
-        end
-        
-        raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless rule_id
-
-        # Now lock on the specific rule
-        begin
-          with_rule_lock(rule_id) do
-            # Read only this rule's versions
-            versions = list_versions_unsafe(rule_id: rule_id)
-            version = versions.find { |v| v[:id] == version_id || v[:id].to_s == version_id.to_s }
+          # Use index to find rule_id quickly - O(1) instead of O(n)
+          begin
+            rule_id = get_rule_id_from_index(version_id)
+          rescue StandardError
+            # If index lookup fails, version doesn't exist
+            raise DecisionAgent::NotFoundError, "Version not found: #{version_id}"
+          end
           
-            # If version not in list, check if file exists - might have been manually deleted
-            unless version
-              rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
-              # Try to find the file by checking all version files
-              file_found = false
-              begin
-                Dir.glob(File.join(rule_dir, "*.json")).each do |filepath|
-                  begin
-                    file_data = JSON.parse(File.read(filepath))
-                    if file_data["id"] == version_id || file_data[:id] == version_id || 
-                       file_data["id"].to_s == version_id.to_s || file_data[:id].to_s == version_id.to_s
-                      # File exists but not in versions list - remove from index and return false
-                      file_found = true
-                      remove_from_index(version_id)
-                      return false
+          raise DecisionAgent::NotFoundError, "Version not found: #{version_id}" unless rule_id
+
+          # Now lock on the specific rule
+          begin
+            with_rule_lock(rule_id) do
+              # Read only this rule's versions
+              versions = list_versions_unsafe(rule_id: rule_id)
+              version = versions.find { |v| v[:id] == version_id || v[:id].to_s == version_id.to_s }
+            
+              # If version not in list, check if file exists - might have been manually deleted
+              unless version
+                rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
+                # Try to find the file by checking all version files
+                file_found = false
+                begin
+                  Dir.glob(File.join(rule_dir, "*.json")).each do |filepath|
+                    begin
+                      file_data = JSON.parse(File.read(filepath))
+                      if file_data["id"] == version_id || file_data[:id] == version_id || 
+                         file_data["id"].to_s == version_id.to_s || file_data[:id].to_s == version_id.to_s
+                        # File exists but not in versions list - remove from index and return false
+                        file_found = true
+                        remove_from_index(version_id)
+                        return false
+                      end
+                    rescue Errno::ENOENT, JSON::ParserError
+                      # File was deleted or corrupted, continue searching
+                      next
                     end
-                  rescue Errno::ENOENT, JSON::ParserError
-                    # File was deleted or corrupted, continue searching
-                    next
                   end
+                rescue Errno::ENOENT
+                  # Directory doesn't exist, version not found
                 end
-              rescue Errno::ENOENT
-                # Directory doesn't exist, version not found
+                # Version not found in list and file doesn't exist - clean up index and return false
+                remove_from_index(version_id)
+                return false
               end
-              # Version not found in list and file doesn't exist - clean up index and return false
-              remove_from_index(version_id)
-              return false
-            end
 
-            # Prevent deletion of active versions
-            if version[:status] == "active"
-              raise DecisionAgent::ValidationError, "Cannot delete active version. Please activate another version first."
-            end
+              # Prevent deletion of active versions
+              if version[:status] == "active"
+                raise DecisionAgent::ValidationError, "Cannot delete active version. Please activate another version first."
+              end
 
-            # Delete the file
-            rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
-            filename = "#{version[:version_number]}.json"
-            filepath = File.join(rule_dir, filename)
+              # Delete the file
+              rule_dir = File.join(@storage_path, sanitize_filename(rule_id))
+              filename = "#{version[:version_number]}.json"
+              filepath = File.join(rule_dir, filename)
 
-            if File.exist?(filepath)
-              File.delete(filepath)
-              # Remove from index
-              remove_from_index(version_id)
-              true
-            else
-              # File already deleted - clean up index and return false
-              remove_from_index(version_id)
-              false
+              if File.exist?(filepath)
+                File.delete(filepath)
+                # Remove from index
+                remove_from_index(version_id)
+                true
+              else
+                # File already deleted - clean up index and return false
+                remove_from_index(version_id)
+                false
+              end
             end
+          rescue DecisionAgent::ValidationError, DecisionAgent::NotFoundError
+            # Re-raise expected errors
+            raise
+          rescue StandardError => e
+            # If any unexpected error occurs during the lock operation, treat as version not found
+            # This prevents 500 errors from propagating
+            remove_from_index(version_id) rescue nil
+            raise DecisionAgent::NotFoundError, "Version not found: #{version_id}"
           end
         rescue DecisionAgent::ValidationError, DecisionAgent::NotFoundError
-          # Re-raise expected errors
+          # Re-raise expected errors from outer scope
           raise
-        rescue StandardError => e
-          # If any unexpected error occurs during the lock operation, treat as version not found
-          # This prevents 500 errors from propagating
+        rescue StandardError, SystemCallError, ThreadError => e
+          # Catch any other runtime errors (including ThreadError, SystemCallError, etc.)
+          # and convert to NotFoundError to prevent 500 errors
+          # This handles edge cases like mutex errors, file system errors, etc.
           remove_from_index(version_id) rescue nil
           raise DecisionAgent::NotFoundError, "Version not found: #{version_id}"
         end

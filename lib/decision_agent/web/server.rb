@@ -814,9 +814,9 @@ module DecisionAgent
       # Delete a version
       delete "/api/versions/:version_id" do
         content_type :json
-        require_permission!(:delete)
-
+        
         begin
+          require_permission!(:delete)
           version_id = params[:version_id]
 
           result = version_manager.delete_version(version_id: version_id)
