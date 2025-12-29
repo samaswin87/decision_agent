@@ -91,7 +91,7 @@ module DecisionAgent
           rule_version_class.where(rule_id: version.rule_id, status: "active")
                             .where.not(id: version_id)
                             .find_each do |v|
-            v.update!(status: "archived")
+                              v.update!(status: "archived")
           end
 
           # Activate this version

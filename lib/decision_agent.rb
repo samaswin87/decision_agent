@@ -43,5 +43,11 @@ require_relative "decision_agent/ab_testing/ab_testing_agent"
 require_relative "decision_agent/ab_testing/storage/adapter"
 require_relative "decision_agent/ab_testing/storage/memory_adapter"
 
+require_relative "decision_agent/testing/test_scenario"
+require_relative "decision_agent/testing/batch_test_importer"
+require_relative "decision_agent/testing/batch_test_runner"
+require_relative "decision_agent/testing/test_result_comparator"
+require_relative "decision_agent/testing/test_coverage_analyzer"
+
 module DecisionAgent
 end

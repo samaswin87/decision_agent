@@ -1,13 +1,37 @@
 require "sinatra/base"
 require "json"
+require "securerandom"
+require "tempfile"
+
+# Ensure testing classes are loaded
+require_relative "../testing/test_scenario"
+require_relative "../testing/batch_test_importer"
+require_relative "../testing/batch_test_runner"
+require_relative "../testing/test_result_comparator"
+require_relative "../testing/test_coverage_analyzer"
+require_relative "../evaluators/json_rule_evaluator"
+require_relative "../agent"
 
 module DecisionAgent
   module Web
+    # rubocop:disable Metrics/ClassLength
     class Server < Sinatra::Base
       set :public_folder, File.expand_path("public", __dir__)
       set :views, File.expand_path("views", __dir__)
       set :bind, "0.0.0.0"
       set :port, 4567
+
+      # In-memory storage for batch test runs
+      @batch_test_storage = {}
+      @batch_test_storage_mutex = Mutex.new
+
+      def self.batch_test_storage
+        @batch_test_storage ||= {}
+      end
+
+      def self.batch_test_storage_mutex
+        @batch_test_storage_mutex ||= Mutex.new
+      end
 
       # Enable CORS for API calls
       before do
@@ -371,6 +395,241 @@ module DecisionAgent
         end
       end
 
+      # Batch Testing API Endpoints
+
+      # POST /api/testing/batch/import - Upload CSV/Excel file
+      post "/api/testing/batch/import" do
+        content_type :json
+
+        begin
+          unless params[:file] && params[:file][:tempfile]
+            status 400
+            return { error: "No file uploaded" }.to_json
+          end
+
+          uploaded_file = params[:file][:tempfile]
+          filename = params[:file][:filename] || "uploaded_file"
+          file_extension = File.extname(filename).downcase
+
+          # Create temporary file
+          temp_file = Tempfile.new(["batch_test", file_extension])
+          temp_file.binmode
+          temp_file.write(uploaded_file.read)
+          temp_file.rewind
+
+          # Import scenarios based on file type
+          importer = DecisionAgent::Testing::BatchTestImporter.new
+
+          scenarios = if [".xlsx", ".xls"].include?(file_extension)
+                        importer.import_excel(temp_file.path)
+                      else
+                        importer.import_csv(temp_file.path)
+                      end
+
+          temp_file.close
+          temp_file.unlink
+
+          # Store scenarios with a unique ID
+          test_id = SecureRandom.uuid
+          self.class.batch_test_storage_mutex.synchronize do
+            self.class.batch_test_storage[test_id] = {
+              id: test_id,
+              scenarios: scenarios,
+              status: "imported",
+              created_at: Time.now.utc.iso8601,
+              results: nil,
+              coverage: nil
+            }
+          end
+
+          status 201
+          {
+            test_id: test_id,
+            scenarios_count: scenarios.size,
+            errors: importer.errors,
+            warnings: importer.warnings
+          }.to_json
+        rescue DecisionAgent::ImportError => e
+          status 422
+          { error: e.message, errors: importer&.errors || [] }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Failed to import file: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/testing/batch/run - Execute batch test
+      post "/api/testing/batch/run" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          test_id = data["test_id"] || params[:test_id]
+          rules_json = data["rules"]
+          options = data["options"] || {}
+
+          unless test_id
+            status 400
+            return { error: "test_id is required" }.to_json
+          end
+
+          unless rules_json
+            status 400
+            return { error: "rules JSON is required" }.to_json
+          end
+
+          # Get stored scenarios
+          test_data = nil
+          self.class.batch_test_storage_mutex.synchronize do
+            test_data = self.class.batch_test_storage[test_id]
+          end
+
+          unless test_data
+            status 404
+            return { error: "Test not found" }.to_json
+          end
+
+          # Create agent from rules
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules_json)
+          agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+
+          # Update status
+          self.class.batch_test_storage_mutex.synchronize do
+            self.class.batch_test_storage[test_id][:status] = "running"
+            self.class.batch_test_storage[test_id][:started_at] = Time.now.utc.iso8601
+          end
+
+          # Run batch test
+          runner = DecisionAgent::Testing::BatchTestRunner.new(agent)
+          results = runner.run(
+            test_data[:scenarios],
+            parallel: options.fetch("parallel", true),
+            thread_count: options.fetch("thread_count", 4),
+            checkpoint_file: options["checkpoint_file"]
+          )
+
+          # Calculate comparison if expected results exist
+          comparison = nil
+          if test_data[:scenarios].any?(&:expected_result?)
+            comparator = DecisionAgent::Testing::TestResultComparator.new
+            comparison = comparator.compare(results, test_data[:scenarios])
+          end
+
+          # Calculate coverage
+          coverage_analyzer = DecisionAgent::Testing::TestCoverageAnalyzer.new
+          coverage = coverage_analyzer.analyze(results, agent)
+
+          # Store results
+          self.class.batch_test_storage_mutex.synchronize do
+            self.class.batch_test_storage[test_id][:status] = "completed"
+            self.class.batch_test_storage[test_id][:results] = results.map(&:to_h)
+            self.class.batch_test_storage[test_id][:comparison] = comparison
+            self.class.batch_test_storage[test_id][:coverage] = coverage.to_h
+            self.class.batch_test_storage[test_id][:statistics] = runner.statistics
+            self.class.batch_test_storage[test_id][:completed_at] = Time.now.utc.iso8601
+          end
+
+          {
+            test_id: test_id,
+            status: "completed",
+            results_count: results.size,
+            statistics: runner.statistics,
+            comparison: comparison,
+            coverage: coverage.to_h
+          }.to_json
+        rescue StandardError => e
+          # Update status to failed
+          if test_id
+            self.class.batch_test_storage_mutex.synchronize do
+              if self.class.batch_test_storage[test_id]
+                self.class.batch_test_storage[test_id][:status] = "failed"
+                self.class.batch_test_storage[test_id][:error] = e.message
+              end
+            end
+          end
+
+          status 500
+          { error: "Batch test execution failed: #{e.message}" }.to_json
+        end
+      end
+
+      # GET /api/testing/batch/:id/results - Get batch test results
+      get "/api/testing/batch/:id/results" do
+        content_type :json
+
+        begin
+          test_id = params[:id]
+
+          test_data = nil
+          self.class.batch_test_storage_mutex.synchronize do
+            test_data = self.class.batch_test_storage[test_id]
+          end
+
+          unless test_data
+            status 404
+            return { error: "Test not found" }.to_json
+          end
+
+          {
+            test_id: test_data[:id],
+            status: test_data[:status],
+            created_at: test_data[:created_at],
+            started_at: test_data[:started_at],
+            completed_at: test_data[:completed_at],
+            scenarios_count: test_data[:scenarios]&.size || 0,
+            results: test_data[:results],
+            comparison: test_data[:comparison],
+            statistics: test_data[:statistics],
+            error: test_data[:error]
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # GET /api/testing/batch/:id/coverage - Get coverage report
+      get "/api/testing/batch/:id/coverage" do
+        content_type :json
+
+        begin
+          test_id = params[:id]
+
+          test_data = nil
+          self.class.batch_test_storage_mutex.synchronize do
+            test_data = self.class.batch_test_storage[test_id]
+          end
+
+          unless test_data
+            status 404
+            return { error: "Test not found" }.to_json
+          end
+
+          unless test_data[:coverage]
+            status 404
+            return { error: "Coverage report not available. Run the batch test first." }.to_json
+          end
+
+          {
+            test_id: test_data[:id],
+            coverage: test_data[:coverage]
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # GET /testing/batch - Batch testing UI page
+      get "/testing/batch" do
+        send_file File.join(settings.public_folder, "batch_testing.html")
+      rescue StandardError
+        status 404
+        "Batch testing page not found"
+      end
+
       private
 
       def version_manager
@@ -411,5 +670,6 @@ module DecisionAgent
         new.call(env)
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

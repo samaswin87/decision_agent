@@ -107,7 +107,7 @@ end
 
 <img width="1622" height="820" alt="Screenshot" src="https://github.com/user-attachments/assets/687e9ff6-669a-40f9-be27-085c614392d4" />
 
-See [Web UI Rails Integration Guide](wiki/WEB_UI_RAILS_INTEGRATION.md) for detailed setup instructions.
+See [Web UI Rails Integration Guide](docs/WEB_UI_RAILS_INTEGRATION.md) for detailed setup instructions.
 
 ## Monitoring & Analytics
 
@@ -181,7 +181,7 @@ end
 alert_manager.start_monitoring(interval: 60)
 ```
 
-See [Monitoring & Analytics Guide](wiki/MONITORING_AND_ANALYTICS.md) for complete documentation.
+See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complete documentation.
 
 
 ## Key Features
@@ -291,7 +291,7 @@ advanced_rules = {
 }
 ```
 
-See [examples/](examples/) and [wiki/ADVANCED_OPERATORS.md](wiki/ADVANCED_OPERATORS.md) for complete working examples.
+See [examples/](examples/) and [docs/ADVANCED_OPERATORS.md](docs/ADVANCED_OPERATORS.md) for complete working examples.
 
 ## Thread-Safety Guarantees
 
@@ -353,7 +353,7 @@ Run the included benchmark to verify zero overhead:
 ruby examples/thread_safe_performance.rb
 ```
 
-See [THREAD_SAFETY.md](wiki/THREAD_SAFETY.md) for detailed implementation guide and [PERFORMANCE_AND_THREAD_SAFETY.md](wiki/PERFORMANCE_AND_THREAD_SAFETY.md) for detailed performance analysis.
+See [THREAD_SAFETY.md](docs/THREAD_SAFETY.md) for detailed implementation guide and [PERFORMANCE_AND_THREAD_SAFETY.md](docs/PERFORMANCE_AND_THREAD_SAFETY.md) for detailed performance analysis.
 
 ## When to Use DecisionAgent
 
@@ -377,25 +377,25 @@ See [THREAD_SAFETY.md](wiki/THREAD_SAFETY.md) for detailed implementation guide 
 - [Examples](examples/README.md)
 
 **Core Features**
-- [Advanced Operators](wiki/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
-- [Versioning System](wiki/VERSIONING.md) - Version control for rules
-- [A/B Testing](wiki/AB_TESTING.md) - Compare rule versions with statistical analysis
-- [Web UI](wiki/WEB_UI.md) - Visual rule builder
-- [Web UI Setup](wiki/WEB_UI_SETUP.md) - Setup guide
-- [Web UI Rails Integration](wiki/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
-- [Monitoring & Analytics](wiki/MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
-- [Monitoring Architecture](wiki/MONITORING_ARCHITECTURE.md) - System architecture and design
+- [Advanced Operators](docs/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
+- [Versioning System](docs/VERSIONING.md) - Version control for rules
+- [A/B Testing](docs/AB_TESTING.md) - Compare rule versions with statistical analysis
+- [Web UI](docs/WEB_UI.md) - Visual rule builder
+- [Web UI Setup](docs/WEB_UI_SETUP.md) - Setup guide
+- [Web UI Rails Integration](docs/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+- [Monitoring & Analytics](docs/MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
+- [Monitoring Architecture](docs/MONITORING_ARCHITECTURE.md) - System architecture and design
 
 **Performance & Thread-Safety**
-- [Performance & Thread-Safety Summary](wiki/PERFORMANCE_AND_THREAD_SAFETY.md) - Benchmarks and production readiness
-- [Thread-Safety Implementation](wiki/THREAD_SAFETY.md) - Technical implementation guide
+- [Performance & Thread-Safety Summary](docs/PERFORMANCE_AND_THREAD_SAFETY.md) - Benchmarks and production readiness
+- [Thread-Safety Implementation](docs/THREAD_SAFETY.md) - Technical implementation guide
 
 **Reference**
-- [API Contract](wiki/API_CONTRACT.md) - Full API reference
-- [Changelog](wiki/CHANGELOG.md) - Version history
+- [API Contract](docs/API_CONTRACT.md) - Full API reference
+- [Changelog](docs/CHANGELOG.md) - Version history
 
 **More Resources**
-- [Wiki Home](wiki/README.md) - Documentation index
+- [Documentation Home](docs/README.md) - Documentation index
 - [GitHub Issues](https://github.com/samaswin87/decision_agent/issues) - Report bugs or request features
 
 ## Contributing
@@ -408,7 +408,7 @@ See [THREAD_SAFETY.md](wiki/THREAD_SAFETY.md) for detailed implementation guide 
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
-- **Documentation**: [Wiki](wiki/README.md)
+- **Documentation**: [Documentation](docs/README.md)
 - **Examples**: [examples/](examples/)
 
 ## License

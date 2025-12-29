@@ -33,7 +33,7 @@ class RuleVersion < ApplicationRecord
       self.class.where(rule_id: rule_id, status: "active")
           .where.not(id: id)
           .find_each do |v|
-        v.update!(status: "archived")
+            v.update!(status: "archived")
       end
 
       # Activate this version

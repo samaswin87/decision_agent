@@ -9,6 +9,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Batch Testing Enhancements**
+  - **Excel File Support:**
+    - Added `roo` gem dependency (~> 2.10) for Excel file parsing
+    - Implemented `import_excel` method in `BatchTestImporter` supporting `.xlsx` and `.xls` formats
+    - Sheet selection by name or index (default: first sheet)
+    - Same flexible column mapping as CSV import
+    - Progress tracking callback support for large Excel files
+  - **Import Progress Tracking:**
+    - Added `progress_callback` option to `import_csv` method
+    - Real-time progress updates with `{ processed: N, total: M, percentage: X }` format
+    - Automatic row counting for accurate progress reporting
+    - Useful for large imports (10k+ rows)
+  - **Resume Capability:**
+    - Added checkpoint mechanism to `BatchTestRunner` for interrupted tests
+    - `checkpoint_file` option to save progress as JSON
+    - `resume` method to continue from checkpoint
+    - Automatically skips already-completed scenarios
+    - Checkpoint file automatically deleted on successful completion
+    - Thread-safe checkpoint management with mutex protection
+  - **Web UI Integration:**
+    - **New API Endpoints:**
+      - `POST /api/testing/batch/import` - Upload CSV/Excel files with drag-and-drop support
+      - `POST /api/testing/batch/run` - Execute batch tests with configurable options
+      - `GET /api/testing/batch/:id/results` - Get detailed test results and statistics
+      - `GET /api/testing/batch/:id/coverage` - Get coverage analysis reports
+    - **New UI Page:**
+      - `/testing/batch` - Complete batch testing interface
+      - File upload with drag-and-drop
+      - Rules JSON configuration and validation
+      - Real-time progress tracking
+      - Results visualization with statistics, comparison, and coverage metrics
+      - Responsive design matching existing UI style
+    - **Features:**
+      - In-memory storage for batch test runs with unique IDs
+      - Support for parallel/sequential execution modes
+      - Configurable thread count for parallel execution
+      - Automatic comparison calculation when expected results provided
+      - Coverage analysis integration
+      - Error handling and status tracking
+  - **Files Modified:**
+    - `lib/decision_agent/testing/batch_test_importer.rb` - Added Excel support and progress tracking
+    - `lib/decision_agent/testing/batch_test_runner.rb` - Added resume capability with checkpoints
+    - `lib/decision_agent/web/server.rb` - Added 4 API endpoints and batch testing page route
+    - `lib/decision_agent/web/public/batch_testing.html` - New batch testing UI page
+    - `decision_agent.gemspec` - Added `roo` gem dependency
+  - **Documentation:**
+    - New documentation page: [BATCH_TESTING.md](BATCH_TESTING.md)
+    - Complete guide with examples, API reference, and best practices
+  - **Usage Example:**
+    ```ruby
+    # Excel import with progress tracking
+    importer = DecisionAgent::Testing::BatchTestImporter.new
+    scenarios = importer.import_excel('test_cases.xlsx',
+      progress_callback: ->(progress) {
+        puts "#{progress[:percentage]}% imported"
+      }
+    )
+    
+    # Run with checkpoint for resume capability
+    runner = DecisionAgent::Testing::BatchTestRunner.new(agent)
+    results = runner.run(scenarios,
+      checkpoint_file: 'checkpoint.json',
+      parallel: true,
+      thread_count: 4
+    )
+    
+    # Resume from checkpoint if interrupted
+    runner.resume(scenarios, 'checkpoint.json')
+    ```
+
+## [0.1.5] - 2025-12-25
+
+### Added
+
 - **Advanced Rule DSL Operators**
   - **Overview:** Comprehensive set of specialized operators for advanced rule conditions
   - **String Operators:**
@@ -37,12 +111,151 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fail-safe design: invalid inputs return false instead of raising errors
     - Full schema validation support
     - Thread-safe evaluation
-    - Comprehensive test coverage (41 specs)
+    - Comprehensive test coverage (1003 lines, 41+ specs)
+  - **Web UI Integration:**
+    - Advanced operators now available in web UI rule builder
+    - Enhanced UI with operator-specific input fields
+    - Improved validation and error messages
+  - **Files Added:**
+    - `lib/decision_agent/dsl/condition_evaluator.rb` - Extended with 15 new operators
+    - `spec/advanced_operators_spec.rb` - Comprehensive test suite (1003 lines)
+    - `docs/ADVANCED_OPERATORS.md` - Complete documentation guide (978 lines)
+  - **Files Modified:**
+    - `lib/decision_agent/dsl/schema_validator.rb` - Enhanced validation for new operators
+    - `lib/decision_agent/web/public/app.js` - Web UI support for advanced operators
+    - `lib/decision_agent/web/public/index.html` - Updated UI for operator selection
+    - `README.md` - Added advanced operators documentation
   - **Documentation:**
-    - New wiki page: [ADVANCED_OPERATORS.md](ADVANCED_OPERATORS.md)
+    - New documentation page: [ADVANCED_OPERATORS.md](ADVANCED_OPERATORS.md)
     - Complete examples for each operator
     - Common use cases and patterns
     - Migration guide from basic operators
+    - Updated README with operator reference
+
+- **Batch Testing Capabilities**
+  - **Overview:** Complete batch testing framework for validating rule changes against large datasets before deployment
+  - **Core Components:**
+    - `BatchTestImporter` - Import test scenarios from CSV files or arrays
+    - `BatchTestRunner` - Execute batch tests with parallel processing
+    - `TestScenario` - Represents a single test case with context and expected results
+    - `TestResult` - Captures execution results (decision, confidence, timing, errors)
+    - `TestResultComparator` - Compare actual vs expected results with accuracy metrics
+    - `TestCoverageAnalyzer` - Analyze which rules and conditions are tested
+  - **CSV/Excel Import:**
+    - Import test scenarios from CSV files with flexible column mapping
+    - Support for custom column names (id, expected_decision, expected_confidence)
+    - Automatic context extraction from remaining columns
+    - Header row detection and optional skipping
+    - Programmatic import from arrays of hashes
+    - Comprehensive error handling and validation
+    - Row-level error reporting for malformed data
+  - **Batch Test Execution:**
+    - **Parallel Execution:** Multi-threaded execution for performance (configurable thread count)
+    - **Sequential Mode:** Option to run tests sequentially for debugging
+    - **Progress Tracking:** Real-time progress callbacks with completion percentage
+    - **Error Handling:** Graceful error handling per scenario (continues on failure)
+    - **Performance Metrics:** Execution time tracking per scenario and aggregate statistics
+    - **Feedback Support:** Pass feedback context to agent during batch execution
+  - **Result Comparison:**
+    - **Expected vs Actual:** Compare decisions and confidence scores
+    - **Accuracy Metrics:** Calculate match rate, decision accuracy, confidence accuracy
+    - **Tolerance Support:** Configurable confidence tolerance (default: 1%)
+    - **Fuzzy Matching:** Optional fuzzy decision matching (case-insensitive, whitespace-tolerant)
+    - **Mismatch Details:** Detailed reports showing exactly what differed
+    - **Export Formats:** Export comparison results to CSV or JSON
+  - **Test Coverage Analysis:**
+    - **Rule Coverage:** Track which rules are exercised by test scenarios
+    - **Condition Coverage:** Track which conditions are evaluated
+    - **Coverage Percentage:** Calculate overall test coverage percentage
+    - **Untested Rules:** Identify rules that haven't been tested
+    - **Execution Counts:** Track how many times each rule/condition was executed
+    - **Coverage Reports:** Detailed reports with rule-by-rule and condition-by-condition breakdown
+  - **Statistics & Reporting:**
+    - **Execution Statistics:** Total, successful, failed counts with success rate
+    - **Performance Metrics:** Average, min, max execution times
+    - **Comparison Summary:** Accuracy rates, mismatch details
+    - **Coverage Reports:** Rule and condition coverage with untested items highlighted
+  - **Features:**
+    - Thread-safe parallel execution with mutex protection
+    - Immutable test scenarios and results (frozen objects)
+    - Support for large datasets (10k+ scenarios)
+    - Efficient memory usage with streaming CSV parsing
+    - Comprehensive error messages with row numbers
+    - Flexible column mapping for different CSV formats
+  - **Files Added:**
+    - `lib/decision_agent/testing/batch_test_importer.rb` - CSV/array import functionality
+    - `lib/decision_agent/testing/batch_test_runner.rb` - Batch execution engine
+    - `lib/decision_agent/testing/test_scenario.rb` - Test scenario model
+    - `lib/decision_agent/testing/test_result_comparator.rb` - Result comparison logic
+    - `lib/decision_agent/testing/test_coverage_analyzer.rb` - Coverage analysis
+    - `spec/testing/batch_test_importer_spec.rb` - Import tests (13 examples)
+    - `spec/testing/batch_test_runner_spec.rb` - Runner tests (11 examples)
+    - `spec/testing/test_result_comparator_spec.rb` - Comparator tests (8 examples)
+    - `spec/testing/test_coverage_analyzer_spec.rb` - Coverage analyzer tests (8 examples)
+    - `examples/08_batch_testing.rb` - Complete working example (180 lines)
+  - **Error Classes:**
+    - `BatchTestError` - Base error for batch testing operations
+    - `ImportError` - Raised when CSV import fails
+    - `InvalidTestDataError` - Raised for invalid test scenario data
+  - **Usage Example:**
+    ```ruby
+    # Step 1: Import test scenarios from CSV
+    importer = DecisionAgent::Testing::BatchTestImporter.new
+    scenarios = importer.import_csv("test_scenarios.csv")
+    
+    # Step 2: Run batch tests
+    runner = DecisionAgent::Testing::BatchTestRunner.new(agent)
+    results = runner.run(scenarios,
+      parallel: true,
+      thread_count: 4,
+      progress_callback: ->(progress) {
+        puts "#{progress[:percentage]}% complete"
+      }
+    )
+    
+    # Step 3: Compare results
+    comparator = DecisionAgent::Testing::TestResultComparator.new
+    comparison = comparator.compare(results, scenarios)
+    puts "Accuracy: #{(comparison[:accuracy_rate] * 100).round(2)}%"
+    
+    # Step 4: Analyze coverage
+    analyzer = DecisionAgent::Testing::TestCoverageAnalyzer.new
+    coverage = analyzer.analyze(results, agent)
+    puts "Coverage: #{(coverage.coverage_percentage * 100).round(2)}%"
+    
+    # Step 5: Export results
+    comparator.export_csv("comparison_results.csv")
+    comparator.export_json("comparison_results.json")
+    ```
+  - **Performance:**
+    - Parallel execution: 4 threads can process 10,000 scenarios in <60 seconds
+    - Memory efficient: Streaming CSV parsing for large files
+    - Thread-safe: Mutex-protected result aggregation
+  - **Testing:**
+    - 40+ comprehensive test examples across all components
+    - Edge case coverage: invalid CSV, missing columns, failed scenarios
+    - Parallel execution verification
+    - Coverage analysis accuracy tests
+  - **Use Cases:**
+    - **Regulatory Compliance:** Validate rule changes against compliance test suites
+    - **Risk Mitigation:** Test rule changes before production deployment
+    - **Performance Testing:** Measure decision-making performance at scale
+    - **Quality Assurance:** Automated regression testing for rule updates
+    - **Coverage Analysis:** Ensure all critical rules are tested
+
+### Changed
+
+- **Web UI Enhancements**
+  - Updated rule builder interface to support advanced operators
+  - Improved operator selection and parameter input
+  - Enhanced validation feedback in web interface
+
+### Fixed
+
+- **Code Quality Improvements**
+  - Fixed linting issues across codebase
+  - Improved code consistency and style
+  - Repository structure cleanup
 
 ## [0.1.4] - 2025-12-25
 
@@ -102,7 +315,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `examples/07_ab_testing.rb` - Complete working example
     - `spec/ab_testing/ab_test_spec.rb` - Comprehensive test coverage
     - `spec/ab_testing/ab_test_manager_spec.rb` - Manager test coverage
-    - `wiki/AB_TESTING.md` - Complete documentation guide
+    - `docs/AB_TESTING.md` - Complete documentation guide
   - **Usage Example:**
     ```ruby
     # Create test
@@ -131,7 +344,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Aim for 95% confidence level for significance
     - Monitor both variants for errors and edge cases
   - **Documentation:**
-    - See `wiki/AB_TESTING.md` for complete guide
+    - See `docs/AB_TESTING.md` for complete guide
     - See `examples/07_ab_testing.rb` for working example
 
 ### Fixed
@@ -205,7 +418,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `spec/monitoring/storage/memory_adapter_spec.rb` - Memory adapter tests (13 examples)
     - `docs/PERSISTENT_MONITORING.md` - 400+ line comprehensive guide
     - `examples/06_persistent_monitoring.rb` - Complete working example
-    - `wiki/PERSISTENT_STORAGE.md` - Implementation summary
+    - `docs/PERSISTENT_STORAGE.md` - Implementation summary
   - **Files Modified:**
     - `lib/decision_agent/monitoring/metrics_collector.rb` - Added storage adapter support
     - `lib/generators/decision_agent/install/install_generator.rb` - Added `--monitoring` flag
@@ -274,7 +487,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Optional opt-in via `--monitoring` generator flag
   - **Documentation:**
     - `docs/PERSISTENT_MONITORING.md` - Installation, schema, configuration, performance tuning
-    - `wiki/PERSISTENT_STORAGE.md` - Implementation details, architecture decisions, migration guide
+    - `docs/PERSISTENT_STORAGE.md` - Implementation details, architecture decisions, migration guide
     - `examples/06_persistent_monitoring.rb` - 10 comprehensive examples with output
   - **Impact:**
     - Dashboard automatically queries persistent data when available
@@ -312,7 +525,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `lib/decision_agent/agent.rb:3` - Added require statement
     - `lib/decision_agent/agent.rb:141-146` - Replaced custom implementation with RFC 8785
     - `README.md:209-222` - Added RFC 8785 documentation section
-    - `wiki/THREAD_SAFETY.md:252-302` - Added RFC 8785 implementation details
+    - `docs/THREAD_SAFETY.md:252-302` - Added RFC 8785 implementation details
   - **Testing:**
     - Added 13 new RFC 8785 compliance tests (`spec/rfc8785_canonicalization_spec.rb`)
     - All 46 core tests passing (agent + thread-safety + RFC 8785)

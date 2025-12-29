@@ -25,6 +25,8 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies
   spec.add_dependency "json-canonicalization", "~> 1.0"
+  spec.add_dependency "roo", "~> 2.10"
+  spec.add_dependency "rubyzip", "< 3.0.0" # Restrict to 2.x to avoid RubyZip 3.0 API changes
   spec.add_dependency "sinatra", "~> 3.0"
 
   # Optional dependencies for Rails integration
