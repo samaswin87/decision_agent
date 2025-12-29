@@ -1,6 +1,24 @@
 require "spec_helper"
 
 RSpec.describe "Audit Adapters" do
+  describe DecisionAgent::Audit::Adapter do
+    it "raises NotImplementedError when record is called" do
+      adapter = DecisionAgent::Audit::Adapter.new
+      decision = DecisionAgent::Decision.new(
+        decision: "approve",
+        confidence: 0.8,
+        explanations: [],
+        evaluations: [],
+        audit_payload: {}
+      )
+      context = DecisionAgent::Context.new({ user: "alice" })
+
+      expect do
+        adapter.record(decision, context)
+      end.to raise_error(NotImplementedError, /Subclasses must implement #record/)
+    end
+  end
+
   describe DecisionAgent::Audit::NullAdapter do
     it "implements record method without side effects" do
       adapter = DecisionAgent::Audit::NullAdapter.new

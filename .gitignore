@@ -38,3 +38,4 @@
 file::memory:?cache=shared
 file::memory:?cache=shared-shm
 file::memory:?cache=shared-wal
+versions

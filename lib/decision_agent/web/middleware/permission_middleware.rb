@@ -58,7 +58,7 @@ module DecisionAgent
           if path.match?(%r{/api/(\w+)})
             # Simple singularize: remove trailing 's'
             word = $1
-            word.end_with?("s") ? word[0..-2] : word
+            word&.end_with?("s") ? word[0..-2] : word
           end
         end
 

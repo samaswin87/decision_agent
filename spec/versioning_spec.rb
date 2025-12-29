@@ -186,6 +186,119 @@ RSpec.describe "DecisionAgent Versioning System" do
         expect(comparison).to be_nil
       end
     end
+
+    describe "#delete_version" do
+      it "deletes a version and removes it from index" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
+        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        # Delete v1 (draft, not active)
+        result = adapter.delete_version(version_id: v1[:id])
+        expect(result).to be true
+
+        # Verify it's deleted
+        expect(adapter.get_version(version_id: v1[:id])).to be_nil
+      end
+
+      it "raises error when trying to delete active version" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        expect do
+          adapter.delete_version(version_id: v1[:id])
+        end.to raise_error(DecisionAgent::ValidationError, /Cannot delete active version/)
+      end
+
+      it "raises error for nonexistent version" do
+        expect do
+          adapter.delete_version(version_id: "nonexistent")
+        end.to raise_error(DecisionAgent::NotFoundError)
+      end
+
+      it "handles file already deleted" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
+        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        # Delete the file manually
+        rule_dir = File.join(adapter.storage_path, rule_id)
+        filename = "#{v1[:version_number]}.json"
+        filepath = File.join(rule_dir, filename)
+        File.delete(filepath) if File.exist?(filepath)
+
+        # Should handle gracefully
+        result = adapter.delete_version(version_id: v1[:id])
+        expect(result).to be false
+      end
+    end
+
+    describe "index management" do
+      it "loads index on initialization" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        # Create new adapter instance - should load index
+        new_adapter = DecisionAgent::Versioning::FileStorageAdapter.new(storage_path: temp_dir)
+
+        # Should be able to find version using index
+        found = new_adapter.get_version(version_id: v1[:id])
+        expect(found).not_to be_nil
+      end
+
+      it "handles corrupted JSON files in index loading" do
+        # Create a corrupted JSON file
+        rule_dir = File.join(temp_dir, rule_id)
+        FileUtils.mkdir_p(rule_dir)
+        corrupted_file = File.join(rule_dir, "1.json")
+        File.write(corrupted_file, "invalid json content{")
+
+        # Should handle gracefully and skip corrupted files
+        expect do
+          _new_adapter = DecisionAgent::Versioning::FileStorageAdapter.new(storage_path: temp_dir)
+        end.not_to raise_error
+      end
+
+      it "updates index when creating versions" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        # Index should be updated
+        found = adapter.get_version(version_id: v1[:id])
+        expect(found).not_to be_nil
+      end
+
+      it "removes from index when deleting versions" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
+        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        version_id = v1[:id]
+        adapter.delete_version(version_id: version_id)
+
+        # Should not find in index
+        expect(adapter.get_version(version_id: version_id)).to be_nil
+      end
+    end
+
+    describe "filename sanitization" do
+      it "sanitizes special characters in rule_id" do
+        special_rule_id = "rule/with\\special:chars*?"
+        version = adapter.create_version(rule_id: special_rule_id, content: rule_content)
+
+        # Should create valid filename
+        expect(version[:rule_id]).to eq(special_rule_id)
+
+        # Should be able to retrieve it
+        found = adapter.get_version(version_id: version[:id])
+        expect(found).not_to be_nil
+      end
+    end
+
+    describe "error handling" do
+      it "handles update_version_status_unsafe with invalid status" do
+        v1 = adapter.create_version(rule_id: rule_id, content: rule_content)
+
+        # Try to update with invalid status via reflection (testing private method behavior)
+        expect do
+          adapter.send(:update_version_status_unsafe, v1[:id], "invalid_status", rule_id)
+        end.to raise_error(DecisionAgent::ValidationError, /Invalid status/)
+      end
+    end
   end
 
   describe DecisionAgent::Versioning::VersionManager do

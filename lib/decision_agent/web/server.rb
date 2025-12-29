@@ -1112,8 +1112,7 @@ module DecisionAgent
 
       def require_authentication!
         unless @current_user
-          status 401
-          return { error: "Authentication required" }.to_json
+          halt 401, { error: "Authentication required" }.to_json
         end
       end
 

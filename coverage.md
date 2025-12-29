@@ -1,16 +1,16 @@
 # Code Coverage Report
 
-**Last Updated:** 2025-12-29 19:57:25
+**Last Updated:** 2025-12-29 21:14:51
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| **Total Coverage** | **31.34%** |
-| Total Files | 57 |
-| Total Relevant Lines | 3417 |
-| Lines Covered | 1071 |
-| Lines Missed | 2346 |
+| **Total Coverage** | **28.81%** |
+| Total Files | 56 |
+| Total Relevant Lines | 3051 |
+| Lines Covered | 879 |
+| Lines Missed | 2172 |
 
 > **Note:** This report excludes files in the `examples/` directory as they are sample code, not production code.
 
@@ -18,7 +18,7 @@
 
 | File | Coverage | Lines Covered | Lines Missed | Total Lines |
 |------|----------|---------------|--------------|-------------|
-| `lib/decision_agent.rb` | ✅ 100.0% | 51 | 0 | 51 |
+| `lib/decision_agent.rb` | ⚠️ 89.39% | 59 | 7 | 66 |
 | `lib/decision_agent/ab_testing/ab_test.rb` | ❌ 28.92% | 24 | 59 | 83 |
 | `lib/decision_agent/ab_testing/ab_test_assignment.rb` | ❌ 32.14% | 9 | 19 | 28 |
 | `lib/decision_agent/ab_testing/ab_test_manager.rb` | ❌ 21.64% | 29 | 105 | 134 |
@@ -29,16 +29,18 @@
 | `lib/decision_agent/audit/adapter.rb` | ⚠️ 80.0% | 4 | 1 | 5 |
 | `lib/decision_agent/audit/logger_adapter.rb` | ❌ 66.67% | 8 | 4 | 12 |
 | `lib/decision_agent/audit/null_adapter.rb` | ✅ 100.0% | 4 | 0 | 4 |
-| `lib/decision_agent/auth/access_audit_logger.rb` | ❌ 51.85% | 28 | 26 | 54 |
-| `lib/decision_agent/auth/authenticator.rb` | ⚠️ 84.0% | 63 | 12 | 75 |
-| `lib/decision_agent/auth/password_reset_manager.rb` | ⚠️ 82.86% | 29 | 6 | 35 |
-| `lib/decision_agent/auth/password_reset_token.rb` | ⚠️ 87.5% | 14 | 2 | 16 |
+| `lib/decision_agent/auth/access_audit_logger.rb` | ❌ 38.89% | 21 | 33 | 54 |
+| `lib/decision_agent/auth/authenticator.rb` | ❌ 28.0% | 21 | 54 | 75 |
+| `lib/decision_agent/auth/password_reset_manager.rb` | ❌ 31.43% | 11 | 24 | 35 |
+| `lib/decision_agent/auth/password_reset_token.rb` | ❌ 56.25% | 9 | 7 | 16 |
 | `lib/decision_agent/auth/permission.rb` | ⚠️ 72.73% | 8 | 3 | 11 |
-| `lib/decision_agent/auth/permission_checker.rb` | ❌ 36.84% | 7 | 12 | 19 |
+| `lib/decision_agent/auth/permission_checker.rb` | ❌ 50.0% | 12 | 12 | 24 |
+| `lib/decision_agent/auth/rbac_adapter.rb` | ❌ 25.38% | 33 | 97 | 130 |
+| `lib/decision_agent/auth/rbac_config.rb` | ❌ 50.0% | 12 | 12 | 24 |
 | `lib/decision_agent/auth/role.rb` | ❌ 52.63% | 10 | 9 | 19 |
-| `lib/decision_agent/auth/session.rb` | ⚠️ 81.25% | 13 | 3 | 16 |
-| `lib/decision_agent/auth/session_manager.rb` | ⚠️ 77.14% | 27 | 8 | 35 |
-| `lib/decision_agent/auth/user.rb` | ⚠️ 71.79% | 28 | 11 | 39 |
+| `lib/decision_agent/auth/session.rb` | ❌ 56.25% | 9 | 7 | 16 |
+| `lib/decision_agent/auth/session_manager.rb` | ❌ 31.43% | 11 | 24 | 35 |
+| `lib/decision_agent/auth/user.rb` | ❌ 38.46% | 15 | 24 | 39 |
 | `lib/decision_agent/context.rb` | ❌ 52.38% | 11 | 10 | 21 |
 | `lib/decision_agent/decision.rb` | ❌ 36.0% | 9 | 16 | 25 |
 | `lib/decision_agent/dsl/condition_evaluator.rb` | ❌ 11.3% | 20 | 157 | 177 |
@@ -72,9 +74,6 @@
 | `lib/decision_agent/versioning/adapter.rb` | ❌ 45.16% | 14 | 17 | 31 |
 | `lib/decision_agent/versioning/file_storage_adapter.rb` | ❌ 24.29% | 34 | 106 | 140 |
 | `lib/decision_agent/versioning/version_manager.rb` | ❌ 42.5% | 17 | 23 | 40 |
-| `lib/decision_agent/web/middleware/auth_middleware.rb` | ❌ 36.0% | 9 | 16 | 25 |
-| `lib/decision_agent/web/middleware/permission_middleware.rb` | ❌ 34.21% | 13 | 25 | 38 |
-| `lib/decision_agent/web/server.rb` | ❌ 25.79% | 123 | 354 | 477 |
 
 ## Coverage Status
 

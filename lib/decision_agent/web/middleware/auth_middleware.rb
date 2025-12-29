@@ -35,7 +35,8 @@ module DecisionAgent
           end
 
           # Check session cookie
-          request.cookies["decision_agent_session"]
+          cookie_token = request.cookies["decision_agent_session"]
+          return cookie_token if cookie_token
 
           # Check query parameter (less secure, but useful for some cases)
           request.params["token"]

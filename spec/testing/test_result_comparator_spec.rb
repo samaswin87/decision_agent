@@ -88,6 +88,156 @@ RSpec.describe DecisionAgent::Testing::TestResultComparator do
       expect(summary[:confidence_accuracy]).to eq(1.0)
     end
 
+    it "handles fuzzy matching" do
+      comparator_fuzzy = DecisionAgent::Testing::TestResultComparator.new(fuzzy_match: true)
+
+      scenarios_fuzzy = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: "APPROVE", # Uppercase
+          expected_confidence: 0.95
+        )
+      ]
+
+      results_fuzzy = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve", # Lowercase - should match with fuzzy
+          confidence: 0.95
+        )
+      ]
+
+      summary = comparator_fuzzy.compare(results_fuzzy, scenarios_fuzzy)
+      expect(summary[:matches]).to eq(1)
+    end
+
+    it "handles fuzzy matching with whitespace" do
+      comparator_fuzzy = DecisionAgent::Testing::TestResultComparator.new(fuzzy_match: true)
+
+      scenarios_fuzzy = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: " approve ", # With spaces
+          expected_confidence: 0.95
+        )
+      ]
+
+      results_fuzzy = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve", # Without spaces - should match with fuzzy
+          confidence: 0.95
+        )
+      ]
+
+      summary = comparator_fuzzy.compare(results_fuzzy, scenarios_fuzzy)
+      expect(summary[:matches]).to eq(1)
+    end
+
+    it "handles nil expected confidence" do
+      scenarios_nil_conf = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: "approve",
+          expected_confidence: nil
+        )
+      ]
+
+      results_nil_conf = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          confidence: 0.95
+        )
+      ]
+
+      summary = comparator.compare(results_nil_conf, scenarios_nil_conf)
+      expect(summary[:matches]).to eq(1)
+    end
+
+    it "handles nil actual confidence when expected is present" do
+      scenarios_with_conf = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: "approve",
+          expected_confidence: 0.95
+        )
+      ]
+
+      results_no_conf = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          confidence: nil
+        )
+      ]
+
+      summary = comparator.compare(results_no_conf, scenarios_with_conf)
+      expect(summary[:matches]).to eq(0)
+      expect(summary[:mismatches]).to eq(1)
+    end
+
+    it "handles missing results for scenarios" do
+      scenarios_missing = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: "approve",
+          expected_confidence: 0.95
+        ),
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_2",
+          context: { user_id: 456 },
+          expected_decision: "reject",
+          expected_confidence: 0.80
+        )
+      ]
+
+      # Only provide result for test_1
+      results_missing = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          confidence: 0.95
+        )
+      ]
+
+      summary = comparator.compare(results_missing, scenarios_missing)
+      # Should only compare test_1 since test_2 has no result
+      expect(summary[:total]).to eq(1)
+    end
+
+    it "handles confidence outside tolerance" do
+      comparator_strict = DecisionAgent::Testing::TestResultComparator.new(
+        confidence_tolerance: 0.01
+      )
+
+      scenarios_strict = [
+        DecisionAgent::Testing::TestScenario.new(
+          id: "test_1",
+          context: { user_id: 123 },
+          expected_decision: "approve",
+          expected_confidence: 0.95
+        )
+      ]
+
+      results_outside = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          confidence: 0.98 # Outside 0.01 tolerance
+        )
+      ]
+
+      summary = comparator_strict.compare(results_outside, scenarios_strict)
+      expect(summary[:matches]).to eq(0)
+      expect(summary[:confidence_accuracy]).to eq(0.0)
+    end
+
     it "handles missing expected results" do
       scenarios_no_expected = [
         DecisionAgent::Testing::TestScenario.new(
@@ -193,6 +343,50 @@ RSpec.describe DecisionAgent::Testing::TestResultComparator do
       expect(content["summary"]["total"]).to eq(1)
 
       file.unlink
+    end
+
+    it "handles empty comparison results" do
+      file = Tempfile.new(["comparison", ".csv"])
+      comparator.export_csv(file.path)
+
+      content = File.read(file.path)
+      expect(content).to include("scenario_id")
+
+      file.unlink
+    end
+  end
+
+  describe "ComparisonResult" do
+    let(:comparison_result) do
+      DecisionAgent::Testing::ComparisonResult.new(
+        scenario_id: "test_1",
+        match: true,
+        decision_match: true,
+        confidence_match: true,
+        differences: [],
+        actual: { decision: "approve", confidence: 0.95 },
+        expected: { decision: "approve", confidence: 0.95 }
+      )
+    end
+
+    it "creates a comparison result" do
+      expect(comparison_result.scenario_id).to eq("test_1")
+      expect(comparison_result.match).to be true
+      expect(comparison_result.decision_match).to be true
+      expect(comparison_result.confidence_match).to be true
+    end
+
+    it "converts to hash" do
+      hash = comparison_result.to_h
+
+      expect(hash[:scenario_id]).to eq("test_1")
+      expect(hash[:match]).to be true
+      expect(hash[:actual][:decision]).to eq("approve")
+      expect(hash[:expected][:decision]).to eq("approve")
+    end
+
+    it "freezes the comparison result" do
+      expect(comparison_result.frozen?).to be true
     end
   end
 end

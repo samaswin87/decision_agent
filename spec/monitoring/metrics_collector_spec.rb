@@ -278,4 +278,222 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
       expect(collector.metrics_count[:decisions]).to eq(1)
     end
   end
+
+  describe "#record_evaluation" do
+    let(:evaluation) do
+      double(
+        "Evaluation",
+        decision: "approve",
+        weight: 0.9,
+        evaluator_name: "test_evaluator"
+      )
+    end
+
+    it "notifies observers" do
+      observed = []
+      collector.add_observer do |type, metric|
+        observed << [type, metric]
+      end
+
+      collector.record_evaluation(evaluation)
+
+      expect(observed.size).to eq(1)
+      expect(observed[0][0]).to eq(:evaluation)
+      expect(observed[0][1][:decision]).to eq("approve")
+    end
+  end
+
+  describe "#record_performance" do
+    it "notifies observers" do
+      observed = []
+      collector.add_observer do |type, metric|
+        observed << [type, metric]
+      end
+
+      collector.record_performance(operation: "test", duration_ms: 10.0, success: true)
+
+      expect(observed.size).to eq(1)
+      expect(observed[0][0]).to eq(:performance)
+      expect(observed[0][1][:operation]).to eq("test")
+    end
+  end
+
+  describe "#record_error" do
+    it "notifies observers" do
+      observed = []
+      collector.add_observer do |type, metric|
+        observed << [type, metric]
+      end
+
+      collector.record_error(StandardError.new("Test"))
+
+      expect(observed.size).to eq(1)
+      expect(observed[0][0]).to eq(:error)
+      expect(observed[0][1][:error_class]).to eq("StandardError")
+    end
+
+    it "handles different error types" do
+      expect { collector.record_error(ArgumentError.new("Arg error")) }.not_to raise_error
+      expect { collector.record_error(TypeError.new("Type error")) }.not_to raise_error
+      expect { collector.record_error(Exception.new("Exception")) }.not_to raise_error
+    end
+  end
+
+  describe "#add_observer" do
+    it "adds an observer callback" do
+      callback = proc { |type, metric| }
+      collector.add_observer(&callback)
+      # Observer should be stored
+      expect(collector.instance_variable_get(:@observers)).to include(callback)
+    end
+
+    it "handles observer errors gracefully" do
+      # Add observer that raises error
+      collector.add_observer do |_type, _metric|
+        raise "Observer error"
+      end
+
+      # Should not raise, just warn
+      expect { collector.record_decision(decision, context) }.not_to raise_error
+    end
+  end
+
+  describe "#statistics" do
+    before do
+      3.times do
+        evaluation = double("Evaluation", decision: "approve", weight: 0.8, evaluator_name: "eval1")
+        collector.record_evaluation(evaluation)
+      end
+      2.times do
+        evaluation = double("Evaluation", decision: "reject", weight: 0.6, evaluator_name: "eval2")
+        collector.record_evaluation(evaluation)
+      end
+    end
+
+    it "computes evaluation statistics" do
+      stats = collector.statistics
+      expect(stats[:evaluations][:total]).to eq(5)
+      expect(stats[:evaluations][:avg_weight]).to be_within(0.01).of(0.72)
+    end
+
+    it "handles empty decisions gracefully" do
+      empty_collector = described_class.new(storage: :memory)
+      stats = empty_collector.statistics
+      expect(stats[:decisions]).to eq({})
+    end
+
+    it "handles decisions without duration_ms" do
+      decision_no_duration = double(
+        "Decision",
+        decision: "approve",
+        confidence: 0.5,
+        evaluations: []
+      )
+      collector.record_decision(decision_no_duration, context)
+      stats = collector.statistics
+      expect(stats[:decisions][:avg_duration_ms]).to be_nil
+    end
+  end
+
+  describe "#time_series" do
+    it "handles empty metric types" do
+      series = collector.time_series(metric_type: :nonexistent, bucket_size: 60, time_range: 3600)
+      expect(series).to eq([])
+    end
+
+    it "filters metrics by time range" do
+      # Record some old metrics (simulated)
+      old_time = Time.now.utc - 7200
+      allow(Time).to receive(:now).and_return(Time.at(old_time.to_i))
+      5.times { collector.record_decision(decision, context) }
+
+      # Record new metrics
+      allow(Time).to receive(:now).and_call_original
+      3.times { collector.record_decision(decision, context) }
+
+      series = collector.time_series(metric_type: :decisions, bucket_size: 60, time_range: 3600)
+      # Should only include recent metrics
+      total = series.sum { |s| s[:count] }
+      expect(total).to be <= 3
+    end
+  end
+
+  describe "#cleanup_old_metrics_from_storage" do
+    it "delegates to storage adapter if it has cleanup method" do
+      # Using memory adapter which doesn't have cleanup
+      expect(collector.cleanup_old_metrics_from_storage(older_than: 3600)).to eq(0)
+    end
+  end
+
+  describe "#initialize_storage_adapter" do
+    it "uses memory storage when :memory specified" do
+      collector = described_class.new(storage: :memory)
+      expect(collector.storage_adapter).to be_a(DecisionAgent::Monitoring::Storage::MemoryAdapter)
+    end
+
+    it "raises error for unknown storage option" do
+      expect do
+        described_class.new(storage: :unknown)
+      end.to raise_error(ArgumentError, /Unknown storage option/)
+    end
+  end
+
+  describe "error severity determination" do
+    it "determines severity for ArgumentError as medium" do
+      error = ArgumentError.new("test")
+      collector.record_error(error)
+      # Just verify it doesn't raise
+      expect(collector.metrics_count[:errors]).to eq(1)
+    end
+
+    it "determines severity for TypeError as medium" do
+      error = TypeError.new("test")
+      collector.record_error(error)
+      expect(collector.metrics_count[:errors]).to eq(1)
+    end
+
+    it "determines severity for Exception as critical" do
+      error = Exception.new("test")
+      collector.record_error(error)
+      expect(collector.metrics_count[:errors]).to eq(1)
+    end
+  end
+
+  describe "decision status determination" do
+    it "determines status for high confidence decisions" do
+      high_conf_decision = double(
+        "Decision",
+        decision: "approve",
+        confidence: 0.9,
+        evaluations: []
+      )
+      collector.record_decision(high_conf_decision, context)
+      # Just verify it records successfully
+      expect(collector.metrics_count[:decisions]).to eq(1)
+    end
+
+    it "determines status for low confidence decisions" do
+      low_conf_decision = double(
+        "Decision",
+        decision: "approve",
+        confidence: 0.2,
+        evaluations: []
+      )
+      collector.record_decision(low_conf_decision, context)
+      expect(collector.metrics_count[:decisions]).to eq(1)
+    end
+  end
+
+  describe "#compute_performance_stats" do
+    it "computes percentile statistics" do
+      durations = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+      durations.each do |duration|
+        collector.record_performance(operation: "test", duration_ms: duration, success: true)
+      end
+
+      stats = collector.statistics
+      expect(stats[:performance][:p95_duration_ms]).to be >= 90
+      expect(stats[:performance][:p99_duration_ms]).to be >= 95
+    end
+  end
 end

@@ -104,6 +104,71 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
       expect(report.coverage_percentage).to be <= 1.0
     end
 
+    it "handles agent with evaluators that have rules method" do
+      evaluator_with_rules = double("EvaluatorWithRules", 
+                                     evaluate: nil,
+                                     rules: ["rule_1", "rule_2"])
+      agent_with_rules = DecisionAgent::Agent.new(evaluators: [evaluator_with_rules])
+
+      report = analyzer.analyze([], agent_with_rules)
+      expect(report.total_rules).to be >= 2
+    end
+
+    it "handles agent with evaluators that have rule_id method" do
+      evaluator_with_rule_id = double("EvaluatorWithRuleId",
+                                       evaluate: nil,
+                                       rule_id: "my_rule_1")
+      agent_with_rule_id = DecisionAgent::Agent.new(evaluators: [evaluator_with_rule_id])
+
+      report = analyzer.analyze([], agent_with_rule_id)
+      expect(report.total_rules).to be >= 1
+    end
+
+    it "handles agent with evaluators that have conditions method" do
+      evaluator_with_conditions = double("EvaluatorWithConditions",
+                                          evaluate: nil,
+                                          conditions: ["condition_1", "condition_2"])
+      agent_with_conditions = DecisionAgent::Agent.new(evaluators: [evaluator_with_conditions])
+
+      report = analyzer.analyze([], agent_with_conditions)
+      expect(report.condition_coverage).to be_an(Array)
+    end
+
+    it "handles agent with evaluators that have condition_id method" do
+      evaluator_with_condition_id = double("EvaluatorWithConditionId",
+                                            evaluate: nil,
+                                            condition_id: "my_condition_1")
+      agent_with_condition_id = DecisionAgent::Agent.new(evaluators: [evaluator_with_condition_id])
+
+      report = analyzer.analyze([], agent_with_condition_id)
+      expect(report.condition_coverage).to be_an(Array)
+    end
+
+    it "caps coverage percentage at 1.0" do
+      # Create a scenario where coverage could exceed 1.0
+      evaluator1 = DecisionAgent::Evaluators::StaticEvaluator.new(decision: "approve", weight: 1.0)
+      single_agent = DecisionAgent::Agent.new(evaluators: [evaluator1])
+
+      results_with_metadata = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          evaluations: [
+            DecisionAgent::Evaluation.new(
+              decision: "approve",
+              weight: 1.0,
+              reason: "Test",
+              evaluator_name: evaluator1.class.name,
+              metadata: { rule_id: "rule_1" }
+            )
+          ]
+        )
+      ]
+
+      report = analyzer.analyze(results_with_metadata, single_agent)
+      expect(report.coverage_percentage).to be <= 1.0
+    end
+
     it "handles results without agent" do
       report = analyzer.analyze(results, nil)
 
@@ -130,10 +195,59 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
 
       expect(report.covered_rules).to eq(0)
     end
+
+    it "handles evaluations without metadata" do
+      results_no_metadata = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          evaluations: [
+            DecisionAgent::Evaluation.new(
+              decision: "approve",
+              weight: 1.0,
+              reason: "Test",
+              evaluator_name: "TestEvaluator"
+              # No metadata
+            )
+          ]
+        )
+      ]
+
+      report = analyzer.analyze(results_no_metadata, agent)
+      expect(report).to be_a(DecisionAgent::Testing::CoverageReport)
+    end
+
+    it "handles evaluations with evaluator_name as rule identifier" do
+      results_eval_name = [
+        DecisionAgent::Testing::TestResult.new(
+          scenario_id: "test_1",
+          decision: "approve",
+          evaluations: [
+            DecisionAgent::Evaluation.new(
+              decision: "approve",
+              weight: 1.0,
+              reason: "Test",
+              evaluator_name: "MyEvaluator"
+              # No metadata, should use evaluator_name
+            )
+          ]
+        )
+      ]
+
+      report = analyzer.analyze(results_eval_name, agent)
+      expect(report.covered_rules).to be >= 0
+    end
   end
 
   describe "#coverage_percentage" do
     it "returns 0.0 when no rules executed" do
+      expect(analyzer.coverage_percentage).to eq(0.0)
+    end
+
+    it "returns 0.0 when rule_evaluation_count is empty" do
+      analyzer.instance_variable_set(:@executed_rules, Set.new(["rule_1"]))
+      analyzer.instance_variable_set(:@rule_evaluation_count, {})
+
       expect(analyzer.coverage_percentage).to eq(0.0)
     end
   end

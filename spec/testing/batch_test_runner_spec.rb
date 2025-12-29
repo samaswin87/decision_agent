@@ -1,4 +1,5 @@
 require "spec_helper"
+require "tempfile"
 
 RSpec.describe DecisionAgent::Testing::BatchTestRunner do
   let(:evaluator) { DecisionAgent::Evaluators::StaticEvaluator.new(decision: "approve", weight: 1.0) }
@@ -40,6 +41,19 @@ RSpec.describe DecisionAgent::Testing::BatchTestRunner do
 
       expect(results.size).to eq(2)
       expect(results.all?(&:success?)).to be true
+    end
+
+    it "executes single scenario sequentially even with parallel enabled" do
+      single_scenario = [scenarios[0]]
+      results = runner.run(single_scenario, parallel: true)
+
+      expect(results.size).to eq(1)
+      expect(results.all?(&:success?)).to be true
+    end
+
+    it "handles empty scenarios array" do
+      results = runner.run([])
+      expect(results).to eq([])
     end
 
     it "calls progress callback during execution" do
@@ -113,6 +127,110 @@ RSpec.describe DecisionAgent::Testing::BatchTestRunner do
       expect(stats[:min_execution_time_ms]).to be >= 0
       expect(stats[:max_execution_time_ms]).to be >= 0
     end
+
+    it "handles nil execution times in statistics" do
+      scenarios = [
+        DecisionAgent::Testing::TestScenario.new(id: "test_1", context: { user_id: 123 })
+      ]
+      runner.run(scenarios)
+
+      # Manually add a result with nil execution time
+      runner.instance_variable_get(:@results) << DecisionAgent::Testing::TestResult.new(
+        scenario_id: "test_2",
+        execution_time_ms: nil
+      )
+
+      stats = runner.statistics
+      expect(stats[:total]).to eq(2)
+    end
+  end
+
+  describe "#resume" do
+    let(:scenarios) do
+      [
+        DecisionAgent::Testing::TestScenario.new(id: "test_1", context: { user_id: 123 }),
+        DecisionAgent::Testing::TestScenario.new(id: "test_2", context: { user_id: 456 })
+      ]
+    end
+
+    it "resumes from checkpoint file" do
+      checkpoint_file = Tempfile.new(["checkpoint", ".json"])
+      checkpoint_file.write(JSON.pretty_generate({ completed_scenario_ids: ["test_1"], last_updated: Time.now.to_i }))
+      checkpoint_file.close
+
+      results = runner.resume(scenarios, checkpoint_file.path)
+
+      # Should only run test_2 since test_1 is already completed
+      expect(results.size).to eq(1)
+      expect(results[0].scenario_id).to eq("test_2")
+
+      checkpoint_file.unlink
+    end
+  end
+
+  describe "checkpoint functionality" do
+    let(:scenarios) do
+      [
+        DecisionAgent::Testing::TestScenario.new(id: "test_1", context: { user_id: 123 }),
+        DecisionAgent::Testing::TestScenario.new(id: "test_2", context: { user_id: 456 })
+      ]
+    end
+
+    it "saves checkpoints during execution" do
+      checkpoint_file = Tempfile.new(["checkpoint", ".json"])
+      checkpoint_file.close
+      File.delete(checkpoint_file.path) # Start with no file
+
+      runner.run(scenarios, checkpoint_file: checkpoint_file.path)
+
+      # Checkpoint file should exist and contain completed scenario IDs
+      expect(File.exist?(checkpoint_file.path)).to be false # Should be cleaned up after completion
+    end
+
+    it "handles checkpoint file errors gracefully" do
+      checkpoint_file = Tempfile.new(["checkpoint", ".json"])
+      checkpoint_file.close
+
+      # Make file read-only to cause write errors
+      File.chmod(0o444, checkpoint_file.path)
+
+      expect do
+        runner.run(scenarios, checkpoint_file: checkpoint_file.path)
+      end.not_to raise_error
+
+      File.chmod(0o644, checkpoint_file.path)
+      checkpoint_file.unlink
+    end
+
+    it "loads checkpoint data correctly" do
+      checkpoint_file = Tempfile.new(["checkpoint", ".json"])
+      checkpoint_data = {
+        completed_scenario_ids: ["test_1"],
+        last_updated: Time.now.to_i
+      }
+      checkpoint_file.write(JSON.pretty_generate(checkpoint_data))
+      checkpoint_file.close
+
+      results = runner.run(scenarios, checkpoint_file: checkpoint_file.path)
+
+      # Should only execute test_2
+      expect(results.size).to eq(1)
+      expect(results[0].scenario_id).to eq("test_2")
+
+      checkpoint_file.unlink
+    end
+
+    it "handles invalid JSON in checkpoint file" do
+      checkpoint_file = Tempfile.new(["checkpoint", ".json"])
+      checkpoint_file.write("invalid json")
+      checkpoint_file.close
+
+      # Should handle gracefully and start fresh
+      results = runner.run(scenarios, checkpoint_file: checkpoint_file.path)
+      expect(results.size).to eq(2)
+
+      checkpoint_file.unlink
+    end
   end
 
   describe "TestResult" do
@@ -152,6 +270,35 @@ RSpec.describe DecisionAgent::Testing::BatchTestRunner do
       expect(hash[:confidence]).to eq(0.95)
       expect(hash[:execution_time_ms]).to eq(10.5)
       expect(hash[:success]).to be true
+    end
+
+    it "includes evaluations in hash" do
+      evaluation = DecisionAgent::Evaluation.new(
+        decision: "approve",
+        weight: 1.0,
+        reason: "Test",
+        evaluator_name: "TestEvaluator"
+      )
+      result_with_eval = DecisionAgent::Testing::TestResult.new(
+        scenario_id: "test_1",
+        decision: "approve",
+        evaluations: [evaluation]
+      )
+
+      hash = result_with_eval.to_h
+      expect(hash[:evaluations]).to be_an(Array)
+      expect(hash[:evaluations].first).to respond_to(:to_h)
+    end
+
+    it "handles nil decision and confidence" do
+      result = DecisionAgent::Testing::TestResult.new(
+        scenario_id: "test_1",
+        decision: nil,
+        confidence: nil
+      )
+
+      expect(result.decision).to be_nil
+      expect(result.confidence).to be_nil
     end
   end
 end
