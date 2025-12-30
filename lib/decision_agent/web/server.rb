@@ -1160,9 +1160,10 @@ module DecisionAgent
             )
           rescue StandardError
             # If logging fails, continue with permission denial
+          ensure
+            content_type :json
+            halt 403, { error: "Permission denied: #{permission}" }.to_json
           end
-          content_type :json
-          halt 403, { error: "Permission denied: #{permission}" }.to_json
         end
 
         begin
