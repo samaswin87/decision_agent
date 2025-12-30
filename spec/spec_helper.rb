@@ -15,6 +15,9 @@ rescue LoadError
   # ActiveRecord is optional - tests will be skipped if not available
 end
 
+# Store original value for cleanup
+$original_disable_webui_permissions = nil
+
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
@@ -34,4 +37,18 @@ RSpec.configure do |config|
 
   config.order = :random
   Kernel.srand config.seed
+
+  # Ensure permissions are enabled for tests
+  config.before(:suite) do
+    $original_disable_webui_permissions = ENV["DISABLE_WEBUI_PERMISSIONS"]
+    ENV["DISABLE_WEBUI_PERMISSIONS"] = "false"
+  end
+
+  config.after(:suite) do
+    if $original_disable_webui_permissions
+      ENV["DISABLE_WEBUI_PERMISSIONS"] = $original_disable_webui_permissions
+    else
+      ENV.delete("DISABLE_WEBUI_PERMISSIONS")
+    end
+  end
 end

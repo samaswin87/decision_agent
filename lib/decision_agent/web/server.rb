@@ -100,25 +100,37 @@ module DecisionAgent
 
       # Main page - serve the rule builder UI
       get "/" do
-        # Read the HTML file
-        html_content = File.read(File.join(settings.public_folder, "index.html"))
-        
-        # Determine the base path from the request
-        # When mounted in Rails, request.script_name contains the mount path
-        base_path = request.script_name.empty? ? "./" : "#{request.script_name}/"
-        
-        # Inject or update base tag
-        base_tag = "<base href=\"#{base_path}\">"
-        if html_content.include?("<base")
-          # Replace existing base tag
-          html_content = html_content.sub(/<base[^>]*>/, base_tag)
-        else
-          # Insert base tag after <head>
-          html_content = html_content.sub(/<head>/, "<head>\n    #{base_tag}")
+        begin
+          # Read the HTML file
+          html_file = File.join(settings.public_folder, "index.html")
+          unless File.exist?(html_file)
+            status 404
+            return "Index page not found"
+          end
+          
+          html_content = File.read(html_file, encoding: "UTF-8")
+          
+          # Determine the base path from the request
+          # When mounted in Rails, request.script_name contains the mount path
+          base_path = request.script_name.empty? ? "./" : "#{request.script_name}/"
+          
+          # Inject or update base tag
+          base_tag = "<base href=\"#{base_path}\">"
+          if html_content.include?("<base")
+            # Replace existing base tag
+            html_content = html_content.sub(/<base[^>]*>/, base_tag)
+          else
+            # Insert base tag after <head>
+            html_content = html_content.sub(/<head>/, "<head>\n    #{base_tag}")
+          end
+          
+          content_type "text/html"
+          html_content
+        rescue StandardError => e
+          status 500
+          content_type "text/html"
+          "Error loading page: #{e.message}"
         end
-        
-        content_type "text/html"
-        html_content
       end
 
       # Serve static assets explicitly (needed when mounted in Rails)
@@ -1176,14 +1188,15 @@ module DecisionAgent
       end
 
       def require_permission!(permission, resource = nil)
+        # Always require authentication first
+        require_authentication!
+        
         # Skip permission checks if disabled via environment variable
         # Useful for development environments
-        # Check this FIRST before requiring authentication
+        # This allows authenticated users to bypass permission checks
         if permissions_disabled?
           return true
         end
-        
-        require_authentication!
         
         checker = self.class.permission_checker
         unless checker.can?(@current_user, permission, resource)
