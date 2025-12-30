@@ -6,10 +6,12 @@ module DecisionAgent
   class Agent
     attr_reader :evaluators, :scoring_strategy, :audit_adapter
 
-    def initialize(evaluators:, scoring_strategy: nil, audit_adapter: nil)
+    def initialize(evaluators:, scoring_strategy: nil, audit_adapter: nil, validate_evaluations: nil)
       @evaluators = Array(evaluators)
       @scoring_strategy = scoring_strategy || Scoring::WeightedAverage.new
       @audit_adapter = audit_adapter || Audit::NullAdapter.new
+      # Default to validating in development, skip in production for performance
+      @validate_evaluations = validate_evaluations.nil? ? (ENV["RAILS_ENV"] != "production") : validate_evaluations
 
       validate_configuration!
 
@@ -24,8 +26,8 @@ module DecisionAgent
 
       raise NoEvaluationsError if evaluations.empty?
 
-      # Validate all evaluations for correctness and thread-safety
-      EvaluationValidator.validate_all!(evaluations)
+      # Validate all evaluations for correctness and thread-safety (optional for performance)
+      EvaluationValidator.validate_all!(evaluations) if @validate_evaluations
 
       scored_result = @scoring_strategy.score(evaluations)
 

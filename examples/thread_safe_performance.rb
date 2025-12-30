@@ -54,7 +54,8 @@ rules = {
 }
 
 evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+# Disable validation for maximum performance in benchmarks
+agent = DecisionAgent::Agent.new(evaluators: [evaluator], validate_evaluations: false)
 
 # Test data - various scenarios
 test_contexts = [

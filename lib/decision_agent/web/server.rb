@@ -100,7 +100,36 @@ module DecisionAgent
 
       # Main page - serve the rule builder UI
       get "/" do
-        send_file File.join(settings.public_folder, "index.html")
+        # Read the HTML file
+        html_content = File.read(File.join(settings.public_folder, "index.html"))
+        
+        # Determine the base path from the request
+        # When mounted in Rails, request.script_name contains the mount path
+        base_path = request.script_name.empty? ? "./" : "#{request.script_name}/"
+        
+        # Inject or update base tag
+        base_tag = "<base href=\"#{base_path}\">"
+        if html_content.include?("<base")
+          # Replace existing base tag
+          html_content = html_content.sub(/<base[^>]*>/, base_tag)
+        else
+          # Insert base tag after <head>
+          html_content = html_content.sub(/<head>/, "<head>\n    #{base_tag}")
+        end
+        
+        content_type "text/html"
+        html_content
+      end
+
+      # Serve static assets explicitly (needed when mounted in Rails)
+      get "/styles.css" do
+        content_type "text/css"
+        send_file File.join(settings.public_folder, "styles.css")
+      end
+
+      get "/app.js" do
+        content_type "application/javascript"
+        send_file File.join(settings.public_folder, "app.js")
       end
 
       # API: Validate rules

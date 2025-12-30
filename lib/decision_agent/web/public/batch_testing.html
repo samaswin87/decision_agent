@@ -299,6 +299,41 @@
     </div>
 
     <script>
+        // Helper function to get the base path for API calls
+        function getBasePath() {
+            const baseTag = document.querySelector('base');
+            if (baseTag && baseTag.href) {
+                try {
+                    const baseUrl = new URL(baseTag.href, window.location.href);
+                    let path = baseUrl.pathname;
+                    if (path && !path.endsWith('/')) {
+                        path += '/';
+                    }
+                    return path;
+                } catch (e) {
+                    if (baseTag.href.startsWith('/')) {
+                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
+                        if (match && match[2]) {
+                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
+                        }
+                    } else if (baseTag.href.startsWith('./')) {
+                        const pathname = window.location.pathname;
+                        return pathname.substring(0, pathname.lastIndexOf('/') + 1);
+                    }
+                }
+            }
+            const pathname = window.location.pathname;
+            if (pathname.includes('/decision_agent')) {
+                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
+                if (match) {
+                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
+                }
+            }
+            const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+            return dirPath || '/';
+        }
+
+        const basePath = getBasePath();
         let currentTestId = null;
         let currentScenarios = null;
 
@@ -341,7 +376,7 @@
             progressFill.style.width = '0%';
             progressText.textContent = 'Uploading...';
 
-            fetch('/api/testing/batch/import', {
+            fetch(`${basePath}api/testing/batch/import`, {
                 method: 'POST',
                 body: formData
             })
@@ -393,7 +428,7 @@
             const rulesJson = document.getElementById('rulesJson').value;
             try {
                 JSON.parse(rulesJson);
-                fetch('/api/validate', {
+                fetch(`${basePath}api/validate`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(JSON.parse(rulesJson))
@@ -446,7 +481,7 @@
                 thread_count: parseInt(document.getElementById('threadCount').value) || 4
             };
 
-            fetch('/api/testing/batch/run', {
+            fetch(`${basePath}api/testing/batch/run`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -477,7 +512,7 @@
 
         // Load results
         function loadResults(testId) {
-            fetch(`/api/testing/batch/${testId}/results`)
+            fetch(`${basePath}api/testing/batch/${testId}/results`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
@@ -565,7 +600,7 @@
 
         // Load coverage
         function loadCoverage(testId) {
-            fetch(`/api/testing/batch/${testId}/coverage`)
+            fetch(`${basePath}api/testing/batch/${testId}/coverage`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {

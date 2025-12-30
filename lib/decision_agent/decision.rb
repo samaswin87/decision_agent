@@ -40,14 +40,21 @@ module DecisionAgent
     end
 
     def deep_freeze(obj)
+      return obj if obj.frozen?
+
       case obj
       when Hash
-        obj.transform_values { |v| deep_freeze(v) }.freeze
-      when Array
-        obj.map { |v| deep_freeze(v) }.freeze
-      else
+        obj.each_value { |v| deep_freeze(v) }
         obj.freeze
+      when Array
+        obj.each { |v| deep_freeze(v) }
+        obj.freeze
+      when String, Symbol, Numeric, TrueClass, FalseClass, NilClass
+        obj.freeze
+      else
+        obj.freeze if obj.respond_to?(:freeze)
       end
+      obj
     end
   end
 end

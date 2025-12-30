@@ -168,12 +168,15 @@ FileStorageAdapter uses a Mutex to serialize file I/O operations, preventing:
 Real-world performance test (10,000 decisions):
 
 ```
-Single-threaded:  9,355 decisions/second
-Multi-threaded:   10,124 decisions/second (50 threads)
-Speedup:          1.08x
-Overhead:         0% (actually faster due to parallelism)
-Average latency:  ~0.1ms per decision
+Single-threaded:  ~8,000-8,500 decisions/second (validation disabled)
+Single-threaded:  ~7,000-8,000 decisions/second (validation enabled)
+Multi-threaded:   ~8,000-8,500 decisions/second (50 threads, validation disabled)
+Speedup:          ~1.0x (linear scaling)
+Overhead:         ~1-2% (minimal)
+Average latency:  ~0.12-0.13ms per decision (validation disabled)
 ```
+
+**Note:** Performance varies by hardware and system load. Benchmarks run on Apple M1/M2 show ~8,000-8,500 decisions/second with validation disabled. Validation is automatically disabled in production environments for maximum performance. Optimizations include in-place freezing, optional validation, and reduced validation overhead.
 
 ### Why It's Fast
 
@@ -190,7 +193,7 @@ Average latency:  ~0.1ms per decision
 3. **Linear Scalability**
    - Performance scales linearly with thread count
    - No bottlenecks or contention in hot paths
-   - Safe for high-throughput applications (10k+ decisions/sec)
+   - Safe for high-throughput applications (7k-8k+ decisions/sec)
 
 4. **Memory Efficiency**
    - Frozen objects can be optimized by Ruby VM

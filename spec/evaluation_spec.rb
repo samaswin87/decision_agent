@@ -89,6 +89,67 @@ RSpec.describe DecisionAgent::Evaluation do
       expect(evaluation.metadata[:nested][:data]).to be_frozen
     end
 
+    it "freezes metadata in-place without creating new objects" do
+      original_metadata = { key: "value", nested: { data: [1, 2, 3] } }
+      original_metadata_id = original_metadata.object_id
+      original_nested_id = original_metadata[:nested].object_id
+
+      evaluation = described_class.new(
+        decision: "approve",
+        weight: 0.8,
+        reason: "Test",
+        evaluator_name: "Test",
+        metadata: original_metadata
+      )
+
+      # Should freeze in-place, not create new objects
+      expect(evaluation.metadata.object_id).to eq(original_metadata_id)
+      expect(evaluation.metadata[:nested].object_id).to eq(original_nested_id)
+      expect(evaluation.metadata).to be_frozen
+      expect(evaluation.metadata[:nested]).to be_frozen
+    end
+
+    it "skips already frozen objects in deep_freeze" do
+      frozen_metadata = { key: "value", nested: { data: [1, 2, 3] } }
+      frozen_metadata.freeze
+      frozen_metadata[:nested].freeze
+
+      evaluation = described_class.new(
+        decision: "approve",
+        weight: 0.8,
+        reason: "Test",
+        evaluator_name: "Test",
+        metadata: frozen_metadata
+      )
+
+      expect(evaluation.metadata).to be_frozen
+      expect(evaluation.metadata[:nested]).to be_frozen
+    end
+
+    it "does not freeze hash keys unnecessarily" do
+      key_symbol = :test_key
+      key_string = "test_key"
+      metadata = {
+        key_symbol => "value1",
+        key_string => "value2"
+      }
+
+      evaluation = described_class.new(
+        decision: "approve",
+        weight: 0.8,
+        reason: "Test",
+        evaluator_name: "Test",
+        metadata: metadata
+      )
+
+      # Keys should not be frozen (they're typically symbols/strings that don't need freezing)
+      expect(evaluation.metadata.keys.first).to eq(key_symbol)
+      expect(evaluation.metadata.keys.last).to eq(key_string)
+      # Values should be frozen
+      expect(evaluation.metadata[key_symbol]).to be_frozen
+      expect(evaluation.metadata[key_string]).to be_frozen
+    end
+
     it "raises error for weight outside 0-1 range" do
       expect do
         described_class.new(

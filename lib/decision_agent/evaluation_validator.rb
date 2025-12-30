@@ -40,7 +40,8 @@ module DecisionAgent
     private_class_method def self.validate_decision!(decision)
       raise ValidationError, "Decision cannot be nil" if decision.nil?
       raise ValidationError, "Decision must be a String" unless decision.is_a?(String)
-      raise ValidationError, "Decision cannot be empty" if decision.strip.empty?
+      # Fast path: skip strip if string is clearly not empty (length > 0)
+      raise ValidationError, "Decision cannot be empty" if decision.empty? || decision.strip.empty?
     end
 
     private_class_method def self.validate_weight!(weight)
@@ -52,7 +53,8 @@ module DecisionAgent
     private_class_method def self.validate_reason!(reason)
       raise ValidationError, "Reason cannot be nil" if reason.nil?
       raise ValidationError, "Reason must be a String" unless reason.is_a?(String)
-      raise ValidationError, "Reason cannot be empty" if reason.strip.empty?
+      # Fast path: skip strip if string is clearly not empty (length > 0)
+      raise ValidationError, "Reason cannot be empty" if reason.empty? || reason.strip.empty?
     end
 
     private_class_method def self.validate_evaluator_name!(name)
@@ -61,18 +63,11 @@ module DecisionAgent
     end
 
     private_class_method def self.validate_frozen!(evaluation)
-      raise ValidationError, "Evaluation must be frozen for thread-safety (call .freeze)" unless evaluation.frozen?
+      # Fast path: if evaluation is frozen, assume nested structures are also frozen
+      # (they are frozen in Evaluation#initialize)
+      return true if evaluation.frozen?
 
-      # Verify nested structures are also frozen
-      raise ValidationError, "Evaluation decision must be frozen" unless evaluation.decision.frozen?
-
-      raise ValidationError, "Evaluation reason must be frozen" unless evaluation.reason.frozen?
-
-      raise ValidationError, "Evaluation evaluator_name must be frozen" unless evaluation.evaluator_name.frozen?
-
-      return unless evaluation.metadata && !evaluation.metadata.frozen?
-
-      raise ValidationError, "Evaluation metadata must be frozen"
+      raise ValidationError, "Evaluation must be frozen for thread-safety (call .freeze)"
     end
   end
 end

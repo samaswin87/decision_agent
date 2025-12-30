@@ -107,6 +107,72 @@ RSpec.describe DecisionAgent::Decision do
       expect(decision.audit_payload[:metadata]).to be_frozen
     end
 
+    it "freezes audit payload in-place without creating new objects" do
+      original_payload = {
+        context: { user: "test" },
+        metadata: [1, 2, 3]
+      }
+      original_payload_id = original_payload.object_id
+      original_context_id = original_payload[:context].object_id
+
+      decision = described_class.new(
+        decision: "approve",
+        confidence: 0.8,
+        explanations: [],
+        evaluations: [evaluation],
+        audit_payload: original_payload
+      )
+
+      # Should freeze in-place, not create new objects
+      expect(decision.audit_payload.object_id).to eq(original_payload_id)
+      expect(decision.audit_payload[:context].object_id).to eq(original_context_id)
+      expect(decision.audit_payload).to be_frozen
+      expect(decision.audit_payload[:context]).to be_frozen
+    end
+
+    it "skips already frozen objects in deep_freeze" do
+      frozen_payload = {
+        context: { user: "test" }
+      }
+      frozen_payload.freeze
+      frozen_payload[:context].freeze
+
+      decision = described_class.new(
+        decision: "approve",
+        confidence: 0.8,
+        explanations: [],
+        evaluations: [evaluation],
+        audit_payload: frozen_payload
+      )
+
+      expect(decision.audit_payload).to be_frozen
+      expect(decision.audit_payload[:context]).to be_frozen
+    end
+
+    it "does not freeze hash keys unnecessarily" do
+      key_symbol = :test_key
+      key_string = "test_key"
+      payload = {
+        key_symbol => "value1",
+        key_string => "value2"
+      }
+
+      decision = described_class.new(
+        decision: "approve",
+        confidence: 0.8,
+        explanations: [],
+        evaluations: [evaluation],
+        audit_payload: payload
+      )
+
+      # Keys should not be frozen (they're typically symbols/strings that don't need freezing)
+      expect(decision.audit_payload.keys.first).to eq(key_symbol)
+      expect(decision.audit_payload.keys.last).to eq(key_string)
+      # Values should be frozen
+      expect(decision.audit_payload[key_symbol]).to be_frozen
+      expect(decision.audit_payload[key_string]).to be_frozen
+    end
+
     it "raises error for confidence outside 0-1 range" do
       expect do
         described_class.new(

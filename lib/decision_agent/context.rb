@@ -3,7 +3,9 @@ module DecisionAgent
     attr_reader :data
 
     def initialize(data)
-      @data = deep_freeze(data.is_a?(Hash) ? data : {})
+      # Create a deep copy before freezing to avoid mutating the original
+      data_hash = data.is_a?(Hash) ? data : {}
+      @data = deep_freeze(deep_dup(data_hash))
     end
 
     def [](key)
@@ -28,15 +30,33 @@ module DecisionAgent
 
     private
 
-    def deep_freeze(obj)
+    def deep_dup(obj)
       case obj
       when Hash
-        obj.transform_values { |v| deep_freeze(v) }.freeze
+        obj.transform_values { |v| deep_dup(v) }
       when Array
-        obj.map { |v| deep_freeze(v) }.freeze
+        obj.map { |v| deep_dup(v) }
       else
-        obj.freeze
+        obj
       end
+    end
+
+    def deep_freeze(obj)
+      return obj if obj.frozen?
+
+      case obj
+      when Hash
+        obj.each_value { |v| deep_freeze(v) }
+        obj.freeze
+      when Array
+        obj.each { |v| deep_freeze(v) }
+        obj.freeze
+      when String, Symbol, Numeric, TrueClass, FalseClass, NilClass
+        obj.freeze
+      else
+        obj.freeze if obj.respond_to?(:freeze)
+      end
+      obj
     end
   end
 end

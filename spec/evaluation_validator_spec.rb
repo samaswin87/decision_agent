@@ -111,4 +111,55 @@ RSpec.describe DecisionAgent::EvaluationValidator do
       end.to raise_error(described_class::ValidationError, /index 1/)
     end
   end
+
+  describe "optimized frozen validation" do
+    it "uses fast path for frozen evaluations" do
+      # Evaluations are always frozen in their initializer
+      evaluation = DecisionAgent::Evaluation.new(
+        decision: "approve",
+        weight: 0.8,
+        reason: "Test reason",
+        evaluator_name: "TestEvaluator"
+      )
+
+      expect(evaluation).to be_frozen
+      expect do
+        described_class.validate!(evaluation)
+      end.not_to raise_error
+    end
+
+    it "skips nested frozen checks when evaluation is frozen" do
+      # Since evaluations are always frozen in initializer,
+      # the optimized validator should skip checking nested structures
+      evaluation = DecisionAgent::Evaluation.new(
+        decision: "approve",
+        weight: 0.8,
+        reason: "Test reason",
+        evaluator_name: "TestEvaluator",
+        metadata: { nested: { data: "value" } }
+      )
+
+      expect(evaluation).to be_frozen
+      expect(evaluation.metadata).to be_frozen
+      expect do
+        described_class.validate!(evaluation)
+      end.not_to raise_error
+    end
+
+    it "still validates unfrozen evaluations" do
+      # Create a mock object that isn't frozen (simulating an edge case)
+      # In practice, evaluations are always frozen in their initializer
+      unfrozen_evaluation = double("UnfrozenEvaluation")
+      allow(unfrozen_evaluation).to receive(:frozen?).and_return(false)
+      allow(unfrozen_evaluation).to receive(:is_a?).with(DecisionAgent::Evaluation).and_return(true)
+      allow(unfrozen_evaluation).to receive(:decision).and_return("approve")
+      allow(unfrozen_evaluation).to receive(:weight).and_return(0.8)
+      allow(unfrozen_evaluation).to receive(:reason).and_return("Test reason")
+      allow(unfrozen_evaluation).to receive(:evaluator_name).and_return("TestEvaluator")
+
+      expect do
+        described_class.validate!(unfrozen_evaluation)
+      end.to raise_error(described_class::ValidationError, /must be frozen/)
+    end
+  end
 end

@@ -340,6 +340,41 @@
     </div>
 
     <script>
+        // Helper function to get the base path for API calls
+        function getBasePath() {
+            const baseTag = document.querySelector('base');
+            if (baseTag && baseTag.href) {
+                try {
+                    const baseUrl = new URL(baseTag.href, window.location.href);
+                    let path = baseUrl.pathname;
+                    if (path && !path.endsWith('/')) {
+                        path += '/';
+                    }
+                    return path;
+                } catch (e) {
+                    if (baseTag.href.startsWith('/')) {
+                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
+                        if (match && match[2]) {
+                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
+                        }
+                    } else if (baseTag.href.startsWith('./')) {
+                        const pathname = window.location.pathname;
+                        return pathname.substring(0, pathname.lastIndexOf('/') + 1);
+                    }
+                }
+            }
+            const pathname = window.location.pathname;
+            if (pathname.includes('/decision_agent')) {
+                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
+                if (match) {
+                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
+                }
+            }
+            const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+            return dirPath || '/';
+        }
+
+        const basePath = getBasePath();
         let currentUser = null;
         let allRoles = [];
         let users = [];
@@ -361,7 +396,7 @@
         async function loadCurrentUser() {
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/auth/me', {
+                const response = await fetch(`${basePath}api/auth/me`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -395,7 +430,7 @@
         async function loadRoles() {
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/auth/roles', {
+                const response = await fetch(`${basePath}api/auth/roles`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -427,7 +462,7 @@
         async function loadUsers() {
             try {
                 const token = localStorage.getItem('auth_token');
-                const response = await fetch('/api/auth/users', {
+                const response = await fetch(`${basePath}api/auth/users`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
@@ -576,7 +611,7 @@
                     showAlert('User roles updated successfully!', 'success');
                 } else {
                     // Create new user
-                    const response = await fetch('/api/auth/users', {
+                    const response = await fetch(`${basePath}api/auth/users`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -627,7 +662,7 @@
         function logout() {
             const token = localStorage.getItem('auth_token');
             if (token) {
-                fetch('/api/auth/logout', {
+                fetch(`${basePath}api/auth/logout`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`

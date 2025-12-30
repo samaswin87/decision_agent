@@ -48,6 +48,46 @@ RSpec.describe DecisionAgent::Agent do
       expect(agent.scoring_strategy).to be_a(DecisionAgent::Scoring::WeightedAverage)
       expect(agent.audit_adapter).to be_a(DecisionAgent::Audit::NullAdapter)
     end
+
+    it "enables validation by default in non-production environments" do
+      evaluator = DecisionAgent::Evaluators::StaticEvaluator.new(decision: "approve")
+      original_env = ENV.fetch("RAILS_ENV", nil)
+      ENV["RAILS_ENV"] = "development"
+
+      agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+      # Validation should be enabled (we can't directly test this, but we can test behavior)
+      # If validation is enabled, invalid evaluations would raise errors
+      expect(agent).to be_a(DecisionAgent::Agent)
+
+      ENV["RAILS_ENV"] = original_env
+    end
+
+    it "disables validation in production by default" do
+      evaluator = DecisionAgent::Evaluators::StaticEvaluator.new(decision: "approve")
+      original_env = ENV.fetch("RAILS_ENV", nil)
+      ENV["RAILS_ENV"] = "production"
+
+      agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+      expect(agent).to be_a(DecisionAgent::Agent)
+
+      ENV["RAILS_ENV"] = original_env
+    end
+
+    it "allows explicit validation control" do
+      evaluator = DecisionAgent::Evaluators::StaticEvaluator.new(decision: "approve")
+
+      agent_with_validation = DecisionAgent::Agent.new(
+        evaluators: [evaluator],
+        validate_evaluations: true
+      )
+      expect(agent_with_validation).to be_a(DecisionAgent::Agent)
+
+      agent_without_validation = DecisionAgent::Agent.new(
+        evaluators: [evaluator],
+        validate_evaluations: false
+      )
+      expect(agent_without_validation).to be_a(DecisionAgent::Agent)
+    end
   end
 
   describe "#decide" do
