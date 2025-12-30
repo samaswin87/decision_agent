@@ -115,7 +115,7 @@ RSpec.describe DecisionAgent::Auth::PasswordResetManager do
 
     it "reflects deletions" do
       token1 = manager.create_token("user123")
-      token2 = manager.create_token("user123")
+      manager.create_token("user123")
       expect(manager.count).to eq(2)
 
       manager.delete_token(token1.token)
@@ -292,4 +292,3 @@ RSpec.describe DecisionAgent::Auth::User do
     end
   end
 end
-

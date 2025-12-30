@@ -62,4 +62,3 @@ RSpec.describe DecisionAgent::ABTesting::Storage::Adapter do
     end
   end
 end
-

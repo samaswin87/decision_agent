@@ -12,9 +12,8 @@ module DecisionAgent
       end
 
       def require_permission!(user, permission, resource = nil)
-        unless can?(user, permission, resource)
-          raise PermissionDeniedError, "User does not have permission: #{permission}"
-        end
+        raise PermissionDeniedError, "User does not have permission: #{permission}" unless can?(user, permission, resource)
+
         true
       end
 
@@ -23,9 +22,8 @@ module DecisionAgent
       end
 
       def require_role!(user, role)
-        unless has_role?(user, role)
-          raise PermissionDeniedError, "User does not have role: #{role}"
-        end
+        raise PermissionDeniedError, "User does not have role: #{role}" unless has_role?(user, role)
+
         true
       end
 
@@ -43,4 +41,3 @@ module DecisionAgent
     end
   end
 end
-

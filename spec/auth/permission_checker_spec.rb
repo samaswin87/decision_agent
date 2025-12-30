@@ -205,4 +205,3 @@ RSpec.describe DecisionAgent::Auth::PermissionChecker do
     end
   end
 end
-

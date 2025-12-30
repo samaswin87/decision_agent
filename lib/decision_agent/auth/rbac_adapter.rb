@@ -25,6 +25,7 @@ module DecisionAgent
       # @return [Boolean] true if user is active, false otherwise
       def active?(user)
         return false unless user
+
         # Default implementation - can be overridden
         user.respond_to?(:active?) ? user.active? : true
       end
@@ -34,6 +35,7 @@ module DecisionAgent
       # @return [String, Integer] User identifier
       def user_id(user)
         return nil unless user
+
         user.respond_to?(:id) ? user.id : user.to_s
       end
 
@@ -42,13 +44,14 @@ module DecisionAgent
       # @return [String, nil] User email
       def user_email(user)
         return nil unless user
+
         user.respond_to?(:email) ? user.email : nil
       end
     end
 
     # Default adapter using the built-in User/Role/Permission system
     class DefaultAdapter < RbacAdapter
-      def can?(user, permission, resource = nil)
+      def can?(user, permission, _resource = nil)
         return false unless user
         return false unless active?(user)
 
@@ -61,12 +64,14 @@ module DecisionAgent
 
       def has_role?(user, role)
         return false unless user
+
         roles = extract_roles(user)
         roles.include?(role.to_sym)
       end
 
       def active?(user)
         return false unless user
+
         user.respond_to?(:active) ? user.active : true
       end
 
@@ -86,6 +91,7 @@ module DecisionAgent
     # Adapter for Devise + CanCanCan integration
     class DeviseCanCanAdapter < RbacAdapter
       def initialize(ability_class: nil)
+        super()
         @ability_class = ability_class
       end
 
@@ -124,6 +130,7 @@ module DecisionAgent
 
       def active?(user)
         return false unless user
+
         # Devise typically uses active_for_authentication? or active?
         if user.respond_to?(:active_for_authentication?)
           user.active_for_authentication?
@@ -158,7 +165,7 @@ module DecisionAgent
         return false unless active?(user)
 
         # Pundit uses policy classes
-        if resource && resource.respond_to?(:policy_class)
+        if resource.respond_to?(:policy_class)
           policy = resource.policy_class.new(user, resource)
           action = map_permission_to_action(permission)
           policy.respond_to?(action) && policy.public_send(action)
@@ -216,6 +223,7 @@ module DecisionAgent
         user_id_proc: nil,
         user_email_proc: nil
       )
+        super()
         @can_proc = can_proc
         @has_role_proc = has_role_proc
         @active_proc = active_proc
@@ -227,21 +235,17 @@ module DecisionAgent
         return false unless user
         return false unless active?(user)
 
-        if @can_proc
-          @can_proc.call(user, permission, resource)
-        else
-          raise NotImplementedError, "CustomAdapter requires can_proc to be provided"
-        end
+        raise NotImplementedError, "CustomAdapter requires can_proc to be provided" unless @can_proc
+
+        @can_proc.call(user, permission, resource)
       end
 
       def has_role?(user, role)
         return false unless user
 
-        if @has_role_proc
-          @has_role_proc.call(user, role)
-        else
-          raise NotImplementedError, "CustomAdapter requires has_role_proc to be provided"
-        end
+        raise NotImplementedError, "CustomAdapter requires has_role_proc to be provided" unless @has_role_proc
+
+        @has_role_proc.call(user, role)
       end
 
       def active?(user)
@@ -272,4 +276,3 @@ module DecisionAgent
     end
   end
 end
-

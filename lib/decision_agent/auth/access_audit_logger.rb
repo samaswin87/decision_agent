@@ -71,6 +71,7 @@ module DecisionAgent
 
     class InMemoryAccessAdapter < AccessAdapter
       def initialize
+        super
         @logs = []
         @mutex = Mutex.new
       end
@@ -85,13 +86,9 @@ module DecisionAgent
         @mutex.synchronize do
           results = @logs.dup
 
-          if filters[:user_id]
-            results.select! { |log| log[:user_id] == filters[:user_id] }
-          end
+          results.select! { |log| log[:user_id] == filters[:user_id] } if filters[:user_id]
 
-          if filters[:event_type]
-            results.select! { |log| log[:event_type] == filters[:event_type].to_s }
-          end
+          results.select! { |log| log[:event_type] == filters[:event_type].to_s } if filters[:event_type]
 
           if filters[:start_time]
             start_time = filters[:start_time].is_a?(String) ? Time.parse(filters[:start_time]) : filters[:start_time]
@@ -103,9 +100,7 @@ module DecisionAgent
             results.select! { |log| Time.parse(log[:timestamp]) <= end_time }
           end
 
-          if filters[:limit]
-            results = results.last(filters[:limit])
-          end
+          results = results.last(filters[:limit]) if filters[:limit]
 
           results.reverse # Most recent first
         end
@@ -125,4 +120,3 @@ module DecisionAgent
     end
   end
 end
-

@@ -30,9 +30,7 @@ module DecisionAgent
         def extract_token(request)
           # Check Authorization header: Bearer <token>
           auth_header = request.get_header("HTTP_AUTHORIZATION")
-          if auth_header && auth_header.start_with?("Bearer ")
-            return auth_header[7..-1]
-          end
+          return auth_header[7..] if auth_header&.start_with?("Bearer ")
 
           # Check session cookie
           cookie_token = request.cookies["decision_agent_session"]
@@ -45,4 +43,3 @@ module DecisionAgent
     end
   end
 end
-

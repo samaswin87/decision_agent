@@ -59,4 +59,3 @@ RSpec.describe DecisionAgent::Monitoring::Storage::BaseAdapter do
     end
   end
 end
-

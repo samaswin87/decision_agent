@@ -172,7 +172,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::DecisionLog).to receive(:create!).and_raise(StandardError.new("DB error"))
+      allow(DecisionLog).to receive(:create!).and_raise(StandardError.new("DB error"))
       expect do
         adapter.record_decision("test", {})
       end.not_to raise_error
@@ -200,7 +200,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::EvaluationMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
+      allow(EvaluationMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
       expect do
         adapter.record_evaluation("test")
       end.not_to raise_error
@@ -225,7 +225,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::PerformanceMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
+      allow(PerformanceMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
       expect do
         adapter.record_performance("test")
       end.not_to raise_error
@@ -258,7 +258,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::ErrorMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
+      allow(ErrorMetric).to receive(:create!).and_raise(StandardError.new("DB error"))
       expect do
         adapter.record_error("test")
       end.not_to raise_error
@@ -334,7 +334,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::DecisionLog).to receive(:recent).and_raise(StandardError.new("DB error"))
+      allow(DecisionLog).to receive(:recent).and_raise(StandardError.new("DB error"))
       stats = adapter.statistics(time_range: 3600)
 
       expect(stats[:decisions][:total]).to eq(0)
@@ -420,7 +420,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::DecisionLog).to receive(:recent).and_raise(StandardError.new("DB error"))
+      allow(DecisionLog).to receive(:recent).and_raise(StandardError.new("DB error"))
       series = adapter.time_series(:decisions, bucket_size: 60, time_range: 200)
 
       expect(series[:timestamps]).to eq([])
@@ -446,7 +446,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::DecisionLog).to receive(:count).and_raise(StandardError.new("DB error"))
+      allow(DecisionLog).to receive(:count).and_raise(StandardError.new("DB error"))
       counts = adapter.metrics_count
 
       expect(counts[:decisions]).to eq(0)
@@ -483,7 +483,7 @@ RSpec.describe DecisionAgent::Monitoring::Storage::ActiveRecordAdapter do
     end
 
     it "handles database errors gracefully" do
-      allow(::DecisionLog).to receive(:where).and_raise(StandardError.new("DB error"))
+      allow(DecisionLog).to receive(:where).and_raise(StandardError.new("DB error"))
       count = adapter.cleanup(older_than: 7.days.to_i)
 
       expect(count).to eq(0)

@@ -8,6 +8,7 @@ AllCops:
     - 'coverage/**/*'
     - 'versions/**/*'
     - 'grafana/**/*'
+    - 'examples/**/*'
 
 # Style preferences
 Style/StringLiterals:
@@ -27,6 +28,8 @@ Metrics/MethodLength:
     - 'spec/**/*'
     - 'examples/**/*'
     - 'bin/**/*'
+    - 'lib/decision_agent/versioning/file_storage_adapter.rb'
+    - 'scripts/generate_coverage_report.rb'
 
 Metrics/BlockLength:
   Max: 99
@@ -51,6 +54,7 @@ Metrics/AbcSize:
     - 'spec/**/*'
     - 'examples/**/*'
     - 'bin/**/*'
+    - 'lib/decision_agent/versioning/file_storage_adapter.rb'
 
 # Layout
 Layout/LineLength:
@@ -79,6 +83,7 @@ Naming/VariableNumber:
 Naming/PredicatePrefix:
   Exclude:
     - 'lib/decision_agent/dsl/schema_validator.rb'
+    - 'lib/decision_agent/auth/**/*'
 
 Naming/PredicateMethod:
   Exclude:
@@ -89,6 +94,7 @@ Naming/PredicateMethod:
     - 'lib/decision_agent/monitoring/metrics_collector.rb'
     - 'lib/decision_agent/monitoring/alert_manager.rb'
     - 'lib/decision_agent/evaluation_validator.rb'
+    - 'lib/decision_agent/auth/**/*'
 
 # Complexity metrics for main library code
 Metrics/CyclomaticComplexity:
@@ -102,6 +108,7 @@ Metrics/PerceivedComplexity:
   Exclude:
     - 'spec/**/*'
     - 'examples/**/*'
+    - 'lib/decision_agent/versioning/file_storage_adapter.rb'
 
 # Gemspec configuration
 Gemspec/DevelopmentDependencies:

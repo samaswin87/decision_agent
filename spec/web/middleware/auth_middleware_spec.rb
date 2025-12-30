@@ -7,7 +7,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
 
   let(:authenticator) { double("Authenticator") }
   let(:access_audit_logger) { double("AccessAuditLogger") }
-  let(:app) { ->(env) { [200, {}, ["OK"]] } }
+  let(:app) { ->(_env) { [200, {}, ["OK"]] } }
   let(:middleware) { described_class.new(app, authenticator: authenticator, access_audit_logger: access_audit_logger) }
 
   describe "#initialize" do
@@ -33,7 +33,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
         allow(authenticator).to receive(:authenticate).with("token123").and_return(auth_result)
 
         env = Rack::MockRequest.env_for("/", "HTTP_AUTHORIZATION" => "Bearer token123")
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to eq(user)
@@ -42,7 +42,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
 
       it "handles missing Bearer prefix" do
         env = Rack::MockRequest.env_for("/", "HTTP_AUTHORIZATION" => "token123")
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to be_nil
@@ -62,7 +62,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
         allow(request).to receive(:cookies).and_return("decision_agent_session" => "cookie_token")
         allow(Rack::Request).to receive(:new).and_return(request)
 
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to eq(user)
@@ -78,7 +78,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
         allow(authenticator).to receive(:authenticate).with("query_token").and_return(auth_result)
 
         env = Rack::MockRequest.env_for("/?token=query_token")
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to eq(user)
@@ -88,7 +88,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
     context "without token" do
       it "calls app without setting user" do
         env = Rack::MockRequest.env_for("/")
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to be_nil
@@ -101,7 +101,7 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
         allow(authenticator).to receive(:authenticate).with("invalid_token").and_return(nil)
 
         env = Rack::MockRequest.env_for("/", "HTTP_AUTHORIZATION" => "Bearer invalid_token")
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
         expect(env["decision_agent.user"]).to be_nil
@@ -124,11 +124,10 @@ RSpec.describe DecisionAgent::Web::Middleware::AuthMiddleware do
         allow(request).to receive(:cookies).and_return("decision_agent_session" => "cookie_token")
         allow(Rack::Request).to receive(:new).and_return(request)
 
-        status, headers, body = middleware.call(env)
+        middleware.call(env)
 
         expect(env["decision_agent.user"]).to eq(user_header)
       end
     end
   end
 end
-

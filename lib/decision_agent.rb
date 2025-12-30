@@ -79,7 +79,7 @@ module DecisionAgent
     #   DecisionAgent.configure_rbac(:custom) do |config|
     #     config.adapter = MyCustomAdapter.new
     #   end
-    def configure_rbac(adapter_type = nil, **options, &block)
+    def configure_rbac(adapter_type = nil, **options)
       if block_given?
         yield @rbac_config
       elsif adapter_type
@@ -94,8 +94,6 @@ module DecisionAgent
     end
 
     # Set a custom permission checker
-    def permission_checker=(checker)
-      @permission_checker = checker
-    end
+    attr_writer :permission_checker
   end
 end

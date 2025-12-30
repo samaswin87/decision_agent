@@ -393,7 +393,7 @@ RSpec.describe DecisionAgent::ABTesting::ABTestManager do
       # Should have enough data for statistical significance
       expect(results[:champion][:decisions_recorded]).to be >= 30
       expect(results[:challenger][:decisions_recorded]).to be >= 30
-      expect(["significant", "not_significant"]).to include(results[:comparison][:statistical_significance])
+      expect(%w[significant not_significant]).to include(results[:comparison][:statistical_significance])
     end
 
     it "calculates different confidence levels based on t-statistic" do
@@ -427,7 +427,7 @@ RSpec.describe DecisionAgent::ABTesting::ABTestManager do
       end
 
       results = manager.get_results(test.id)
-      expect(["champion", "challenger", "inconclusive"]).to include(results[:comparison][:winner])
+      expect(%w[champion challenger inconclusive]).to include(results[:comparison][:winner])
     end
 
     it "generates appropriate recommendations" do

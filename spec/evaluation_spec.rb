@@ -301,4 +301,3 @@ RSpec.describe DecisionAgent::Evaluation do
     end
   end
 end
-

@@ -26,6 +26,7 @@ module DecisionAgent
 
       def authenticate(password)
         return false unless @active
+
         BCrypt::Password.new(@password_hash) == password
       end
 
@@ -67,4 +68,3 @@ module DecisionAgent
     end
   end
 end
-

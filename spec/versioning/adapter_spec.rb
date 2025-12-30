@@ -154,4 +154,3 @@ RSpec.describe DecisionAgent::Versioning::Adapter do
     end
   end
 end
-

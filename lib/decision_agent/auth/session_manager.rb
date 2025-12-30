@@ -1,5 +1,3 @@
-require "thread"
-
 module DecisionAgent
   module Auth
     class SessionManager
@@ -24,6 +22,7 @@ module DecisionAgent
           session = @sessions[token]
           return nil unless session
           return nil if session.expired?
+
           session
         end
       end
@@ -56,4 +55,3 @@ module DecisionAgent
     end
   end
 end
-

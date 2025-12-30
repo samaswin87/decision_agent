@@ -49,4 +49,3 @@ RSpec.describe DecisionAgent::Auth::Role do
     end
   end
 end
-

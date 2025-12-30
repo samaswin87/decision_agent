@@ -125,7 +125,7 @@ RSpec.describe DecisionAgent::Auth::AccessAuditLogger do
     it "returns logs in reverse order (most recent first)" do
       # Clear any existing logs first
       adapter.clear
-      
+
       logger.log_authentication("test1", user_id: "user1", email: "user1@example.com", success: true)
       sleep(0.01) # Ensure different timestamps
       logger.log_authentication("test2", user_id: "user1", email: "user1@example.com", success: true)
@@ -392,4 +392,3 @@ RSpec.describe DecisionAgent::Audit::AccessAdapter do
     end
   end
 end
-

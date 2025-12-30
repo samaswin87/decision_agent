@@ -772,4 +772,3 @@ RSpec.describe DecisionAgent::Dsl::ConditionEvaluator do
     end
   end
 end
-

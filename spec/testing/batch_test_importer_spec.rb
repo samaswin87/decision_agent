@@ -443,7 +443,7 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
 
       let(:spreadsheet_double) do
         double("Spreadsheet",
-               sheets: ["Sheet1", "Sheet2"],
+               sheets: %w[Sheet1 Sheet2],
                first_row: 1,
                last_row: 3)
       end
@@ -453,11 +453,11 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
         allow(spreadsheet_double).to receive(:row) do |idx|
           case idx
           when 1
-            ["id", "user_id", "amount"]
+            %w[id user_id amount]
           when 2
-            ["test_1", "123", "1000"]
+            %w[test_1 123 1000]
           when 3
-            ["test_2", "456", "5000"]
+            %w[test_2 456 5000]
           end
         end
       end
@@ -473,7 +473,7 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
 
       it "imports Excel file with sheet index" do
         allow(Roo::Spreadsheet).to receive(:open).and_return(spreadsheet_double)
-        allow(spreadsheet_double).to receive(:sheets).and_return(["Sheet1", "Sheet2"])
+        allow(spreadsheet_double).to receive(:sheets).and_return(%w[Sheet1 Sheet2])
 
         scenarios = importer.import_excel("test.xlsx", sheet: 1)
 
@@ -495,9 +495,9 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
         allow(spreadsheet_double).to receive(:row) do |idx|
           case idx
           when 1
-            ["test_1", "123", "1000"]
+            %w[test_1 123 1000]
           when 2
-            ["test_2", "456", "5000"]
+            %w[test_2 456 5000]
           end
         end
 
@@ -510,7 +510,7 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
         allow(Roo::Spreadsheet).to receive(:open).and_return(spreadsheet_double)
 
         progress_calls = []
-        scenarios = importer.import_excel("test.xlsx", progress_callback: lambda { |progress|
+        importer.import_excel("test.xlsx", progress_callback: lambda { |progress|
           progress_calls << progress
         })
 
@@ -520,10 +520,10 @@ RSpec.describe DecisionAgent::Testing::BatchTestImporter do
 
       it "handles Excel file with no rows" do
         empty_spreadsheet = double("Spreadsheet",
-                                    sheets: ["Sheet1"],
-                                    first_row: 1,
-                                    last_row: 1,
-                                    row: ["id", "user_id", "amount"])
+                                   sheets: ["Sheet1"],
+                                   first_row: 1,
+                                   last_row: 1,
+                                   row: %w[id user_id amount])
         allow(empty_spreadsheet).to receive(:default_sheet=)
 
         allow(Roo::Spreadsheet).to receive(:open).and_return(empty_spreadsheet)

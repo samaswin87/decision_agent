@@ -128,7 +128,7 @@ RSpec.describe DecisionAgent::Auth::SessionManager do
 
     it "reflects deletions" do
       session1 = manager.create_session("user123")
-      session2 = manager.create_session("user123")
+      manager.create_session("user123")
       expect(manager.count).to eq(2)
 
       manager.delete_session(session1.token)
@@ -170,4 +170,3 @@ RSpec.describe DecisionAgent::Auth::SessionManager do
     end
   end
 end
-

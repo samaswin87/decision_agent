@@ -222,16 +222,16 @@ RSpec.describe DecisionAgent::ABTesting::ABTestAssignment do
       hash = assignment.to_h
 
       expect(hash).to eq({
-        id: "assign_123",
-        ab_test_id: "test_1",
-        user_id: "user_456",
-        variant: :champion,
-        version_id: "v1",
-        timestamp: Time.new(2024, 1, 1, 12, 0, 0, "+00:00"),
-        decision_result: "approve",
-        confidence: 0.95,
-        context: { region: "us" }
-      })
+                           id: "assign_123",
+                           ab_test_id: "test_1",
+                           user_id: "user_456",
+                           variant: :champion,
+                           version_id: "v1",
+                           timestamp: Time.new(2024, 1, 1, 12, 0, 0, "+00:00"),
+                           decision_result: "approve",
+                           confidence: 0.95,
+                           context: { region: "us" }
+                         })
     end
 
     it "includes nil values in hash" do
@@ -251,4 +251,3 @@ RSpec.describe DecisionAgent::ABTesting::ABTestAssignment do
     end
   end
 end
-

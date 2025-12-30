@@ -18,7 +18,7 @@ RSpec.describe DecisionAgent::Auth::Authenticator do
       user = authenticator.create_user(
         email: "admin@example.com",
         password: "password123",
-        roles: [:admin, :editor]
+        roles: %i[admin editor]
       )
 
       expect(user.roles).to include(:admin, :editor)
@@ -110,4 +110,3 @@ RSpec.describe DecisionAgent::Auth::Authenticator do
     end
   end
 end
-

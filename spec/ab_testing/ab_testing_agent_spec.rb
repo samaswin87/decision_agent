@@ -479,4 +479,3 @@ RSpec.describe DecisionAgent::ABTesting::ABTestingAgent do
     end
   end
 end
-

@@ -31,4 +31,3 @@ module DecisionAgent
     end
   end
 end
-

@@ -50,24 +50,24 @@ module DecisionAgent
         @batch_test_storage_mutex ||= Mutex.new
       end
 
-      def self.authenticator=(auth)
-        @authenticator = auth
+      class << self
+        attr_writer :authenticator
       end
 
       def self.authenticator
         @authenticator ||= Auth::Authenticator.new
       end
 
-      def self.permission_checker=(checker)
-        @permission_checker = checker
+      class << self
+        attr_writer :permission_checker
       end
 
       def self.permission_checker
         @permission_checker ||= Auth::PermissionChecker.new(adapter: DecisionAgent.rbac_config.adapter)
       end
 
-      def self.access_audit_logger=(logger)
-        @access_audit_logger = logger
+      class << self
+        attr_writer :access_audit_logger
       end
 
       def self.access_audit_logger
@@ -814,7 +814,7 @@ module DecisionAgent
       # Delete a version
       delete "/api/versions/:version_id" do
         content_type :json
-        
+
         begin
           require_permission!(:delete)
           version_id = params[:version_id]
@@ -826,7 +826,7 @@ module DecisionAgent
           end
 
           result = version_manager.delete_version(version_id: version_id)
-          
+
           if result == false
             status 404
             { error: "Version not found" }.to_json
@@ -840,7 +840,7 @@ module DecisionAgent
         rescue DecisionAgent::ValidationError => e
           status 422
           { error: e.message }.to_json
-        rescue StandardError, ThreadError, SystemCallError => e
+        rescue StandardError
           # Log the error for debugging but return a safe response
           # In production, you might want to log this to a proper logger
           status 500
@@ -1127,9 +1127,7 @@ module DecisionAgent
       def extract_token
         # Check Authorization header: Bearer <token>
         auth_header = request.env["HTTP_AUTHORIZATION"]
-        if auth_header && auth_header.start_with?("Bearer ")
-          return auth_header[7..-1]
-        end
+        return auth_header[7..] if auth_header&.start_with?("Bearer ")
 
         # Check session cookie
         cookie_token = request.cookies["decision_agent_session"]
@@ -1139,15 +1137,13 @@ module DecisionAgent
         params["token"]
       end
 
-      def current_user
-        @current_user
-      end
+      attr_reader :current_user
 
       def require_authentication!
-        unless @current_user
-          content_type :json
-          halt 401, { error: "Authentication required" }.to_json
-        end
+        return if @current_user
+
+        content_type :json
+        halt 401, { error: "Authentication required" }.to_json
       end
 
       def require_permission!(permission, resource = nil)
@@ -1164,9 +1160,10 @@ module DecisionAgent
             )
           rescue StandardError
             # If logging fails, continue with permission denial
+          ensure
+            content_type :json
+            halt 403, { error: "Permission denied: #{permission}" }.to_json
           end
-          content_type :json
-          halt 403, { error: "Permission denied: #{permission}" }.to_json
         end
 
         begin

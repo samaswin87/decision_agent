@@ -7,7 +7,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
 
   let(:permission_checker) { double("PermissionChecker") }
   let(:access_audit_logger) { double("AccessAuditLogger") }
-  let(:app) { ->(env) { [200, {}, ["OK"]] } }
+  let(:app) { ->(_env) { [200, {}, ["OK"]] } }
   let(:user) { double("User", id: "user1", email: "user@example.com") }
 
   describe "#initialize" do
@@ -52,7 +52,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
 
         allow(permission_checker).to receive(:active?).with(user).and_return(false)
 
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
 
         expect(status).to eq(403)
         body_text = body.first
@@ -68,7 +68,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
 
         allow(permission_checker).to receive(:active?).with(user).and_return(true)
 
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
 
         expect(status).to eq(200)
         expect(body.first).to eq("OK")
@@ -90,7 +90,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
         allow(permission_checker).to receive(:user_id).with(user).and_return("user1")
         allow(access_audit_logger).to receive(:log_permission_check)
 
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
 
         expect(status).to eq(200)
         expect(body.first).to eq("OK")
@@ -104,7 +104,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
         allow(permission_checker).to receive(:user_id).with(user).and_return("user1")
         allow(access_audit_logger).to receive(:log_permission_check)
 
-        status, headers, body = middleware.call(env)
+        status, _, body = middleware.call(env)
 
         expect(status).to eq(403)
         body_text = body.first
@@ -164,7 +164,7 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
         allow(permission_checker).to receive(:can?).with(user, :read, nil).and_return(true)
         allow(permission_checker).to receive(:user_id).with(user).and_return("user1")
 
-        status, headers, body = middleware.call(env)
+        status, = middleware.call(env)
 
         expect(status).to eq(200)
       end
@@ -245,4 +245,3 @@ RSpec.describe DecisionAgent::Web::Middleware::PermissionMiddleware do
     end
   end
 end
-

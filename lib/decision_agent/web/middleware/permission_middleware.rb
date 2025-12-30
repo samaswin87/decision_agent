@@ -15,14 +15,10 @@ module DecisionAgent
         def call(env)
           user = env["decision_agent.user"]
 
-          unless user
-            return unauthorized_response("Authentication required")
-          end
+          return unauthorized_response("Authentication required") unless user
 
           # Check if user is active using the adapter
-          unless @permission_checker.active?(user)
-            return forbidden_response("User account is not active")
-          end
+          return forbidden_response("User account is not active") unless @permission_checker.active?(user)
 
           if @required_permission
             resource_type = extract_resource_type(env)
@@ -41,9 +37,7 @@ module DecisionAgent
               )
             end
 
-            unless granted
-              return forbidden_response("Permission denied: #{@required_permission}")
-            end
+            return forbidden_response("Permission denied: #{@required_permission}") unless granted
           end
 
           @app.call(env)
@@ -55,7 +49,7 @@ module DecisionAgent
           request = Rack::Request.new(env)
           # Try to extract from path, e.g., /api/rules/:id -> "rule"
           path = request.path
-          if match = path.match(%r{/api/(\w+)})
+          if (match = path.match(%r{/api/(\w+)}))
             # Simple singularize: remove trailing 's'
             word = match[1]
             word&.end_with?("s") ? word[0..-2] : word
@@ -66,16 +60,16 @@ module DecisionAgent
           request = Rack::Request.new(env)
           # Try params first (for query parameters and Sinatra path params)
           resource_id = request.params["id"] || request.params["rule_id"] || request.params["version_id"]
-          
+
           # If not in params, try to extract from path (e.g., /api/rules/123 -> 123)
           unless resource_id
             path = request.path
             # Match patterns like /api/rules/123 or /api/versions/v1
-            if match = path.match(%r{/api/(?:rules|versions)/([^/]+)})
+            if (match = path.match(%r{/api/(?:rules|versions)/([^/]+)}))
               resource_id = match[1]
             end
           end
-          
+
           resource_id
         end
 
@@ -98,4 +92,3 @@ module DecisionAgent
     end
   end
 end
-

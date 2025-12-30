@@ -150,17 +150,17 @@ module DecisionAgent
             header_data = spreadsheet.row(first_row)
             # Handle different return types from Roo (including Proc/lambda)
             header_row = if header_data.is_a?(Array)
-                          header_data
-                        elsif header_data.is_a?(Proc)
-                          header_data.call
-                        elsif header_data.respond_to?(:to_a)
-                          header_data.to_a
-                        elsif header_data.respond_to?(:to_ary)
-                          header_data.to_ary
-                        else
-                          # Fallback: try to convert to array
-                          [header_data].flatten
-                        end
+                           header_data
+                         elsif header_data.is_a?(Proc)
+                           header_data.call
+                         elsif header_data.respond_to?(:to_a)
+                           header_data.to_a
+                         elsif header_data.respond_to?(:to_ary)
+                           header_data.to_ary
+                         else
+                           # Fallback: try to convert to array
+                           [header_data].flatten
+                         end
             row_number = 1 # Start from row 2 (after header)
           end
 
@@ -173,25 +173,25 @@ module DecisionAgent
             row_data_raw = spreadsheet.row(row_index)
             # Handle different return types from Roo (including Proc/lambda)
             row_data = if row_data_raw.is_a?(Array)
-                        row_data_raw
-                      elsif row_data_raw.is_a?(Proc)
-                        row_data_raw.call
-                      elsif row_data_raw.respond_to?(:to_a)
-                        row_data_raw.to_a
-                      elsif row_data_raw.respond_to?(:to_ary)
-                        row_data_raw.to_ary
-                      else
-                        # Fallback: try to convert to array
-                        [row_data_raw].flatten
-                      end
+                         row_data_raw
+                       elsif row_data_raw.is_a?(Proc)
+                         row_data_raw.call
+                       elsif row_data_raw.respond_to?(:to_a)
+                         row_data_raw.to_a
+                       elsif row_data_raw.respond_to?(:to_ary)
+                         row_data_raw.to_ary
+                       else
+                         # Fallback: try to convert to array
+                         [row_data_raw].flatten
+                       end
 
             begin
               # Convert row data to hash using headers
               row_hash = if header_row
-                           header_row.each_with_index.map { |header, idx| [header.to_s, row_data[idx]] }.to_h
+                           header_row.each_with_index.to_h { |header, idx| [header.to_s, row_data[idx]] }
                          else
                            # Use numeric indices if no headers
-                           row_data.each_with_index.map { |val, idx| [idx.to_s, val] }.to_h
+                           row_data.each_with_index.to_h { |val, idx| [idx.to_s, val] }
                          end
 
               scenario = parse_hash_row(row_hash, row_number, options)

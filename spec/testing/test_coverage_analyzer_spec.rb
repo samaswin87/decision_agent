@@ -105,9 +105,9 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
     end
 
     it "handles agent with evaluators that have rules method" do
-      evaluator_with_rules = double("EvaluatorWithRules", 
-                                     evaluate: nil,
-                                     rules: ["rule_1", "rule_2"])
+      evaluator_with_rules = double("EvaluatorWithRules",
+                                    evaluate: nil,
+                                    rules: %w[rule_1 rule_2])
       agent_with_rules = DecisionAgent::Agent.new(evaluators: [evaluator_with_rules])
 
       report = analyzer.analyze([], agent_with_rules)
@@ -116,8 +116,8 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
 
     it "handles agent with evaluators that have rule_id method" do
       evaluator_with_rule_id = double("EvaluatorWithRuleId",
-                                       evaluate: nil,
-                                       rule_id: "my_rule_1")
+                                      evaluate: nil,
+                                      rule_id: "my_rule_1")
       agent_with_rule_id = DecisionAgent::Agent.new(evaluators: [evaluator_with_rule_id])
 
       report = analyzer.analyze([], agent_with_rule_id)
@@ -126,8 +126,8 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
 
     it "handles agent with evaluators that have conditions method" do
       evaluator_with_conditions = double("EvaluatorWithConditions",
-                                          evaluate: nil,
-                                          conditions: ["condition_1", "condition_2"])
+                                         evaluate: nil,
+                                         conditions: %w[condition_1 condition_2])
       agent_with_conditions = DecisionAgent::Agent.new(evaluators: [evaluator_with_conditions])
 
       report = analyzer.analyze([], agent_with_conditions)
@@ -136,8 +136,8 @@ RSpec.describe DecisionAgent::Testing::TestCoverageAnalyzer do
 
     it "handles agent with evaluators that have condition_id method" do
       evaluator_with_condition_id = double("EvaluatorWithConditionId",
-                                            evaluate: nil,
-                                            condition_id: "my_condition_1")
+                                           evaluate: nil,
+                                           condition_id: "my_condition_1")
       agent_with_condition_id = DecisionAgent::Agent.new(evaluators: [evaluator_with_condition_id])
 
       report = analyzer.analyze([], agent_with_condition_id)

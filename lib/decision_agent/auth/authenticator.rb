@@ -1,5 +1,3 @@
-require "thread"
-
 module DecisionAgent
   module Auth
     class Authenticator
@@ -17,8 +15,7 @@ module DecisionAgent
         return nil unless user.active
         return nil unless user.authenticate(password)
 
-        session = @session_manager.create_session(user.id)
-        session
+        @session_manager.create_session(user.id)
       end
 
       def logout(token)
@@ -59,8 +56,7 @@ module DecisionAgent
         @password_reset_manager.delete_user_tokens(user.id)
 
         # Create a new reset token (expires in 1 hour)
-        token = @password_reset_manager.create_token(user.id, expires_in: 3600)
-        token
+        @password_reset_manager.create_token(user.id, expires_in: 3600)
       end
 
       def reset_password(token_string, new_password)
@@ -129,4 +125,3 @@ module DecisionAgent
     end
   end
 end
-

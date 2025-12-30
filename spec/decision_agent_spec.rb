@@ -22,10 +22,9 @@ RSpec.describe DecisionAgent do
 
       it "configures RBAC with custom options" do
         result = DecisionAgent.configure_rbac(:custom,
-          can_proc: ->(user, permission, resource) { true },
-          has_role_proc: ->(user, role) { false },
-          active_proc: ->(user) { true }
-        )
+                                              can_proc: ->(_user, _permission, _resource) { true },
+                                              has_role_proc: ->(_user, _role) { false },
+                                              active_proc: ->(_user) { true })
         expect(result).to be_a(DecisionAgent::Auth::RbacConfig)
       end
     end
@@ -95,4 +94,3 @@ RSpec.describe DecisionAgent do
     end
   end
 end
-

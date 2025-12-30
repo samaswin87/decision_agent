@@ -18,7 +18,7 @@ RSpec.describe DecisionAgent::Auth::User do
       user = DecisionAgent::Auth::User.new(
         email: "admin@example.com",
         password: "password123",
-        roles: [:admin, :editor]
+        roles: %i[admin editor]
       )
 
       expect(user.roles).to include(:admin, :editor)
@@ -90,7 +90,7 @@ RSpec.describe DecisionAgent::Auth::User do
       user = DecisionAgent::Auth::User.new(
         email: "test@example.com",
         password: "password123",
-        roles: [:editor, :viewer]
+        roles: %i[editor viewer]
       )
 
       user.remove_role(:editor)
@@ -128,4 +128,3 @@ RSpec.describe DecisionAgent::Auth::User do
     end
   end
 end
-

@@ -2,7 +2,7 @@ module DecisionAgent
   module Auth
     # Configuration class for RBAC adapter
     class RbacConfig
-      attr_accessor :adapter, :authenticator, :user_store
+      attr_accessor :authenticator, :user_store
 
       def initialize
         @adapter = nil
@@ -32,9 +32,8 @@ module DecisionAgent
       # Configure with a custom adapter instance
       # @param adapter_instance [RbacAdapter] An instance of RbacAdapter or subclass
       def adapter=(adapter_instance)
-        unless adapter_instance.is_a?(RbacAdapter)
-          raise ArgumentError, "Adapter must be an instance of DecisionAgent::Auth::RbacAdapter"
-        end
+        raise ArgumentError, "Adapter must be an instance of DecisionAgent::Auth::RbacAdapter" unless adapter_instance.is_a?(RbacAdapter)
+
         @adapter = adapter_instance
       end
 
@@ -50,4 +49,3 @@ module DecisionAgent
     end
   end
 end
-

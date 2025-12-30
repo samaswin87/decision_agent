@@ -110,4 +110,3 @@ RSpec.describe DecisionAgent::Auth::Session do
     end
   end
 end
-

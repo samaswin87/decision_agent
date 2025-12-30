@@ -1,5 +1,3 @@
-require "thread"
-
 module DecisionAgent
   module Auth
     class PasswordResetManager
@@ -24,6 +22,7 @@ module DecisionAgent
           token = @tokens[token_string]
           return nil unless token
           return nil if token.expired?
+
           token
         end
       end
@@ -56,4 +55,3 @@ module DecisionAgent
     end
   end
 end
-

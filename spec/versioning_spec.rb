@@ -190,7 +190,7 @@ RSpec.describe "DecisionAgent Versioning System" do
     describe "#delete_version" do
       it "deletes a version and removes it from index" do
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         # Delete v1 (draft, not active)
         result = adapter.delete_version(version_id: v1[:id])
@@ -216,13 +216,13 @@ RSpec.describe "DecisionAgent Versioning System" do
 
       it "handles file already deleted" do
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         # Delete the file manually
         rule_dir = File.join(adapter.storage_path, rule_id)
         filename = "#{v1[:version_number]}.json"
         filepath = File.join(rule_dir, filename)
-        File.delete(filepath) if File.exist?(filepath)
+        FileUtils.rm_f(filepath)
 
         # Should handle gracefully
         result = adapter.delete_version(version_id: v1[:id])
@@ -241,12 +241,12 @@ RSpec.describe "DecisionAgent Versioning System" do
       it "handles missing directory when searching for version files" do
         # Create a version
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
         version_id = v1[:id]
 
         # Manually remove the rule directory to simulate missing directory
         rule_dir = File.join(adapter.storage_path, rule_id)
-        FileUtils.rm_rf(rule_dir) if Dir.exist?(rule_dir)
+        FileUtils.rm_rf(rule_dir)
 
         # The version should still be in the index, but directory is gone
         # This simulates a stale index entry
@@ -258,7 +258,7 @@ RSpec.describe "DecisionAgent Versioning System" do
 
       it "handles version ID type mismatches with string conversion" do
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         # Version IDs are stored as strings, but test that .to_s comparison works
         # This ensures the code handles cases where version_id might be passed as different types
@@ -275,14 +275,14 @@ RSpec.describe "DecisionAgent Versioning System" do
 
       it "handles file read errors gracefully when searching for version" do
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         # Delete the actual version file but keep it in the index
         # This simulates a scenario where the file was manually deleted
         rule_dir = File.join(adapter.storage_path, rule_id)
         filename = "#{v1[:version_number]}.json"
         filepath = File.join(rule_dir, filename)
-        File.delete(filepath) if File.exist?(filepath)
+        FileUtils.rm_f(filepath)
 
         # The version should still be in the index, but the file is gone
         # When delete_version is called, it will:
@@ -301,7 +301,7 @@ RSpec.describe "DecisionAgent Versioning System" do
 
         # Remove the directory but keep the index entry
         rule_dir = File.join(adapter.storage_path, rule_id)
-        FileUtils.rm_rf(rule_dir) if Dir.exist?(rule_dir)
+        FileUtils.rm_rf(rule_dir)
 
         # This tests the path where:
         # 1. get_rule_id_from_index returns a rule_id (version is in index)
@@ -350,7 +350,7 @@ RSpec.describe "DecisionAgent Versioning System" do
         expect(versions.first[:id]).to eq(v1[:id])
 
         # Clean up
-        File.delete(corrupted_file) if File.exist?(corrupted_file)
+        FileUtils.rm_f(corrupted_file)
       end
 
       it "handles missing files gracefully" do
@@ -361,7 +361,7 @@ RSpec.describe "DecisionAgent Versioning System" do
         rule_dir = File.join(adapter.storage_path, rule_id)
         filename = "#{v1[:version_number]}.json"
         filepath = File.join(rule_dir, filename)
-        File.delete(filepath) if File.exist?(filepath)
+        FileUtils.rm_f(filepath)
 
         # Should handle missing files gracefully
         versions = adapter.send(:list_versions_unsafe, rule_id: rule_id)
@@ -405,7 +405,7 @@ RSpec.describe "DecisionAgent Versioning System" do
 
       it "removes from index when deleting versions" do
         v1 = adapter.create_version(rule_id: rule_id, content: rule_content, metadata: { status: "draft" })
-        v2 = adapter.create_version(rule_id: rule_id, content: rule_content)
+        adapter.create_version(rule_id: rule_id, content: rule_content)
 
         version_id = v1[:id]
         adapter.delete_version(version_id: version_id)

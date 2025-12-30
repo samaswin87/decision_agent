@@ -4,11 +4,11 @@ module DecisionAgent
       ROLES = {
         admin: {
           name: "Admin",
-          permissions: [:read, :write, :delete, :approve, :deploy, :manage_users, :audit]
+          permissions: %i[read write delete approve deploy manage_users audit]
         },
         editor: {
           name: "Editor",
-          permissions: [:read, :write]
+          permissions: %i[read write]
         },
         viewer: {
           name: "Viewer",
@@ -16,11 +16,11 @@ module DecisionAgent
         },
         auditor: {
           name: "Auditor",
-          permissions: [:read, :audit]
+          permissions: %i[read audit]
         },
         approver: {
           name: "Approver",
-          permissions: [:read, :approve]
+          permissions: %i[read approve]
         }
       }.freeze
 
@@ -36,12 +36,14 @@ module DecisionAgent
         def permissions_for(role)
           role_data = ROLES[role.to_sym]
           return [] unless role_data
+
           role_data[:permissions]
         end
 
         def name_for(role)
           role_data = ROLES[role.to_sym]
           return nil unless role_data
+
           role_data[:name]
         end
 
@@ -52,4 +54,3 @@ module DecisionAgent
     end
   end
 end
-

@@ -111,23 +111,23 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
   describe "#list_tests" do
     before do
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Scheduled Test",
-        champion_version_id: "v1",
-        challenger_version_id: "v2",
-        status: "scheduled"
-      ))
+                          name: "Scheduled Test",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2",
+                          status: "scheduled"
+                        ))
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Running Test",
-        champion_version_id: "v1",
-        challenger_version_id: "v2",
-        status: "running"
-      ))
+                          name: "Running Test",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2",
+                          status: "running"
+                        ))
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Another Running",
-        champion_version_id: "v1",
-        challenger_version_id: "v2",
-        status: "running"
-      ))
+                          name: "Another Running",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2",
+                          status: "running"
+                        ))
     end
 
     it "returns all tests when no filters" do
@@ -209,9 +209,9 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
 
     it "updates assignment attributes" do
       updated = adapter.update_assignment(saved_assignment.id, {
-        decision_result: "approve",
-        confidence: 0.85
-      })
+                                            decision_result: "approve",
+                                            confidence: 0.85
+                                          })
       expect(updated.decision_result).to eq("approve")
       expect(updated.confidence).to eq(0.85)
     end
@@ -234,31 +234,31 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
   describe "#get_assignments" do
     before do
       test1 = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                  name: "Test 1",
+                                  champion_version_id: "v1",
+                                  challenger_version_id: "v2"
+                                ))
       test2 = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 2",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                  name: "Test 2",
+                                  champion_version_id: "v1",
+                                  challenger_version_id: "v2"
+                                ))
 
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test1.id,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                ab_test_id: test1.id,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test1.id,
-        variant: :challenger,
-        version_id: "v2"
-      ))
+                                ab_test_id: test1.id,
+                                variant: :challenger,
+                                version_id: "v2"
+                              ))
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test2.id,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                ab_test_id: test2.id,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
     end
 
     it "returns assignments for a specific test" do
@@ -276,34 +276,34 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
   describe "#delete_test" do
     let(:test) do
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                          name: "Test 1",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2"
+                        ))
     end
 
     before do
-      assignment1 = adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test.id,
-        variant: :champion,
-        version_id: "v1"
-      ))
-      assignment2 = adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test.id,
-        variant: :challenger,
-        version_id: "v2"
-      ))
+      adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
+                                ab_test_id: test.id,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
+      adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
+                                ab_test_id: test.id,
+                                variant: :challenger,
+                                version_id: "v2"
+                              ))
       # Assignment for another test
       other_test = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 2",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                       name: "Test 2",
+                                       champion_version_id: "v1",
+                                       challenger_version_id: "v2"
+                                     ))
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: other_test.id,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                ab_test_id: other_test.id,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
     end
 
     it "deletes the test" do
@@ -338,15 +338,15 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
   describe "#clear!" do
     before do
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                          name: "Test 1",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2"
+                        ))
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: 1,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                ab_test_id: 1,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
     end
 
     it "clears all tests" do
@@ -364,20 +364,20 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
     it "resets test counter" do
       adapter.clear!
       test = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "New Test",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                 name: "New Test",
+                                 champion_version_id: "v1",
+                                 challenger_version_id: "v2"
+                               ))
       expect(test.id).to eq(1)
     end
 
     it "resets assignment counter" do
       adapter.clear!
       assignment = adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: 1,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                             ab_test_id: 1,
+                                             variant: :champion,
+                                             version_id: "v1"
+                                           ))
       expect(assignment.id).to eq(1)
     end
   end
@@ -389,31 +389,31 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
 
     it "returns correct count after saving tests" do
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                          name: "Test 1",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2"
+                        ))
       expect(adapter.test_count).to eq(1)
 
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 2",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                          name: "Test 2",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2"
+                        ))
       expect(adapter.test_count).to eq(2)
     end
 
     it "reflects deletions" do
       test = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                 name: "Test 1",
+                                 champion_version_id: "v1",
+                                 challenger_version_id: "v2"
+                               ))
       adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 2",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                          name: "Test 2",
+                          champion_version_id: "v1",
+                          challenger_version_id: "v2"
+                        ))
       adapter.delete_test(test.id)
       expect(adapter.test_count).to eq(1)
     end
@@ -426,36 +426,36 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
 
     it "returns correct count after saving assignments" do
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: 1,
-        variant: :champion,
-        version_id: "v1"
-      ))
+                                ab_test_id: 1,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
       expect(adapter.assignment_count).to eq(1)
 
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: 1,
-        variant: :challenger,
-        version_id: "v2"
-      ))
+                                ab_test_id: 1,
+                                variant: :challenger,
+                                version_id: "v2"
+                              ))
       expect(adapter.assignment_count).to eq(2)
     end
 
     it "reflects deletions" do
       test = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-        name: "Test 1",
-        champion_version_id: "v1",
-        challenger_version_id: "v2"
-      ))
+                                 name: "Test 1",
+                                 champion_version_id: "v1",
+                                 challenger_version_id: "v2"
+                               ))
       adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test.id,
-        variant: :champion,
-        version_id: "v1"
-      ))
-      assignment = adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
-        ab_test_id: test.id,
-        variant: :challenger,
-        version_id: "v2"
-      ))
+                                ab_test_id: test.id,
+                                variant: :champion,
+                                version_id: "v1"
+                              ))
+      adapter.save_assignment(DecisionAgent::ABTesting::ABTestAssignment.new(
+                                ab_test_id: test.id,
+                                variant: :challenger,
+                                version_id: "v2"
+                              ))
       adapter.delete_test(test.id) # This deletes all assignments for the test
       expect(adapter.assignment_count).to eq(0)
     end
@@ -468,10 +468,10 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
         threads << Thread.new do
           10.times do
             test = adapter.save_test(DecisionAgent::ABTesting::ABTest.new(
-              name: "Test",
-              champion_version_id: "v1",
-              challenger_version_id: "v2"
-            ))
+                                       name: "Test",
+                                       champion_version_id: "v1",
+                                       challenger_version_id: "v2"
+                                     ))
             adapter.get_test(test.id)
             adapter.list_tests
           end
@@ -483,4 +483,3 @@ RSpec.describe DecisionAgent::ABTesting::Storage::MemoryAdapter do
     end
   end
 end
-

@@ -174,9 +174,9 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
 
     describe "#extract_roles" do
       it "extracts roles from user.roles" do
-        user = double("User", roles: [:admin, :editor])
+        user = double("User", roles: %i[admin editor])
         roles = adapter.send(:extract_roles, user)
-        expect(roles).to eq([:admin, :editor])
+        expect(roles).to eq(%i[admin editor])
       end
 
       it "extracts role from user.role (singular)" do
@@ -192,9 +192,9 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
       end
 
       it "handles array of roles" do
-        user = double("User", roles: ["admin", "editor"])
+        user = double("User", roles: %w[admin editor])
         roles = adapter.send(:extract_roles, user)
-        expect(roles).to eq([:admin, :editor])
+        expect(roles).to eq(%i[admin editor])
       end
     end
   end
@@ -419,11 +419,11 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
   describe DecisionAgent::Auth::CustomAdapter do
     describe "#initialize" do
       it "initializes with procs" do
-        can_proc = ->(u, p, r) { true }
-        has_role_proc = ->(u, r) { true }
-        active_proc = ->(u) { true }
-        user_id_proc = ->(u) { "id" }
-        user_email_proc = ->(u) { "email" }
+        can_proc = ->(_u, _p, _r) { true }
+        has_role_proc = ->(_u, _r) { true }
+        active_proc = ->(_u) { true }
+        user_id_proc = ->(_u) { "id" }
+        user_email_proc = ->(_u) { "email" }
 
         adapter = described_class.new(
           can_proc: can_proc,
@@ -443,22 +443,22 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
 
     describe "#can?" do
       it "returns false for nil user" do
-        adapter = described_class.new(can_proc: ->(u, p, r) { true })
+        adapter = described_class.new(can_proc: ->(_u, _p, _r) { true })
         expect(adapter.can?(nil, :read)).to be false
       end
 
       it "returns false for inactive user" do
         adapter = described_class.new(
-          can_proc: ->(u, p, r) { true },
-          active_proc: ->(u) { false }
+          can_proc: ->(_u, _p, _r) { true },
+          active_proc: ->(_u) { false }
         )
         user = double("User")
         expect(adapter.can?(user, :read)).to be false
       end
 
       it "calls can_proc when provided" do
-        can_proc = ->(u, p, r) { p == :read }
-        adapter = described_class.new(can_proc: can_proc, active_proc: ->(u) { true })
+        can_proc = ->(_u, p, _r) { p == :read }
+        adapter = described_class.new(can_proc: can_proc, active_proc: ->(_u) { true })
         user = double("User")
 
         expect(adapter.can?(user, :read)).to be true
@@ -466,7 +466,7 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
       end
 
       it "raises error when can_proc not provided" do
-        adapter = described_class.new(active_proc: ->(u) { true })
+        adapter = described_class.new(active_proc: ->(_u) { true })
         user = double("User")
 
         expect { adapter.can?(user, :read) }.to raise_error(NotImplementedError, /requires can_proc/)
@@ -475,12 +475,12 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
 
     describe "#has_role?" do
       it "returns false for nil user" do
-        adapter = described_class.new(has_role_proc: ->(u, r) { true })
+        adapter = described_class.new(has_role_proc: ->(_u, _r) { true })
         expect(adapter.has_role?(nil, :admin)).to be false
       end
 
       it "calls has_role_proc when provided" do
-        has_role_proc = ->(u, r) { r == :admin }
+        has_role_proc = ->(_u, r) { r == :admin }
         adapter = described_class.new(has_role_proc: has_role_proc)
         user = double("User")
 
@@ -515,7 +515,7 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
 
     describe "#user_id" do
       it "calls user_id_proc when provided" do
-        user_id_proc = ->(u) { "custom_id" }
+        user_id_proc = ->(_u) { "custom_id" }
         adapter = described_class.new(user_id_proc: user_id_proc)
         user = double("User")
 
@@ -532,7 +532,7 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
 
     describe "#user_email" do
       it "calls user_email_proc when provided" do
-        user_email_proc = ->(u) { "custom@example.com" }
+        user_email_proc = ->(_u) { "custom@example.com" }
         adapter = described_class.new(user_email_proc: user_email_proc)
         user = double("User")
 
@@ -548,4 +548,3 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
     end
   end
 end
-

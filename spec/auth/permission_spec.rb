@@ -71,4 +71,3 @@ RSpec.describe DecisionAgent::Auth::Permission do
     end
   end
 end
-

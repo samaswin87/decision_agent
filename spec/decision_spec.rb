@@ -152,7 +152,7 @@ RSpec.describe DecisionAgent::Decision do
     end
 
     it "handles array explanations" do
-      explanations = ["explanation1", "explanation2"]
+      explanations = %w[explanation1 explanation2]
       decision = described_class.new(
         decision: "approve",
         confidence: 0.8,
@@ -355,4 +355,3 @@ RSpec.describe DecisionAgent::Decision do
     end
   end
 end
-
