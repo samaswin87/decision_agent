@@ -69,6 +69,7 @@ module DecisionAgent
 
         def broadcast_to_clients(message)
           return unless WEBSOCKET_AVAILABLE
+          return if @websocket_clients.empty? # Skip if no clients connected
 
           json_message = message.to_json
           @websocket_clients.each do |client|

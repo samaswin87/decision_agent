@@ -266,7 +266,7 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
 
   describe "metric cleanup" do
     it "removes old metrics outside window" do
-      collector = described_class.new(window_size: 1, storage: :memory)
+      collector = described_class.new(window_size: 1, storage: :memory, cleanup_threshold: 1)
 
       collector.record_decision(decision, context)
       expect(collector.metrics_count[:decisions]).to eq(1)
@@ -274,7 +274,7 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
       sleep 1.5
 
       collector.record_decision(decision, context)
-      # Old metric should be cleaned up
+      # Old metric should be cleaned up (threshold=1 means cleanup on every record)
       expect(collector.metrics_count[:decisions]).to eq(1)
     end
   end

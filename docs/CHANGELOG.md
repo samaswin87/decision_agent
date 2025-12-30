@@ -541,12 +541,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved operator selection and parameter input
   - Enhanced validation feedback in web interface
 
+- **Development Mode Permission Bypass** 🔧
+  - Added `DISABLE_WEBUI_PERMISSIONS` environment variable support
+  - Automatically disables permission checks when `RACK_ENV` or `RAILS_ENV` is set to `development`
+  - Authentication is still required; only permission checks are skipped
+  - Useful for simplifying development and testing workflows
+  - Production environments remain secure by default (permissions enabled unless explicitly disabled)
+
+- **Web UI Rails Integration Improvements** 🎨
+  - Enhanced UI to better support Rails application integration
+  - Improved compatibility with Rails routing and middleware
+  - Better error handling and route management
+
+### Performance
+
+- **MetricsCollector Cleanup Optimization** ⚡
+  - **Problem:** Cleanup ran on every record, causing O(n) array scans
+  - **Solution:** Batched cleanup that runs every N records (configurable `cleanup_threshold`, default: 100)
+  - **Impact:** Reduces cleanup overhead by up to 100x for high-throughput scenarios
+  - **Files Modified:**
+    - `lib/decision_agent/monitoring/metrics_collector.rb` - Added `cleanup_threshold` parameter and `maybe_cleanup_old_metrics!` method
+    - `spec/performance_optimizations_spec.rb` - Added comprehensive tests for batching behavior
+
+- **ABTestingAgent Agent Caching** 🚀
+  - **Problem:** Agents were rebuilt for every decision, causing unnecessary overhead
+  - **Solution:** Thread-safe caching of agents by version_id with mutex protection
+  - **Features:**
+    - Configurable caching (`cache_agents` parameter, default: true)
+    - `clear_agent_cache!` method for cache invalidation
+    - `cache_stats` method for monitoring cache usage
+    - Thread-safe concurrent access with double-checked locking pattern
+  - **Impact:** Eliminates agent rebuild overhead for repeated decisions with same version
+  - **Files Modified:**
+    - `lib/decision_agent/ab_testing/ab_testing_agent.rb` - Added caching infrastructure and methods
+    - `spec/performance_optimizations_spec.rb` - Added tests for caching behavior and thread-safety
+
+- **ConditionEvaluator Performance Caching** 💨
+  - **Problem:** Repeated regex compilation, path splitting, and date parsing caused performance overhead
+  - **Solution:** Thread-safe caching for frequently used operations
+    - **Regex Cache:** Caches compiled regex patterns from string inputs
+    - **Path Cache:** Caches split paths for nested field access (e.g., "user.profile.role")
+    - **Date Cache:** Caches parsed dates from ISO8601 strings
+  - **Features:**
+    - Fast path: lock-free cache reads for hot paths
+    - Slow path: mutex-protected cache writes on misses
+    - `clear_caches!` method for cache management
+    - `cache_stats` method for monitoring cache sizes
+    - Thread-safe concurrent access
+  - **Impact:** Significant performance improvement for rules using regex, nested fields, or date operations
+  - **Files Modified:**
+    - `lib/decision_agent/dsl/condition_evaluator.rb` - Added three caches with thread-safe access methods
+    - `spec/performance_optimizations_spec.rb` - Added comprehensive cache tests including thread-safety verification
+
+- **WebSocket Broadcasting Optimization** 📡
+  - **Problem:** Broadcasting to WebSocket clients even when no clients were connected
+  - **Solution:** Early return if no clients connected, avoiding unnecessary JSON serialization
+  - **Impact:** Reduces CPU overhead when dashboard is not in use
+  - **Files Modified:**
+    - `lib/decision_agent/monitoring/dashboard_server.rb` - Added early return in `broadcast_to_clients` method
+
 ### Fixed
 
 - **Code Quality Improvements**
   - Fixed linting issues across codebase
   - Improved code consistency and style
   - Repository structure cleanup
+  - Fixed halt issue in web server
 
 ## [0.1.4] - 2025-12-25
 

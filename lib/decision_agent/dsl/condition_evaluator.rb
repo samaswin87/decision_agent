@@ -7,6 +7,18 @@ module DecisionAgent
     # - Nested field access via dot notation (e.g., "user.profile.role")
     # - Logical operators (all/any)
     class ConditionEvaluator
+      # Thread-safe caches for performance optimization
+      @regex_cache = {}
+      @regex_cache_mutex = Mutex.new
+      @path_cache = {}
+      @path_cache_mutex = Mutex.new
+      @date_cache = {}
+      @date_cache_mutex = Mutex.new
+
+      class << self
+        attr_reader :regex_cache, :path_cache, :date_cache
+      end
+
       def self.evaluate(condition, context)
         return false unless condition.is_a?(Hash)
 
@@ -122,7 +134,7 @@ module DecisionAgent
           return false if expected_value.nil?
 
           begin
-            regex = expected_value.is_a?(Regexp) ? expected_value : Regexp.new(expected_value.to_s)
+            regex = get_cached_regex(expected_value)
             !regex.match(actual_value).nil?
           rescue RegexpError
             false
@@ -261,7 +273,7 @@ module DecisionAgent
       #
       # Supports both string and symbol keys in the hash
       def self.get_nested_value(hash, key_path)
-        keys = key_path.to_s.split(".")
+        keys = get_cached_path(key_path)
         keys.reduce(hash) do |memo, key|
           return nil unless memo.is_a?(Hash)
 
@@ -312,13 +324,13 @@ module DecisionAgent
         end
       end
 
-      # Parse date from string, Time, Date, or DateTime
+      # Parse date from string, Time, Date, or DateTime (with caching)
       def self.parse_date(value)
         case value
         when Time, Date, DateTime
           value
         when String
-          Time.parse(value)
+          get_cached_date(value)
         end
       rescue ArgumentError
         nil
@@ -437,6 +449,62 @@ module DecisionAgent
         end
 
         inside
+      end
+
+      # Cache management methods
+
+      # Get or compile regex with caching
+      def self.get_cached_regex(pattern)
+        return pattern if pattern.is_a?(Regexp)
+
+        # Fast path: check cache without lock
+        cached = @regex_cache[pattern]
+        return cached if cached
+
+        # Slow path: compile and cache
+        @regex_cache_mutex.synchronize do
+          @regex_cache[pattern] ||= Regexp.new(pattern.to_s)
+        end
+      end
+
+      # Get cached split path
+      def self.get_cached_path(key_path)
+        # Fast path: check cache without lock
+        cached = @path_cache[key_path]
+        return cached if cached
+
+        # Slow path: split and cache
+        @path_cache_mutex.synchronize do
+          @path_cache[key_path] ||= key_path.to_s.split(".").freeze
+        end
+      end
+
+      # Get cached parsed date
+      def self.get_cached_date(date_string)
+        # Fast path: check cache without lock
+        cached = @date_cache[date_string]
+        return cached if cached
+
+        # Slow path: parse and cache
+        @date_cache_mutex.synchronize do
+          @date_cache[date_string] ||= Time.parse(date_string)
+        end
+      end
+
+      # Clear all caches (useful for testing or memory management)
+      def self.clear_caches!
+        @regex_cache_mutex.synchronize { @regex_cache.clear }
+        @path_cache_mutex.synchronize { @path_cache.clear }
+        @date_cache_mutex.synchronize { @date_cache.clear }
+      end
+
+      # Get cache statistics
+      def self.cache_stats
+        {
+          regex_cache_size: @regex_cache.size,
+          path_cache_size: @path_cache.size,
+          date_cache_size: @date_cache.size
+        }
       end
     end
   end

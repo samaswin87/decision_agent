@@ -16,9 +16,11 @@ module DecisionAgent
 
       attr_reader :metrics, :window_size, :storage_adapter
 
-      def initialize(window_size: 3600, storage: :auto)
+      def initialize(window_size: 3600, storage: :auto, cleanup_threshold: 100)
         super()
         @window_size = window_size # Default: 1 hour window
+        @cleanup_threshold = cleanup_threshold # Cleanup every N records
+        @cleanup_counter = 0
         @storage_adapter = initialize_storage_adapter(storage, window_size)
 
         # Legacy in-memory metrics for backward compatibility with observers
@@ -47,7 +49,7 @@ module DecisionAgent
 
           # Store in-memory for observers (backward compatibility)
           @metrics[:decisions] << metric
-          cleanup_old_metrics!
+          maybe_cleanup_old_metrics!
 
           # Persist to storage adapter
           @storage_adapter.record_decision(
@@ -76,7 +78,7 @@ module DecisionAgent
 
           # Store in-memory for observers (backward compatibility)
           @metrics[:evaluations] << metric
-          cleanup_old_metrics!
+          maybe_cleanup_old_metrics!
 
           # Persist to storage adapter
           @storage_adapter.record_evaluation(
@@ -104,7 +106,7 @@ module DecisionAgent
 
           # Store in-memory for observers (backward compatibility)
           @metrics[:performance] << metric
-          cleanup_old_metrics!
+          maybe_cleanup_old_metrics!
 
           # Persist to storage adapter
           @storage_adapter.record_performance(
@@ -131,7 +133,7 @@ module DecisionAgent
 
           # Store in-memory for observers (backward compatibility)
           @metrics[:errors] << metric
-          cleanup_old_metrics!
+          maybe_cleanup_old_metrics!
 
           # Persist to storage adapter
           @storage_adapter.record_error(
@@ -315,6 +317,16 @@ module DecisionAgent
         else
           "low"
         end
+      end
+
+      # Conditionally cleanup old metrics based on counter
+      # This reduces O(n) array scans from every record to every N records
+      def maybe_cleanup_old_metrics!
+        @cleanup_counter += 1
+        return unless @cleanup_counter >= @cleanup_threshold
+
+        @cleanup_counter = 0
+        cleanup_old_metrics!
       end
 
       def cleanup_old_metrics!

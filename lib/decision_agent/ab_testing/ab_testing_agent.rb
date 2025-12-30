@@ -10,18 +10,23 @@ module DecisionAgent
       # @param evaluators [Array] Base evaluators (can be overridden by versioned rules)
       # @param scoring_strategy [Scoring::Base] Scoring strategy
       # @param audit_adapter [Audit::Adapter] Audit adapter
+      # @param cache_agents [Boolean] Whether to cache agents by version_id (default: true)
       def initialize(
         ab_test_manager:,
         version_manager: nil,
         evaluators: [],
         scoring_strategy: nil,
-        audit_adapter: nil
+        audit_adapter: nil,
+        cache_agents: true
       )
         @ab_test_manager = ab_test_manager
         @version_manager = version_manager || ab_test_manager.version_manager
         @base_evaluators = evaluators
         @scoring_strategy = scoring_strategy
         @audit_adapter = audit_adapter
+        @cache_agents = cache_agents
+        @agent_cache = {} # Cache agents by version_id
+        @agent_cache_mutex = Mutex.new
       end
 
       # Make a decision with A/B testing support
@@ -64,21 +69,29 @@ module DecisionAgent
         @ab_test_manager.active_tests
       end
 
+      # Clear the agent cache (useful for testing or when versions are updated)
+      def clear_agent_cache!
+        @agent_cache_mutex.synchronize { @agent_cache.clear }
+      end
+
+      # Get cache statistics
+      def cache_stats
+        @agent_cache_mutex.synchronize do
+          {
+            cached_agents: @agent_cache.size,
+            version_ids: @agent_cache.keys
+          }
+        end
+      end
+
       private
 
       def decide_with_ab_test(context, feedback, ab_test_id, user_id)
         # Assign variant
         assignment = @ab_test_manager.assign_variant(test_id: ab_test_id, user_id: user_id)
 
-        # Get the version for the assigned variant
-        version = @version_manager.get_version(version_id: assignment[:version_id])
-        raise VersionNotFoundError, "Version not found: #{assignment[:version_id]}" unless version
-
-        # Build evaluators from the versioned rule content
-        evaluators = build_evaluators_from_version(version)
-
-        # Create agent with version-specific evaluators
-        agent = build_agent(evaluators)
+        # Get or build cached agent for this version
+        agent = get_or_build_agent_for_version(assignment[:version_id])
 
         # Make decision
         decision = agent.decide(context: context, feedback: feedback)
@@ -103,6 +116,29 @@ module DecisionAgent
             assignment_id: assignment[:assignment_id]
           }
         }
+      end
+
+      # Get or build agent for a specific version (with caching)
+      def get_or_build_agent_for_version(version_id)
+        return build_agent_for_version(version_id) unless @cache_agents
+
+        # Check cache first (fast path without lock for reads)
+        cached = @agent_cache[version_id]
+        return cached if cached
+
+        # Cache miss - acquire lock and build
+        @agent_cache_mutex.synchronize do
+          # Double-check after acquiring lock (another thread may have built it)
+          @agent_cache[version_id] ||= build_agent_for_version(version_id)
+        end
+      end
+
+      def build_agent_for_version(version_id)
+        version = @version_manager.get_version(version_id: version_id)
+        raise VersionNotFoundError, "Version not found: #{version_id}" unless version
+
+        evaluators = build_evaluators_from_version(version)
+        build_agent(evaluators)
       end
 
       def build_agent(evaluators)
