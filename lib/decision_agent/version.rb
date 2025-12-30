@@ -3,7 +3,7 @@ module DecisionAgent
   # MAJOR: Incremented for incompatible API changes
   # MINOR: Incremented for backward-compatible functionality additions
   # PATCH: Incremented for backward-compatible bug fixes
-  VERSION = "0.1.5".freeze
+  VERSION = "0.1.6".freeze
 
   # Validate version format (semantic versioning)
   unless VERSION.match?(/\A\d+\.\d+\.\d+(-[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)?(\+[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)?\z/)
