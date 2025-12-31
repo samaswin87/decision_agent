@@ -230,5 +230,5 @@ end
 For complete working examples, see:
 - [Examples Directory](../examples/README.md) - Comprehensive examples with explanations
 - [Advanced Operators Guide](ADVANCED_OPERATORS.md) - Detailed operator documentation
-- [Example Application](https://github.com/samaswin87/decision_agent_example) - Full Rails integration example
+- [Example Application](https://github.com/samaswin/decision_agent_example) - Full Rails integration example
 

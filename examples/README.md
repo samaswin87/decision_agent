@@ -376,7 +376,7 @@ end
 
 - Documentation: [VERSIONING.md](../docs/VERSIONING.md)
 - API Reference: [VERSIONING.md#api-reference](../docs/VERSIONING.md#api-reference)
-- Issues: [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
+- Issues: [GitHub Issues](https://github.com/samaswin/decision_agent/issues)
 
 ## License
 
