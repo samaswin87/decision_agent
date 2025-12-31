@@ -2961,7 +2961,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "metrics", op: "moving_average", value: { "window": 5, "threshold": 100 } },
+              if: { field: "metrics", op: "moving_average", value: { "window": 5, "lte": 100 } },
               then: { decision: "low_avg" }
             }
           ]
@@ -2985,7 +2985,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "values", op: "moving_sum", value: { "window": 3, "threshold": 30 } },
+              if: { field: "values", op: "moving_sum", value: { window: 3, gte: 25 } },
               then: { decision: "match" }
             }
           ]
