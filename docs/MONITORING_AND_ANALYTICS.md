@@ -752,7 +752,7 @@ end
 
 ## Support
 
-- [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
+- [GitHub Issues](https://github.com/samaswin/decision_agent/issues)
 - [Documentation](README.md)
 - [Examples](examples/)
 
