@@ -6,6 +6,7 @@ module DecisionAgent
     # - Field conditions with various operators
     # - Nested field access via dot notation (e.g., "user.profile.role")
     # - Logical operators (all/any)
+    # rubocop:disable Metrics/ClassLength
     class ConditionEvaluator
       # Thread-safe caches for performance optimization
       @regex_cache = {}
@@ -194,7 +195,7 @@ module DecisionAgent
           # expected_value is the expected result of sqrt(actual_value)
           return false unless actual_value.is_a?(Numeric)
           return false unless expected_value.is_a?(Numeric)
-          return false if actual_value < 0 # sqrt of negative number is invalid
+          return false if actual_value.negative? # sqrt of negative number is invalid
 
           Math.sqrt(actual_value).round(10) == expected_value.round(10)
 
@@ -312,7 +313,7 @@ module DecisionAgent
           median_value = if numeric_array.size.odd?
                            numeric_array[numeric_array.size / 2]
                          else
-                           (numeric_array[numeric_array.size / 2 - 1] + numeric_array[numeric_array.size / 2]) / 2.0
+                           (numeric_array[(numeric_array.size / 2) - 1] + numeric_array[numeric_array.size / 2]) / 2.0
                          end
           compare_aggregation_result(median_value, expected_value)
 
@@ -359,7 +360,7 @@ module DecisionAgent
                              else
                                lower = numeric_array[percentile_index.floor]
                                upper = numeric_array[percentile_index.ceil]
-                               lower + (upper - lower) * (percentile_index - percentile_index.floor)
+                               lower + ((upper - lower) * (percentile_index - percentile_index.floor))
                              end
 
           compare_percentile_result(percentile_value, params)
@@ -489,7 +490,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         when "subtract_days"
           # Subtracts days from a date and compares
@@ -505,7 +506,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         when "add_hours"
           # Adds hours to a date and compares
@@ -521,7 +522,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         when "subtract_hours"
           # Subtracts hours from a date and compares
@@ -537,7 +538,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         when "add_minutes"
           # Adds minutes to a date and compares
@@ -553,7 +554,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         when "subtract_minutes"
           # Subtracts minutes from a date and compares
@@ -569,7 +570,7 @@ module DecisionAgent
           target_date = params[:target] == "now" ? Time.now : parse_date(get_nested_value(context_hash, params[:target]))
           return false unless target_date
 
-          compare_date_result(result_date, target_date, params)
+          compare_date_result?(result_date, target_date, params)
 
         # TIME COMPONENT EXTRACTION
         when "hour_of_day"
@@ -751,7 +752,7 @@ module DecisionAgent
           principal = actual_value
           rate = params[:rate]
           periods = params[:periods]
-          result = principal * ((1 + rate / periods)**periods)
+          result = principal * ((1 + (rate / periods))**periods)
 
           if params[:result]
             (result.round(2) == params[:result].round(2))
@@ -811,11 +812,11 @@ module DecisionAgent
 
           return false if rate <= 0 || periods <= 0
 
-          if rate == 0
-            payment = principal / periods
-          else
-            payment = principal * (rate * ((1 + rate)**periods)) / (((1 + rate)**periods) - 1)
-          end
+          payment = if rate.zero?
+                      principal / periods
+                    else
+                      principal * (rate * ((1 + rate)**periods)) / (((1 + rate)**periods) - 1)
+                    end
 
           if params[:result]
             (payment.round(2) == params[:result].round(2))
@@ -1129,6 +1130,7 @@ module DecisionAgent
       # Helper methods for new operators
 
       # Compare aggregation result with expected value (supports hash with comparison operators)
+      # rubocop:disable Metrics/PerceivedComplexity
       def self.compare_aggregation_result(actual, expected)
         if expected.is_a?(Hash)
           result = true
@@ -1144,13 +1146,14 @@ module DecisionAgent
           actual == expected
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       # Parse percentile parameters
       def self.parse_percentile_params(value)
         return nil unless value.is_a?(Hash)
 
         percentile = value["percentile"] || value[:percentile]
-        return nil unless percentile && percentile.is_a?(Numeric) && percentile >= 0 && percentile <= 100
+        return nil unless percentile.is_a?(Numeric) && percentile >= 0 && percentile <= 100
 
         {
           percentile: percentile.to_f,
@@ -1210,7 +1213,7 @@ module DecisionAgent
         return nil unless value.is_a?(Hash)
 
         unit_value = value[unit.to_s] || value[unit]
-        return nil unless unit_value && unit_value.is_a?(Numeric)
+        return nil unless unit_value.is_a?(Numeric)
 
         {
           unit => unit_value.to_f,
@@ -1225,7 +1228,7 @@ module DecisionAgent
       end
 
       # Compare date result
-      def self.compare_date_result(actual, target, params)
+      def self.compare_date_result?(actual, target, params)
         if params[:compare]
           case params[:compare].to_s
           when "eq", "=="
@@ -1257,6 +1260,7 @@ module DecisionAgent
       end
 
       # Compare numeric result (for time component extraction)
+      # rubocop:disable Metrics/PerceivedComplexity
       def self.compare_numeric_result(actual, expected)
         if expected.is_a?(Hash)
           result = true
@@ -1272,6 +1276,7 @@ module DecisionAgent
           actual == expected
         end
       end
+      # rubocop:enable Metrics/PerceivedComplexity
 
       # Compare rate result
       def self.compare_rate_result(actual, expected)
@@ -1283,7 +1288,7 @@ module DecisionAgent
         return nil unless value.is_a?(Hash)
 
         window = value["window"] || value[:window]
-        return nil unless window && window.is_a?(Numeric) && window > 0
+        return nil unless window.is_a?(Numeric) && window.positive?
 
         {
           window: window.to_i,
@@ -1433,6 +1438,7 @@ module DecisionAgent
           date_cache_size: @date_cache.size
         }
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

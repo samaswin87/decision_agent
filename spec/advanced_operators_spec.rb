@@ -1420,10 +1420,10 @@ RSpec.describe "Advanced DSL Operators" do
 
           evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
           context = DecisionAgent::Context.new({
-            angle: 0,
-            number: 9,
-            value: -5
-          })
+                                                 angle: 0,
+                                                 number: 9,
+                                                 value: -5
+                                               })
 
           evaluation = evaluator.evaluate(context)
 
@@ -1452,10 +1452,10 @@ RSpec.describe "Advanced DSL Operators" do
 
           evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
           context = DecisionAgent::Context.new({
-            angle: 0,  # sin(0) = 0, not 1
-            number: 9,  # sqrt(9) = 3, not 4
-            value: -10  # abs(-10) = 10, matches!
-          })
+                                                 angle: 0, # sin(0) = 0, not 1
+                                                 number: 9,  # sqrt(9) = 3, not 4
+                                                 value: -10  # abs(-10) = 10, matches!
+                                               })
 
           evaluation = evaluator.evaluate(context)
 
@@ -2271,7 +2271,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "prices", op: "sum", value: { "gte": 100 } },
+              if: { field: "prices", op: "sum", value: { gte: 100 } },
               then: { decision: "free_shipping" }
             }
           ]
@@ -2360,7 +2360,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "latencies", op: "average", value: { "lt": 200 } },
+              if: { field: "latencies", op: "average", value: { lt: 200 } },
               then: { decision: "acceptable" }
             }
           ]
@@ -2454,7 +2454,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "values", op: "stddev", value: { "lt": 5 } },
+              if: { field: "values", op: "stddev", value: { lt: 5 } },
               then: { decision: "low_variance" }
             }
           ]
@@ -2499,7 +2499,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "scores", op: "variance", value: { "lt": 100 } },
+              if: { field: "scores", op: "variance", value: { lt: 100 } },
               then: { decision: "low_variance" }
             }
           ]
@@ -2523,7 +2523,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "latencies", op: "percentile", value: { "percentile": 95, "threshold": 200 } },
+              if: { field: "latencies", op: "percentile", value: { percentile: 95, threshold: 200 } },
               then: { decision: "p95_ok" }
             }
           ]
@@ -2545,7 +2545,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "times", op: "percentile", value: { "percentile": 99, "gt": 500 } },
+              if: { field: "times", op: "percentile", value: { percentile: 99, gt: 500 } },
               then: { decision: "high_p99" }
             }
           ]
@@ -2576,7 +2576,7 @@ RSpec.describe "Advanced DSL Operators" do
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ items: ["a", "b", "c"] })
+        context = DecisionAgent::Context.new({ items: %w[a b c] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -2591,14 +2591,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "errors", op: "count", value: { "gte": 5 } },
+              if: { field: "errors", op: "count", value: { gte: 5 } },
               then: { decision: "alert" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ errors: ["err1", "err2", "err3", "err4", "err5"] })
+        context = DecisionAgent::Context.new({ errors: %w[err1 err2 err3 err4 err5] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -2618,7 +2618,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "start_time", op: "duration_seconds", value: { "end": "now", "max": 3600 } },
+              if: { field: "start_time", op: "duration_seconds", value: { end: "now", max: 3600 } },
               then: { decision: "within_hour" }
             }
           ]
@@ -2640,7 +2640,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "session.start", op: "duration_seconds", value: { "end": "session.end", "max": 7200 } },
+              if: { field: "session.start", op: "duration_seconds", value: { end: "session.end", max: 7200 } },
               then: { decision: "short_session" }
             }
           ]
@@ -2672,7 +2672,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "created_at", op: "duration_minutes", value: { "end": "now", "gte": 30 } },
+              if: { field: "created_at", op: "duration_minutes", value: { end: "now", gte: 30 } },
               then: { decision: "old_enough" }
             }
           ]
@@ -2696,7 +2696,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "start", op: "duration_hours", value: { "end": "now", "gte": 1 } },
+              if: { field: "start", op: "duration_hours", value: { end: "now", gte: 1 } },
               then: { decision: "match" }
             }
           ]
@@ -2718,14 +2718,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "trial_start", op: "duration_days", value: { "end": "now", "gte": 7 } },
+              if: { field: "trial_start", op: "duration_days", value: { end: "now", gte: 7 } },
               then: { decision: "trial_expired" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ trial_start: (Time.now - 8 * 86_400).iso8601 })
+        context = DecisionAgent::Context.new({ trial_start: (Time.now - (8 * 86_400)).iso8601 })
 
         evaluation = evaluator.evaluate(context)
 
@@ -2745,14 +2745,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "created_at", op: "add_days", value: { "days": 7, "compare": "lte", "target": "now" } },
+              if: { field: "created_at", op: "add_days", value: { days: 7, compare: "lte", target: "now" } },
               then: { decision: "week_old" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ created_at: (Time.now - 8 * 86_400).iso8601 })
+        context = DecisionAgent::Context.new({ created_at: (Time.now - (8 * 86_400)).iso8601 })
 
         evaluation = evaluator.evaluate(context)
 
@@ -2769,14 +2769,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "deadline", op: "subtract_days", value: { "days": 1, "compare": "gt", "target": "now" } },
+              if: { field: "deadline", op: "subtract_days", value: { days: 1, compare: "gt", target: "now" } },
               then: { decision: "not_urgent" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ deadline: (Time.now + 2 * 86_400).iso8601 })
+        context = DecisionAgent::Context.new({ deadline: (Time.now + (2 * 86_400)).iso8601 })
 
         evaluation = evaluator.evaluate(context)
 
@@ -2791,7 +2791,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "start", op: "add_hours", value: { "hours": 2, "compare": "lt", "target": "now" } },
+              if: { field: "start", op: "add_hours", value: { hours: 2, compare: "lt", target: "now" } },
               then: { decision: "past_2h" }
             }
           ]
@@ -2818,7 +2818,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "timestamp", op: "hour_of_day", value: { "gte": 9, "lte": 17 } },
+              if: { field: "timestamp", op: "hour_of_day", value: { gte: 9, lte: 17 } },
               then: { decision: "business_hours" }
             }
           ]
@@ -2894,7 +2894,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "request_timestamps", op: "rate_per_second", value: { "max": 10 } },
+              if: { field: "request_timestamps", op: "rate_per_second", value: { max: 10 } },
               then: { decision: "within_limit" }
             }
           ]
@@ -2927,7 +2927,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "events", op: "rate_per_minute", value: { "max": 60 } },
+              if: { field: "events", op: "rate_per_minute", value: { max: 60 } },
               then: { decision: "ok" }
             }
           ]
@@ -2961,7 +2961,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "metrics", op: "moving_average", value: { "window": 5, "lte": 100 } },
+              if: { field: "metrics", op: "moving_average", value: { window: 5, lte: 100 } },
               then: { decision: "low_avg" }
             }
           ]
@@ -3012,7 +3012,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "principal", op: "compound_interest", value: { "rate": 0.05, "periods": 12, "result": 1051.16 } },
+              if: { field: "principal", op: "compound_interest", value: { rate: 0.05, periods: 12, result: 1051.16 } },
               then: { decision: "match" }
             }
           ]
@@ -3036,7 +3036,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "future_value", op: "present_value", value: { "rate": 0.05, "periods": 10, "result": 613.91 } },
+              if: { field: "future_value", op: "present_value", value: { rate: 0.05, periods: 10, result: 613.91 } },
               then: { decision: "match" }
             }
           ]
@@ -3063,14 +3063,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "tags", op: "join", value: { "separator": ",", "result": "a,b,c" } },
+              if: { field: "tags", op: "join", value: { separator: ",", result: "a,b,c" } },
               then: { decision: "match" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ tags: ["a", "b", "c"] })
+        context = DecisionAgent::Context.new({ tags: %w[a b c] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -3085,14 +3085,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "tags", op: "join", value: { "separator": ",", "contains": "important" } },
+              if: { field: "tags", op: "join", value: { separator: ",", contains: "important" } },
               then: { decision: "has_important" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ tags: ["urgent", "important", "critical"] })
+        context = DecisionAgent::Context.new({ tags: %w[urgent important critical] })
 
         evaluation = evaluator.evaluate(context)
 
@@ -3109,7 +3109,7 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "description", op: "length", value: { "min": 10, "max": 500 } },
+              if: { field: "description", op: "length", value: { min: 10, max: 500 } },
               then: { decision: "valid_length" }
             }
           ]
@@ -3131,14 +3131,14 @@ RSpec.describe "Advanced DSL Operators" do
           rules: [
             {
               id: "rule_1",
-              if: { field: "items", op: "length", value: { "gte": 3 } },
+              if: { field: "items", op: "length", value: { gte: 3 } },
               then: { decision: "enough_items" }
             }
           ]
         }
 
         evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-        context = DecisionAgent::Context.new({ items: ["a", "b", "c", "d"] })
+        context = DecisionAgent::Context.new({ items: %w[a b c d] })
 
         evaluation = evaluator.evaluate(context)
 
