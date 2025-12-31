@@ -24,7 +24,7 @@ def print_help
       decision_agent version
 
     For more information, visit:
-    https://github.com/samaswin87/decision_agent
+    https://github.com/samaswin/decision_agent
   HELP
 end
 

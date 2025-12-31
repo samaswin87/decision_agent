@@ -63,7 +63,7 @@ docs/
 - [Installation](../README.md#installation)
 - [Quick Start](../README.md#quick-start)
 - [Examples Directory](../examples/)
-- [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
+- [GitHub Issues](https://github.com/samaswin/decision_agent/issues)
 
 ## 📖 Additional Resources
 

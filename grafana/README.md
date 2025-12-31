@@ -320,5 +320,5 @@ global:
 ## Support
 
 For issues specific to DecisionAgent monitoring:
-- [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
+- [GitHub Issues](https://github.com/samaswin/decision_agent/issues)
 - [Monitoring Documentation](../docs/MONITORING_AND_ANALYTICS.md)

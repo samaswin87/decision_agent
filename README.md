@@ -1,7 +1,7 @@
 # DecisionAgent
 
 [![Gem Version](https://badge.fury.io/rb/decision_agent.svg)](https://badge.fury.io/rb/decision_agent)
-[![CI](https://github.com/samaswin87/decision_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/samaswin87/decision_agent/actions/workflows/ci.yml)
+[![CI](https://github.com/samaswin/decision_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/samaswin/decision_agent/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 [![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.7.0-red.svg)](https://www.ruby-lang.org)
 
@@ -189,7 +189,7 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 
 ### More Resources
 - [Documentation Home](docs/README.md) - Documentation index
-- [GitHub Issues](https://github.com/samaswin87/decision_agent/issues) - Report bugs or request features
+- [GitHub Issues](https://github.com/samaswin/decision_agent/issues) - Report bugs or request features
 
 ## Thread-Safety & Performance
 
@@ -213,7 +213,7 @@ See [Thread-Safety Guide](docs/THREAD_SAFETY.md) and [Performance Analysis](docs
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/samaswin87/decision_agent/issues)
+- **Issues**: [GitHub Issues](https://github.com/samaswin/decision_agent/issues)
 - **Documentation**: [Documentation](docs/README.md)
 - **Examples**: [Examples Directory](examples/README.md)
 

@@ -8,14 +8,14 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Deterministic, explainable, auditable decision engine for Ruby"
   spec.description   = "A production-grade decision agent that provides deterministic rule evaluation, conflict resolution, and full audit replay capabilities. Framework-agnostic and AI-optional."
-  spec.homepage      = "https://github.com/samaswin87/decision_agent"
+  spec.homepage      = "https://github.com/samaswin/decision_agent"
   spec.license       = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/samaswin87/decision_agent"
-  spec.metadata["changelog_uri"] = "https://github.com/samaswin87/decision_agent/blob/main/CHANGELOG.md"
-  spec.metadata["github_repo"] = "https://github.com/samaswin87/decision_agent"
+  spec.metadata["source_code_uri"] = "https://github.com/samaswin/decision_agent"
+  spec.metadata["changelog_uri"] = "https://github.com/samaswin/decision_agent/blob/main/CHANGELOG.md"
+  spec.metadata["github_repo"] = "https://github.com/samaswin/decision_agent"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.glob("{lib,spec,bin}/**/*") + %w[README.md LICENSE.txt]
