@@ -177,7 +177,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Numeric)
           return false unless expected_value.is_a?(Numeric)
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.sin(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -187,7 +187,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Numeric)
           return false unless expected_value.is_a?(Numeric)
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.cos(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -197,7 +197,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Numeric)
           return false unless expected_value.is_a?(Numeric)
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.tan(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -209,7 +209,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Numeric)
           return false if actual_value.negative? # sqrt of negative number is invalid
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.sqrt(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -221,7 +221,7 @@ module DecisionAgent
           params = parse_power_params(expected_value)
           return false unless params
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = actual_value**params[:exponent]
           (result - params[:result]).abs < 1e-10
 
@@ -231,7 +231,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Numeric)
           return false unless expected_value.is_a?(Numeric)
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.exp(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -242,7 +242,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Numeric)
           return false if actual_value <= 0 # log of non-positive number is invalid
 
-          # Optimize: Use epsilon comparison instead of round for better performance
+          # OPTIMIZE: Use epsilon comparison instead of round for better performance
           result = Math.log(actual_value)
           (result - expected_value).abs < 1e-10
 
@@ -305,7 +305,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Array)
           return false if actual_value.empty?
 
-          # Optimize: calculate sum in single pass, filtering as we go
+          # OPTIMIZE: calculate sum in single pass, filtering as we go
           sum_value = 0.0
           found_numeric = false
           actual_value.each do |v|
@@ -323,7 +323,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Array)
           return false if actual_value.empty?
 
-          # Optimize: calculate sum and count in single pass
+          # OPTIMIZE: calculate sum and count in single pass
           sum_value = 0.0
           count = 0
           actual_value.each do |v|
@@ -712,7 +712,7 @@ module DecisionAgent
           return false unless actual_value.is_a?(Array)
           return false if actual_value.empty?
 
-          # Optimize: filter once and reuse
+          # OPTIMIZE: filter once and reuse
           numeric_array = actual_value.select { |v| v.is_a?(Numeric) }
           return false if numeric_array.empty?
 
@@ -722,7 +722,7 @@ module DecisionAgent
           window = [params[:window], numeric_array.size].min
           return false if window < 1
 
-          # Optimize: use slice instead of last for better performance
+          # OPTIMIZE: use slice instead of last for better performance
           window_array = numeric_array.slice(-window, window)
           moving_avg = window_array.sum.to_f / window
           compare_moving_window_result(moving_avg, params)
@@ -741,7 +741,7 @@ module DecisionAgent
           window = [params[:window], numeric_array.size].min
           return false if window < 1
 
-          # Optimize: use slice instead of last
+          # OPTIMIZE: use slice instead of last
           window_array = numeric_array.slice(-window, window)
           moving_sum = window_array.sum
           compare_moving_window_result(moving_sum, params)
@@ -760,7 +760,7 @@ module DecisionAgent
           window = [params[:window], numeric_array.size].min
           return false if window < 1
 
-          # Optimize: use slice instead of last, iterate directly for max
+          # OPTIMIZE: use slice instead of last, iterate directly for max
           window_array = numeric_array.slice(-window, window)
           moving_max = window_array.max
           compare_moving_window_result(moving_max, params)
@@ -779,7 +779,7 @@ module DecisionAgent
           window = [params[:window], numeric_array.size].min
           return false if window < 1
 
-          # Optimize: use slice instead of last
+          # OPTIMIZE: use slice instead of last
           window_array = numeric_array.slice(-window, window)
           moving_min = window_array.min
           compare_moving_window_result(moving_min, params)
@@ -910,7 +910,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Array)
           return true if expected_value.empty?
 
-          # Optimize: Use Set for O(1) lookups instead of O(n) include?
+          # OPTIMIZE: Use Set for O(1) lookups instead of O(n) include?
           # For small arrays, Set overhead is minimal; for large arrays, huge win
           actual_set = actual_value.to_set
           expected_value.all? { |item| actual_set.include?(item) }
@@ -922,7 +922,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Array)
           return false if expected_value.empty?
 
-          # Optimize: Use Set for O(1) lookups instead of O(n) include?
+          # OPTIMIZE: Use Set for O(1) lookups instead of O(n) include?
           # Early exit on first match for better performance
           actual_set = actual_value.to_set
           expected_value.any? { |item| actual_set.include?(item) }
@@ -934,7 +934,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Array)
           return false if actual_value.empty? || expected_value.empty?
 
-          # Optimize: Use Set intersection for O(n) instead of array & which creates intermediate array
+          # OPTIMIZE: Use Set intersection for O(n) instead of array & which creates intermediate array
           # Check smaller array against larger set for better performance
           if actual_value.size <= expected_value.size
             expected_set = expected_value.to_set
@@ -951,7 +951,7 @@ module DecisionAgent
           return false unless expected_value.is_a?(Array)
           return true if actual_value.empty?
 
-          # Optimize: Use Set for O(1) lookups instead of O(n) include?
+          # OPTIMIZE: Use Set for O(1) lookups instead of O(n) include?
           expected_set = expected_value.to_set
           actual_value.all? { |item| expected_set.include?(item) }
 
@@ -1004,15 +1004,13 @@ module DecisionAgent
         keys.reduce(hash) do |memo, key|
           return nil unless memo.is_a?(Hash)
 
-          # Optimize: try symbol first (most common), then string
+          # OPTIMIZE: try symbol first (most common), then string
           # Check key existence first to avoid double lookup
           key_sym = key.to_sym
           if memo.key?(key_sym)
             memo[key_sym]
           elsif memo.key?(key)
             memo[key]
-          else
-            nil
           end
         end
       end
@@ -1037,7 +1035,7 @@ module DecisionAgent
       def self.parse_range(value)
         # Generate cache key from normalized value
         cache_key = normalize_param_cache_key(value, "range")
-        
+
         # Fast path: check cache without lock
         cached = @param_cache[cache_key]
         return cached if cached
@@ -1066,7 +1064,7 @@ module DecisionAgent
       def self.parse_modulo_params(value)
         # Generate cache key from normalized value
         cache_key = normalize_param_cache_key(value, "modulo")
-        
+
         # Fast path: check cache without lock
         cached = @param_cache[cache_key]
         return cached if cached
@@ -1122,11 +1120,9 @@ module DecisionAgent
         return false unless actual_value && expected_value
 
         # Fast path: Both are already Time/Date objects (no parsing needed)
-        if actual_value.is_a?(Time) || actual_value.is_a?(Date) || actual_value.is_a?(DateTime)
-          if expected_value.is_a?(Time) || expected_value.is_a?(Date) || expected_value.is_a?(DateTime)
-            return actual_value.send(operator, expected_value)
-          end
-        end
+        actual_is_date = actual_value.is_a?(Time) || actual_value.is_a?(Date) || actual_value.is_a?(DateTime)
+        expected_is_date = expected_value.is_a?(Time) || expected_value.is_a?(Date) || expected_value.is_a?(DateTime)
+        return actual_value.send(operator, expected_value) if actual_is_date && expected_is_date
 
         # Slow path: Parse dates (with caching)
         actual_date = parse_date(actual_value)
@@ -1565,7 +1561,11 @@ module DecisionAgent
         # Fast-path: ISO8601 date format (YYYY-MM-DD)
         if date_string.match?(/^\d{4}-\d{2}-\d{2}$/)
           year, month, day = date_string.split("-").map(&:to_i)
-          return Time.new(year, month, day) rescue nil
+          begin
+            return Time.new(year, month, day)
+          rescue StandardError
+            nil
+          end
         end
 
         # Fast-path: ISO8601 datetime format (YYYY-MM-DDTHH:MM:SS or YYYY-MM-DDTHH:MM:SSZ)
@@ -1617,7 +1617,7 @@ module DecisionAgent
             h[key] = v
           end
           sorted_keys = normalized.keys.sort
-          "#{prefix}:#{sorted_keys.map { |k| "#{k}:#{normalized[k]}" }.join(",")}"
+          "#{prefix}:#{sorted_keys.map { |k| "#{k}:#{normalized[k]}" }.join(',')}"
         else
           "#{prefix}:#{value.inspect}"
         end
