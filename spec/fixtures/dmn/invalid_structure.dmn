@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="definitions_invalid"
+             name="Invalid Decision"
+             namespace="http://decision_agent.local">
+
+  <decision id="invalid_decision" name="Invalid Decision">
+    <decisionTable id="invalid_table" hitPolicy="FIRST">
+      <input id="input1" label="Input 1">
+        <inputExpression typeRef="string">
+          <text>field1</text>
+        </inputExpression>
+      </input>
+
+      <output id="output1" label="Output 1" name="output" typeRef="string"/>
+
+      <!-- This rule is invalid: has 1 input but 2 input entries -->
+      <rule id="bad_rule">
+        <inputEntry id="entry1">
+          <text>"value1"</text>
+        </inputEntry>
+        <inputEntry id="entry2">
+          <text>"value2"</text>
+        </inputEntry>
+        <outputEntry id="output_entry">
+          <text>"result"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

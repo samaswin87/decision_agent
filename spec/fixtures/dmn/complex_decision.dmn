@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="definitions_complex"
+             name="Complex Loan Decision"
+             namespace="http://decision_agent.local">
+
+  <decision id="loan_approval" name="Loan Approval Decision">
+    <description>Multi-criteria loan approval decision</description>
+    <decisionTable id="loan_approval_table" hitPolicy="FIRST">
+      <input id="input_credit_score" label="Credit Score">
+        <inputExpression typeRef="number">
+          <text>credit_score</text>
+        </inputExpression>
+      </input>
+
+      <input id="input_income" label="Annual Income">
+        <inputExpression typeRef="number">
+          <text>income</text>
+        </inputExpression>
+      </input>
+
+      <input id="input_loan_amount" label="Loan Amount">
+        <inputExpression typeRef="number">
+          <text>loan_amount</text>
+        </inputExpression>
+      </input>
+
+      <output id="output_decision" label="Decision" name="decision" typeRef="string"/>
+
+      <rule id="rule_excellent">
+        <description>Excellent credit and high income</description>
+        <inputEntry id="entry_excellent_credit">
+          <text>>= 750</text>
+        </inputEntry>
+        <inputEntry id="entry_excellent_income">
+          <text>>= 50000</text>
+        </inputEntry>
+        <inputEntry id="entry_excellent_loan">
+          <text>&lt; 200000</text>
+        </inputEntry>
+        <outputEntry id="output_excellent">
+          <text>"approve"</text>
+        </outputEntry>
+      </rule>
+
+      <rule id="rule_good">
+        <description>Good credit and moderate income</description>
+        <inputEntry id="entry_good_credit">
+          <text>>= 650</text>
+        </inputEntry>
+        <inputEntry id="entry_good_income">
+          <text>>= 40000</text>
+        </inputEntry>
+        <inputEntry id="entry_good_loan">
+          <text>&lt; 150000</text>
+        </inputEntry>
+        <outputEntry id="output_good">
+          <text>"conditional_approve"</text>
+        </outputEntry>
+      </rule>
+
+      <rule id="rule_default">
+        <description>Default rejection for all other cases</description>
+        <inputEntry id="entry_default_credit">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="entry_default_income">
+          <text>-</text>
+        </inputEntry>
+        <inputEntry id="entry_default_loan">
+          <text>-</text>
+        </inputEntry>
+        <outputEntry id="output_default">
+          <text>"reject"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

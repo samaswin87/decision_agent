@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/"
+             xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/"
+             id="definitions_simple"
+             name="Simple Decision"
+             namespace="http://decision_agent.local">
+
+  <decision id="age_check" name="Age Check Decision">
+    <decisionTable id="age_check_table" hitPolicy="FIRST">
+      <input id="input_age" label="Age">
+        <inputExpression typeRef="number">
+          <text>age</text>
+        </inputExpression>
+      </input>
+
+      <output id="output_decision" label="Decision" name="decision" typeRef="string"/>
+
+      <rule id="rule_1">
+        <description>Approve if age >= 18</description>
+        <inputEntry id="entry_1_age">
+          <text>>= 18</text>
+        </inputEntry>
+        <outputEntry id="output_1">
+          <text>"approve"</text>
+        </outputEntry>
+      </rule>
+
+      <rule id="rule_2">
+        <description>Reject if age &lt; 18</description>
+        <inputEntry id="entry_2_age">
+          <text>&lt; 18</text>
+        </inputEntry>
+        <outputEntry id="output_2">
+          <text>"reject"</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>
