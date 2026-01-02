@@ -23,6 +23,11 @@ module DecisionAgent
           { type: :string, value: val.to_s }
         end
 
+        # Argument wrapper (unwrap the arg node to get the inner expression)
+        rule(arg: subtree(:expr)) do
+          expr
+        end
+
         # List literal
         rule(list_literal: { list: subtree(:items) }) do
           items_array = case items
@@ -297,10 +302,19 @@ module DecisionAgent
 
         # Quantified expressions
         rule(quantifier: simple(:q), var: subtree(:v), list: subtree(:l), condition: subtree(:c)) do
+          # Variable might be already transformed to a field node or still be an identifier hash
+          var_name = if v.is_a?(Hash) && v[:type] == :field
+                       v[:name]
+                     elsif v.is_a?(Hash) && v[:identifier]
+                       v[:identifier].to_s
+                     else
+                       v.to_s
+                     end
+
           {
             type: :quantified,
             quantifier: q.to_s,
-            variable: v[:identifier].to_s,
+            variable: var_name,
             list: l,
             condition: c
           }
@@ -308,9 +322,18 @@ module DecisionAgent
 
         # For expression
         rule(var: subtree(:v), list: subtree(:l), return_expr: subtree(:r)) do
+          # Variable might be already transformed to a field node or still be an identifier hash
+          var_name = if v.is_a?(Hash) && v[:type] == :field
+                       v[:name]
+                     elsif v.is_a?(Hash) && v[:identifier]
+                       v[:identifier].to_s
+                     else
+                       v.to_s
+                     end
+
           {
             type: :for,
-            variable: v[:identifier].to_s,
+            variable: var_name,
             list: l,
             return_expr: r
           }

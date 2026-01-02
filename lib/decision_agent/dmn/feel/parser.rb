@@ -297,7 +297,7 @@ module DecisionAgent
 
         # Identifier (variable/field name)
         rule(:identifier) do
-          (match["a-zA-Z_"] >> match["a-zA-Z0-9_\\s"].repeat).as(:identifier)
+          (match["a-zA-Z_"] >> match["a-zA-Z0-9_"].repeat).as(:identifier)
         end
 
         # Parenthesized expression
