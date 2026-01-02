@@ -1157,7 +1157,373 @@ module DecisionAgent
         "User management page not found"
       end
 
+      # DMN Editor Routes
+
+      # GET /dmn/editor - DMN Editor UI page
+      get "/dmn/editor" do
+        send_file File.join(settings.public_folder, "dmn-editor.html")
+      rescue StandardError
+        status 404
+        "DMN Editor page not found"
+      end
+
+      # API: List all DMN models
+      get "/api/dmn/models" do
+        content_type :json
+        dmn_editor.list_models.to_json
+      end
+
+      # API: Create new DMN model
+      post "/api/dmn/models" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          model = dmn_editor.create_model(
+            name: data["name"],
+            namespace: data["namespace"]
+          )
+
+          status 201
+          model.to_json
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Get DMN model
+      get "/api/dmn/models/:id" do
+        content_type :json
+
+        model = dmn_editor.get_model(params[:id])
+        if model
+          model.to_json
+        else
+          status 404
+          { error: "Model not found" }.to_json
+        end
+      end
+
+      # API: Update DMN model
+      put "/api/dmn/models/:id" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          model = dmn_editor.update_model(
+            params[:id],
+            name: data["name"],
+            namespace: data["namespace"]
+          )
+
+          if model
+            model.to_json
+          else
+            status 404
+            { error: "Model not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Delete DMN model
+      delete "/api/dmn/models/:id" do
+        content_type :json
+
+        result = dmn_editor.delete_model(params[:id])
+        { success: result }.to_json
+      end
+
+      # API: Add decision to model
+      post "/api/dmn/models/:model_id/decisions" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          decision = dmn_editor.add_decision(
+            model_id: params[:model_id],
+            decision_id: data["decision_id"],
+            name: data["name"],
+            type: data["type"] || "decision_table"
+          )
+
+          if decision
+            status 201
+            decision.to_json
+          else
+            status 404
+            { error: "Model not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Update decision
+      put "/api/dmn/models/:model_id/decisions/:decision_id" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          decision = dmn_editor.update_decision(
+            model_id: params[:model_id],
+            decision_id: params[:decision_id],
+            name: data["name"],
+            logic: data["logic"]
+          )
+
+          if decision
+            decision.to_json
+          else
+            status 404
+            { error: "Decision not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Delete decision
+      delete "/api/dmn/models/:model_id/decisions/:decision_id" do
+        content_type :json
+
+        result = dmn_editor.delete_decision(
+          model_id: params[:model_id],
+          decision_id: params[:decision_id]
+        )
+
+        { success: result }.to_json
+      end
+
+      # API: Add input column
+      post "/api/dmn/models/:model_id/decisions/:decision_id/inputs" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          input = dmn_editor.add_input(
+            model_id: params[:model_id],
+            decision_id: params[:decision_id],
+            input_id: data["input_id"],
+            label: data["label"],
+            type_ref: data["type_ref"],
+            expression: data["expression"]
+          )
+
+          if input
+            status 201
+            input.to_json
+          else
+            status 404
+            { error: "Decision not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Add output column
+      post "/api/dmn/models/:model_id/decisions/:decision_id/outputs" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          output = dmn_editor.add_output(
+            model_id: params[:model_id],
+            decision_id: params[:decision_id],
+            output_id: data["output_id"],
+            label: data["label"],
+            type_ref: data["type_ref"],
+            name: data["name"]
+          )
+
+          if output
+            status 201
+            output.to_json
+          else
+            status 404
+            { error: "Decision not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Add rule
+      post "/api/dmn/models/:model_id/decisions/:decision_id/rules" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          rule = dmn_editor.add_rule(
+            model_id: params[:model_id],
+            decision_id: params[:decision_id],
+            rule_id: data["rule_id"],
+            input_entries: data["input_entries"],
+            output_entries: data["output_entries"],
+            description: data["description"]
+          )
+
+          if rule
+            status 201
+            rule.to_json
+          else
+            status 404
+            { error: "Decision not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Update rule
+      put "/api/dmn/models/:model_id/decisions/:decision_id/rules/:rule_id" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          rule = dmn_editor.update_rule(
+            model_id: params[:model_id],
+            decision_id: params[:decision_id],
+            rule_id: params[:rule_id],
+            input_entries: data["input_entries"],
+            output_entries: data["output_entries"],
+            description: data["description"]
+          )
+
+          if rule
+            rule.to_json
+          else
+            status 404
+            { error: "Rule not found" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Delete rule
+      delete "/api/dmn/models/:model_id/decisions/:decision_id/rules/:rule_id" do
+        content_type :json
+
+        result = dmn_editor.delete_rule(
+          model_id: params[:model_id],
+          decision_id: params[:decision_id],
+          rule_id: params[:rule_id]
+        )
+
+        { success: result }.to_json
+      end
+
+      # API: Validate DMN model
+      get "/api/dmn/models/:id/validate" do
+        content_type :json
+        dmn_editor.validate_model(params[:id]).to_json
+      end
+
+      # API: Export DMN model to XML
+      get "/api/dmn/models/:id/export" do
+        content_type :xml
+
+        xml = dmn_editor.export_to_xml(params[:id])
+        if xml
+          xml
+        else
+          status 404
+          "Model not found"
+        end
+      end
+
+      # API: Import DMN model from XML
+      post "/api/dmn/models/import" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = JSON.parse(request_body)
+
+          model = dmn_editor.import_from_xml(data["xml"], name: data["name"])
+
+          if model
+            status 201
+            model.to_json
+          else
+            status 400
+            { error: "Failed to import model" }.to_json
+          end
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # API: Visualize decision tree
+      get "/api/dmn/models/:model_id/decisions/:decision_id/visualize/tree" do
+        format = params[:format] || "svg"
+
+        visualization = dmn_editor.visualize_tree(
+          model_id: params[:model_id],
+          decision_id: params[:decision_id],
+          format: format
+        )
+
+        if visualization
+          content_type format == "svg" ? "image/svg+xml" : :text
+          visualization
+        else
+          status 404
+          "Decision not found or not a tree"
+        end
+      end
+
+      # API: Visualize decision graph
+      get "/api/dmn/models/:id/visualize/graph" do
+        format = params[:format] || "svg"
+
+        visualization = dmn_editor.visualize_graph(
+          model_id: params[:id],
+          format: format
+        )
+
+        if visualization
+          content_type format == "svg" ? "image/svg+xml" : :text
+          visualization
+        else
+          status 404
+          "Model not found"
+        end
+      end
+
       private
+
+      def dmn_editor
+        @dmn_editor ||= DmnEditor.new
+      end
 
       def version_manager
         @version_manager ||= DecisionAgent::Versioning::VersionManager.new

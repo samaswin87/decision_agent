@@ -116,8 +116,8 @@ context1 = DecisionAgent::Context.new(
 evaluation1 = evaluator.evaluate(context1)
 puts "Test 1: Credit Score: 800, Income: $100,000"
 puts "  Decision: #{evaluation1.decision}"
-puts "  Confidence: #{evaluation1.confidence}"
-puts "  Reason: #{evaluation1.explanations.first&.reason}"
+puts "  Weight: #{evaluation1.weight}"
+puts "  Reason: #{evaluation1.reason}"
 puts
 
 # Test case 2: Good credit, moderate income
@@ -128,8 +128,8 @@ context2 = DecisionAgent::Context.new(
 evaluation2 = evaluator.evaluate(context2)
 puts "Test 2: Credit Score: 680, Income: $55,000"
 puts "  Decision: #{evaluation2.decision}"
-puts "  Confidence: #{evaluation2.confidence}"
-puts "  Reason: #{evaluation2.explanations.first&.reason}"
+puts "  Weight: #{evaluation2.weight}"
+puts "  Reason: #{evaluation2.reason}"
 puts
 
 # Test case 3: Low credit score
@@ -140,8 +140,8 @@ context3 = DecisionAgent::Context.new(
 evaluation3 = evaluator.evaluate(context3)
 puts "Test 3: Credit Score: 580, Income: $45,000"
 puts "  Decision: #{evaluation3.decision}"
-puts "  Confidence: #{evaluation3.confidence}"
-puts "  Reason: #{evaluation3.explanations.first&.reason}"
+puts "  Weight: #{evaluation3.weight}"
+puts "  Reason: #{evaluation3.reason}"
 puts
 
 puts "=" * 80

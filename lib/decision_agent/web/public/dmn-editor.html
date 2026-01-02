@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMN Editor - DecisionAgent</title>
+    <link rel="stylesheet" href="dmn-editor.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DMN Editor</h1>
+            <div class="header-actions">
+                <button id="new-model-btn" class="btn btn-primary">New Model</button>
+                <button id="import-btn" class="btn btn-secondary">Import DMN</button>
+                <button id="export-btn" class="btn btn-secondary">Export DMN</button>
+                <button id="validate-btn" class="btn btn-secondary">Validate</button>
+                <a href="/" class="btn btn-link">Back to Main</a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <h3>Models</h3>
+                <div id="model-list" class="model-list">
+                    <p class="empty-state">No models yet. Create one to get started.</p>
+                </div>
+            </aside>
+
+            <!-- Editor Area -->
+            <main class="editor-area">
+                <div id="welcome-screen" class="welcome-screen">
+                    <h2>Welcome to DMN Editor</h2>
+                    <p>Create a new model or import an existing DMN file to get started.</p>
+                    <button class="btn btn-primary btn-large" onclick="document.getElementById('new-model-btn').click()">
+                        Create New Model
+                    </button>
+                </div>
+
+                <div id="editor-container" class="editor-container" style="display: none;">
+                    <!-- Model Info -->
+                    <div class="model-info">
+                        <h2 id="model-name">Model Name</h2>
+                        <span id="model-id" class="model-id"></span>
+                        <button id="add-decision-btn" class="btn btn-sm btn-primary">Add Decision</button>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="table">Decision Table</button>
+                        <button class="tab-btn" data-tab="tree">Decision Tree</button>
+                        <button class="tab-btn" data-tab="graph">Decision Graph</button>
+                        <button class="tab-btn" data-tab="xml">DMN XML</button>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content">
+                        <!-- Decision Table Tab -->
+                        <div id="table-tab" class="tab-pane active">
+                            <div class="decision-selector">
+                                <label>Select Decision:</label>
+                                <select id="decision-select" class="form-control">
+                                    <option value="">No decisions yet</option>
+                                </select>
+                            </div>
+
+                            <div id="decision-table-editor" class="decision-table-editor">
+                                <div class="table-controls">
+                                    <label>Hit Policy:</label>
+                                    <select id="hit-policy-select" class="form-control">
+                                        <option value="UNIQUE">UNIQUE</option>
+                                        <option value="FIRST" selected>FIRST</option>
+                                        <option value="PRIORITY">PRIORITY</option>
+                                        <option value="ANY">ANY</option>
+                                        <option value="COLLECT">COLLECT</option>
+                                    </select>
+                                    <button id="add-input-btn" class="btn btn-sm">Add Input</button>
+                                    <button id="add-output-btn" class="btn btn-sm">Add Output</button>
+                                    <button id="add-rule-btn" class="btn btn-sm btn-primary">Add Rule</button>
+                                </div>
+
+                                <div class="table-wrapper">
+                                    <table id="decision-table" class="decision-table">
+                                        <thead>
+                                            <tr id="table-headers">
+                                                <th class="rule-number">#</th>
+                                                <!-- Input/output headers will be added dynamically -->
+                                                <th class="actions-col">Actions</th>
+                                            </tr>
+                                            <tr id="table-types">
+                                                <th></th>
+                                                <!-- Type annotations will be added dynamically -->
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="table-body">
+                                            <tr class="empty-row">
+                                                <td colspan="2">No rules defined. Click "Add Rule" to create one.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Decision Tree Tab -->
+                        <div id="tree-tab" class="tab-pane">
+                            <div class="tree-controls">
+                                <button id="add-tree-node-btn" class="btn btn-sm btn-primary">Add Node</button>
+                                <button id="visualize-tree-btn" class="btn btn-sm">Visualize</button>
+                            </div>
+                            <div id="tree-editor" class="tree-editor">
+                                <p class="empty-state">Decision tree builder coming soon...</p>
+                            </div>
+                            <div id="tree-visualization" class="visualization-area"></div>
+                        </div>
+
+                        <!-- Decision Graph Tab -->
+                        <div id="graph-tab" class="tab-pane">
+                            <div class="graph-controls">
+                                <button id="visualize-graph-btn" class="btn btn-sm btn-primary">Generate Graph</button>
+                                <select id="graph-format-select" class="form-control">
+                                    <option value="svg">SVG</option>
+                                    <option value="mermaid">Mermaid</option>
+                                    <option value="dot">DOT</option>
+                                </select>
+                            </div>
+                            <div id="graph-visualization" class="visualization-area"></div>
+                        </div>
+
+                        <!-- XML Tab -->
+                        <div id="xml-tab" class="tab-pane">
+                            <div class="xml-controls">
+                                <button id="copy-xml-btn" class="btn btn-sm">Copy XML</button>
+                                <button id="download-xml-btn" class="btn btn-sm btn-primary">Download</button>
+                            </div>
+                            <pre id="xml-content" class="xml-content"><code></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="new-model-modal" class="modal">
+        <div class="modal-content">
+            <h3>Create New DMN Model</h3>
+            <form id="new-model-form">
+                <div class="form-group">
+                    <label for="model-name-input">Model Name:</label>
+                    <input type="text" id="model-name-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="model-namespace-input">Namespace (optional):</label>
+                    <input type="text" id="model-namespace-input" class="form-control"
+                           placeholder="http://example.com/dmn/model">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Create</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('new-model-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-decision-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add Decision</h3>
+            <form id="add-decision-form">
+                <div class="form-group">
+                    <label for="decision-id-input">Decision ID:</label>
+                    <input type="text" id="decision-id-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="decision-name-input">Decision Name:</label>
+                    <input type="text" id="decision-name-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="decision-type-select">Type:</label>
+                    <select id="decision-type-select" class="form-control">
+                        <option value="decision_table">Decision Table</option>
+                        <option value="decision_tree">Decision Tree</option>
+                        <option value="literal">Literal Expression</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-decision-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-column-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="column-modal-title">Add Column</h3>
+            <form id="add-column-form">
+                <input type="hidden" id="column-type" value="">
+                <div class="form-group">
+                    <label for="column-id-input">ID:</label>
+                    <input type="text" id="column-id-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="column-label-input">Label:</label>
+                    <input type="text" id="column-label-input" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="column-type-input">Data Type:</label>
+                    <select id="column-type-input" class="form-control">
+                        <option value="string">String</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="date">Date</option>
+                    </select>
+                </div>
+                <div class="form-group" id="expression-group">
+                    <label for="column-expression-input">Expression:</label>
+                    <input type="text" id="column-expression-input" class="form-control">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('add-column-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <h3>Import DMN File</h3>
+            <form id="import-form">
+                <div class="form-group">
+                    <label for="import-file-input">Select DMN XML File:</label>
+                    <input type="file" id="import-file-input" class="form-control" accept=".dmn,.xml" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">Import</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('import-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="dmn-editor.js"></script>
+</body>
+</html>
