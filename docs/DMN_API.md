@@ -16,6 +16,8 @@ Complete API reference for DecisionAgent's DMN support.
 - [Class: DmnEvaluator](#class-dmnevaluator)
 - [Module: Feel](#module-feel)
 - [Error Classes](#error-classes)
+- [CLI Commands](#cli-commands)
+- [Web API Endpoints](#web-api-endpoints)
 
 ---
 
@@ -673,6 +675,228 @@ Raised when a FEEL expression cannot be parsed.
 ```ruby
 raise DecisionAgent::Dmn::FeelExpressionError, "Invalid expression"
 ```
+
+---
+
+## CLI Commands
+
+DecisionAgent provides command-line tools for DMN import and export operations.
+
+### `decision_agent dmn import`
+
+Import a DMN XML file into the versioning system.
+
+**Usage:**
+```bash
+decision_agent dmn import <file.xml> [ruleset_name]
+```
+
+**Parameters:**
+- `file.xml` (required): Path to DMN XML file
+- `ruleset_name` (optional): Custom name for the ruleset. Defaults to decision ID.
+
+**Example:**
+```bash
+decision_agent dmn import loan_approval.dmn
+decision_agent dmn import loan_approval.dmn loan_rules_v1
+```
+
+**Output:**
+The command displays:
+- Import status
+- Model information (name, namespace)
+- Number of decisions imported
+- Details for each decision (ID, name, rules count, hit policy)
+- Version information
+
+**Errors:**
+- File not found: `❌ Error: File not found: <filepath>`
+- Invalid DMN: `❌ DMN Import Error: <error message>`
+
+### `decision_agent dmn export`
+
+Export a ruleset from the versioning system to DMN XML format.
+
+**Usage:**
+```bash
+decision_agent dmn export <ruleset> <output.xml>
+```
+
+**Parameters:**
+- `ruleset` (required): Ruleset ID to export
+- `output.xml` (required): Output file path
+
+**Example:**
+```bash
+decision_agent dmn export loan_rules loan_export.dmn
+```
+
+**Output:**
+The command displays:
+- Export status
+- Ruleset ID
+- Output file path
+- File size in bytes
+
+**Errors:**
+- Missing arguments: `❌ Error: Please provide ruleset ID and output file path`
+- Ruleset not found: `❌ Export Error: No active version found for '<ruleset>'`
+
+---
+
+## Web API Endpoints
+
+DecisionAgent's web server provides REST API endpoints for DMN operations.
+
+### POST /api/dmn/import
+
+Import a DMN file via HTTP request.
+
+**Endpoint:** `POST /api/dmn/import`
+
+**Content-Type:** 
+- `multipart/form-data` (file upload)
+- `application/json` (JSON body with XML)
+- `application/xml` or `text/xml` (direct XML)
+
+**Request Parameters:**
+
+**Method 1: Multipart Form Data**
+```
+file: <DMN file>
+ruleset_name: <optional string>
+created_by: <optional string>
+```
+
+**Method 2: JSON Body**
+```json
+{
+  "xml": "<DMN XML content>",
+  "ruleset_name": "<optional string>",
+  "created_by": "<optional string>"
+}
+```
+
+**Method 3: Direct XML**
+```
+Content-Type: application/xml
+Body: <DMN XML content>
+Query params: ruleset_name=<optional>
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "ruleset_name": "loan_rules",
+  "decisions_imported": 1,
+  "model": {
+    "id": "loan_approval",
+    "name": "Loan Approval Decision",
+    "namespace": "http://example.com/dmn",
+    "decisions": [
+      {
+        "id": "loan_decision",
+        "name": "Loan Approval"
+      }
+    ]
+  },
+  "versions": [
+    {
+      "version": 1,
+      "rule_id": "loan_rules",
+      "created_by": "api_user",
+      "created_at": "2026-01-03T10:30:45Z"
+    }
+  ]
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "error": "DMN validation error",
+  "message": "<error details>"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "error": "Import failed",
+  "message": "<error details>"
+}
+```
+
+**Example (cURL):**
+```bash
+# File upload
+curl -X POST http://localhost:4567/api/dmn/import \
+  -F "file=@loan_approval.dmn" \
+  -F "ruleset_name=loan_rules"
+
+# JSON body
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Content-Type: application/json" \
+  -d '{
+    "xml": "<?xml version=\"1.0\"?>...",
+    "ruleset_name": "loan_rules"
+  }'
+
+# Direct XML
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Content-Type: application/xml" \
+  -d @loan_approval.dmn \
+  --data-urlencode "ruleset_name=loan_rules"
+```
+
+### GET /api/dmn/export/:ruleset_id
+
+Export a ruleset as DMN XML.
+
+**Endpoint:** `GET /api/dmn/export/:ruleset_id`
+
+**URL Parameters:**
+- `ruleset_id` (required): ID of the ruleset to export
+
+**Response (200 OK):**
+- **Content-Type:** `application/xml`
+- **Content-Disposition:** `attachment; filename="<ruleset_id>.dmn"`
+- **Body:** DMN XML content
+
+**Response (404 Not Found):**
+```json
+{
+  "error": "Ruleset not found",
+  "message": "No active version found for '<ruleset_id>'"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "error": "Export failed",
+  "message": "<error details>"
+}
+```
+
+**Example (cURL):**
+```bash
+curl -X GET http://localhost:4567/api/dmn/export/loan_rules \
+  -o loan_export.dmn
+```
+
+**Authentication:**
+
+If authentication is enabled, include an authorization header:
+
+```bash
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@model.dmn"
+```
+
+The `created_by` field will automatically use the authenticated user's ID if available.
 
 ---
 

@@ -3,6 +3,8 @@
 require "bundler/setup"
 require_relative "../lib/decision_agent"
 require_relative "../lib/decision_agent/web/server"
+require_relative "../lib/decision_agent/dmn/importer"
+require_relative "../lib/decision_agent/dmn/exporter"
 
 def print_help
   puts <<~HELP
@@ -14,6 +16,8 @@ def print_help
     Commands:
       web [PORT]         Start the web UI rule builder (default port: 4567)
       validate FILE      Validate a rules JSON file
+      dmn import FILE    Import a DMN XML file
+      dmn export RULESET OUTPUT  Export a ruleset to DMN XML
       version            Show version
       help               Show this help message
 
@@ -21,6 +25,8 @@ def print_help
       decision_agent web               # Start web UI on port 4567
       decision_agent web 8080          # Start web UI on port 8080
       decision_agent validate rules.json
+      decision_agent dmn import loan_decision.dmn
+      decision_agent dmn export loan_rules loan_export.dmn
       decision_agent version
 
     For more information, visit:
@@ -74,6 +80,77 @@ def validate_file(filepath)
   end
 end
 
+def dmn_import(filepath, ruleset_name: nil)
+  unless File.exist?(filepath)
+    puts "❌ Error: File not found: #{filepath}"
+    exit 1
+  end
+
+  begin
+    puts "📥 Importing DMN file: #{filepath}..."
+
+    importer = DecisionAgent::Dmn::Importer.new
+    result = importer.import(
+      filepath,
+      ruleset_name: ruleset_name,
+      created_by: ENV["USER"] || "cli_user"
+    )
+
+    puts "✅ Import successful!"
+    puts "   Model: #{result[:model].name}"
+    puts "   Decisions imported: #{result[:decisions_imported]}"
+    puts "   Namespace: #{result[:model].namespace}"
+
+    result[:model].decisions.each do |decision|
+      puts "   - Decision: #{decision.name} (#{decision.id})"
+      if decision.decision_table
+        puts "     Rules: #{decision.decision_table.rules.size}"
+        puts "     Hit Policy: #{decision.decision_table.hit_policy}"
+      end
+    end
+
+    if result[:versions].any?
+      puts ""
+      puts "   Versions created:"
+      result[:versions].each do |version|
+        puts "   - #{version[:rule_id]}: version #{version[:version]}"
+      end
+    end
+  rescue DecisionAgent::Dmn::InvalidDmnModelError, DecisionAgent::Dmn::DmnParseError => e
+    puts "❌ DMN Import Error:"
+    puts "   #{e.message}"
+    exit 1
+  rescue StandardError => e
+    puts "❌ Unexpected Error:"
+    puts "   #{e.message}"
+    puts "   #{e.backtrace.first}" if ENV["DEBUG"]
+    exit 1
+  end
+end
+
+def dmn_export(ruleset_id, output_path)
+  begin
+    puts "📤 Exporting ruleset: #{ruleset_id}..."
+
+    exporter = DecisionAgent::Dmn::Exporter.new
+    dmn_xml = exporter.export(ruleset_id, output_path: output_path)
+
+    puts "✅ Export successful!"
+    puts "   Ruleset: #{ruleset_id}"
+    puts "   Output: #{output_path}"
+    puts "   Size: #{dmn_xml.bytesize} bytes"
+  rescue DecisionAgent::Dmn::InvalidDmnModelError => e
+    puts "❌ Export Error:"
+    puts "   #{e.message}"
+    exit 1
+  rescue StandardError => e
+    puts "❌ Unexpected Error:"
+    puts "   #{e.message}"
+    puts "   #{e.backtrace.first}" if ENV["DEBUG"]
+    exit 1
+  end
+end
+
 # Main CLI handler
 command = ARGV[0] || "help"
 
@@ -89,6 +166,35 @@ when "validate"
     exit 1
   end
   validate_file(ARGV[1])
+
+when "dmn"
+  subcommand = ARGV[1]
+  case subcommand
+  when "import"
+    if ARGV[2].nil?
+      puts "❌ Error: Please provide a DMN file path"
+      puts "Usage: decision_agent dmn import <file.xml>"
+      exit 1
+    end
+    ruleset_name = ARGV[3] # Optional ruleset name
+    dmn_import(ARGV[2], ruleset_name: ruleset_name)
+
+  when "export"
+    if ARGV[2].nil? || ARGV[3].nil?
+      puts "❌ Error: Please provide ruleset ID and output file path"
+      puts "Usage: decision_agent dmn export <ruleset> <output.xml>"
+      exit 1
+    end
+    dmn_export(ARGV[2], ARGV[3])
+
+  else
+    puts "❌ Unknown DMN subcommand: #{subcommand || '(none)'}"
+    puts ""
+    puts "DMN Commands:"
+    puts "  import FILE     Import a DMN XML file"
+    puts "  export RULESET OUTPUT  Export a ruleset to DMN XML"
+    exit 1
+  end
 
 when "version"
   puts "DecisionAgent version #{DecisionAgent::VERSION}"

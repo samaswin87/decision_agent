@@ -10,6 +10,8 @@ Welcome to the DecisionAgent DMN (Decision Model and Notation) Guide. This guide
 - [DMN Concepts](#dmn-concepts)
 - [Importing DMN Models](#importing-dmn-models)
 - [Exporting to DMN](#exporting-to-dmn)
+- [CLI Commands](#cli-commands)
+- [Web API Endpoints](#web-api-endpoints)
 - [FEEL Expressions](#feel-expressions)
 - [Decision Tables](#decision-tables)
 - [Hit Policies](#hit-policies)
@@ -244,6 +246,207 @@ result2 = importer.import_from_xml(exported_xml, ruleset_name: "v2", created_by:
 
 # Both produce equivalent results
 ```
+
+## CLI Commands
+
+DecisionAgent provides command-line tools for importing and exporting DMN files.
+
+### Import DMN File
+
+Import a DMN XML file into the versioning system:
+
+```bash
+decision_agent dmn import <file.xml>
+```
+
+**Example:**
+```bash
+decision_agent dmn import loan_approval.dmn
+```
+
+**Output:**
+```
+📥 Importing DMN file: loan_approval.dmn...
+✅ Import successful!
+   Model: Loan Approval Decision
+   Decisions imported: 1
+   Namespace: http://example.com/dmn
+   - Decision: Loan Approval (loan_decision)
+     Rules: 3
+     Hit Policy: FIRST
+   
+   Versions created:
+   - loan_approval: version 1
+```
+
+**Options:**
+- The file path can be relative or absolute
+- Imported models are automatically stored in the versioning system
+- The ruleset name defaults to the decision ID, or can be specified as an optional third argument
+
+### Export Ruleset to DMN
+
+Export a ruleset from the versioning system to DMN XML format:
+
+```bash
+decision_agent dmn export <ruleset> <output.xml>
+```
+
+**Example:**
+```bash
+decision_agent dmn export loan_rules loan_export.dmn
+```
+
+**Output:**
+```
+📤 Exporting ruleset: loan_rules...
+✅ Export successful!
+   Ruleset: loan_rules
+   Output: loan_export.dmn
+   Size: 2847 bytes
+```
+
+**Options:**
+- The ruleset ID must exist in the versioning system
+- The output file path can be relative or absolute
+- The exported DMN XML is valid DMN 1.3 format
+
+### Error Handling
+
+The CLI provides clear error messages for common issues:
+
+```bash
+# File not found
+❌ Error: File not found: missing.dmn
+
+# Invalid DMN structure
+❌ DMN Import Error:
+   Invalid decision table structure: missing output clause
+
+# Ruleset not found
+❌ Export Error:
+   No active version found for 'nonexistent_ruleset'
+```
+
+## Web API Endpoints
+
+DecisionAgent's web server provides REST API endpoints for DMN import and export operations.
+
+### Import DMN File
+
+**Endpoint:** `POST /api/dmn/import`
+
+Import a DMN file via HTTP request. Supports multiple input methods:
+
+#### Method 1: Multipart Form Data (File Upload)
+
+```bash
+curl -X POST http://localhost:4567/api/dmn/import \
+  -F "file=@loan_approval.dmn" \
+  -F "ruleset_name=loan_rules"
+```
+
+#### Method 2: JSON Body with XML Content
+
+```bash
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Content-Type: application/json" \
+  -d '{
+    "xml": "<?xml version=\"1.0\"?>...",
+    "ruleset_name": "loan_rules",
+    "created_by": "api_user"
+  }'
+```
+
+#### Method 3: Direct XML Upload
+
+```bash
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Content-Type: application/xml" \
+  -d @loan_approval.dmn \
+  --data-urlencode "ruleset_name=loan_rules"
+```
+
+**Response (Success - 201):**
+```json
+{
+  "success": true,
+  "ruleset_name": "loan_rules",
+  "decisions_imported": 1,
+  "model": {
+    "id": "loan_approval",
+    "name": "Loan Approval Decision",
+    "namespace": "http://example.com/dmn",
+    "decisions": [
+      {
+        "id": "loan_decision",
+        "name": "Loan Approval"
+      }
+    ]
+  },
+  "versions": [
+    {
+      "version": 1,
+      "rule_id": "loan_rules",
+      "created_by": "api_user",
+      "created_at": "2026-01-03T10:30:45Z"
+    }
+  ]
+}
+```
+
+**Response (Error - 400):**
+```json
+{
+  "error": "DMN validation error",
+  "message": "Invalid decision table structure: missing output clause"
+}
+```
+
+### Export Ruleset to DMN
+
+**Endpoint:** `GET /api/dmn/export/:ruleset_id`
+
+Export a ruleset as DMN XML:
+
+```bash
+curl -X GET http://localhost:4567/api/dmn/export/loan_rules \
+  -o loan_export.dmn
+```
+
+**Response (Success - 200):**
+- Content-Type: `application/xml`
+- Content-Disposition: `attachment; filename="loan_rules.dmn"`
+- Body: DMN XML content
+
+**Response (Error - 404):**
+```json
+{
+  "error": "Ruleset not found",
+  "message": "No active version found for 'loan_rules'"
+}
+```
+
+### Authentication
+
+If authentication is enabled, include an authorization token:
+
+```bash
+curl -X POST http://localhost:4567/api/dmn/import \
+  -H "Authorization: Bearer <token>" \
+  -F "file=@model.dmn"
+```
+
+The `created_by` field will automatically use the authenticated user's ID if available.
+
+### Error Handling
+
+All endpoints return appropriate HTTP status codes:
+- `201 Created` - Import successful
+- `200 OK` - Export successful
+- `400 Bad Request` - Invalid DMN structure or missing required fields
+- `404 Not Found` - Ruleset not found (export)
+- `500 Internal Server Error` - Unexpected error
 
 ## FEEL Expressions
 

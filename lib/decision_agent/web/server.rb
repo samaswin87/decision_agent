@@ -12,6 +12,10 @@ require_relative "../testing/test_coverage_analyzer"
 require_relative "../evaluators/json_rule_evaluator"
 require_relative "../agent"
 
+# DMN components
+require_relative "../dmn/importer"
+require_relative "../dmn/exporter"
+
 # Auth components
 require_relative "../auth/user"
 require_relative "../auth/role"
@@ -1516,6 +1520,101 @@ module DecisionAgent
         else
           status 404
           "Model not found"
+        end
+      end
+
+      # API: Import DMN file (uploads and imports to versioning system)
+      post "/api/dmn/import" do
+        content_type :json
+
+        begin
+          # Check if request has multipart form data (file upload)
+          if params[:file] && params[:file][:tempfile]
+            # File upload
+            file = params[:file][:tempfile]
+            xml_content = file.read
+            ruleset_name = params[:ruleset_name] || params[:file][:filename]&.gsub(/\.dmn$/i, "")
+            created_by = @current_user ? @current_user.id.to_s : params[:created_by] || "system"
+          elsif request.content_type&.include?("application/json")
+            # JSON body with XML content
+            request_body = request.body.read
+            data = JSON.parse(request_body)
+            xml_content = data["xml"] || data["content"]
+            ruleset_name = data["ruleset_name"] || data["name"]
+            created_by = @current_user ? @current_user.id.to_s : data["created_by"] || "system"
+          elsif request.content_type&.include?("application/xml") || request.content_type&.include?("text/xml")
+            # Direct XML upload
+            xml_content = request.body.read
+            ruleset_name = params[:ruleset_name] || "imported_dmn"
+            created_by = @current_user ? @current_user.id.to_s : params[:created_by] || "system"
+          else
+            status 400
+            return { error: "Invalid request. Expected file upload, JSON with 'xml' field, or XML content." }.to_json
+          end
+
+          raise ArgumentError, "DMN XML content is required" if xml_content.nil? || xml_content.strip.empty?
+
+          # Import using DMN Importer
+          importer = Dmn::Importer.new(version_manager: version_manager)
+          result = importer.import_from_xml(
+            xml_content,
+            ruleset_name: ruleset_name,
+            created_by: created_by
+          )
+
+          status 201
+          {
+            success: true,
+            ruleset_name: ruleset_name,
+            decisions_imported: result[:decisions_imported],
+            model: {
+              id: result[:model].id,
+              name: result[:model].name,
+              namespace: result[:model].namespace,
+              decisions: result[:model].decisions.map do |d|
+                {
+                  id: d.id,
+                  name: d.name
+                }
+              end
+            },
+            versions: result[:versions].map do |v|
+              {
+                version: v[:version],
+                rule_id: v[:rule_id],
+                created_by: v[:created_by],
+                created_at: v[:created_at]
+              }
+            end
+          }.to_json
+        rescue Dmn::InvalidDmnModelError, Dmn::DmnParseError => e
+          status 400
+          { error: "DMN validation error", message: e.message }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Import failed", message: e.message }.to_json
+        end
+      end
+
+      # API: Export ruleset as DMN XML
+      get "/api/dmn/export/:ruleset_id" do
+        content_type :xml
+
+        begin
+          ruleset_id = params[:ruleset_id]
+          exporter = Dmn::Exporter.new(version_manager: version_manager)
+          dmn_xml = exporter.export(ruleset_id)
+
+          headers["Content-Disposition"] = "attachment; filename=\"#{ruleset_id}.dmn\""
+          dmn_xml
+        rescue Dmn::InvalidDmnModelError => e
+          status 404
+          content_type :json
+          { error: "Ruleset not found", message: e.message }.to_json
+        rescue StandardError => e
+          status 500
+          content_type :json
+          { error: "Export failed", message: e.message }.to_json
         end
       end
 
