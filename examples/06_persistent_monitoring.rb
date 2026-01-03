@@ -151,22 +151,45 @@ puts
 puts "2. Recording Metrics to Database"
 puts "-" * 80
 
-# Create a simple evaluator
-fraud_evaluator = DecisionAgent::Evaluator.new(
-  "FraudDetection",
-  ->(context) { context[:amount] > 10_000 ? 0.3 : 0.9 }
-)
+# Create custom evaluators
+class FraudDetectionEvaluator < DecisionAgent::Evaluators::Base
+  def evaluate(context, feedback: {})
+    amount = context[:amount] || context["amount"]
+    return nil unless amount
 
-credit_evaluator = DecisionAgent::Evaluator.new(
-  "CreditScore",
-  ->(context) { context[:credit_score] >= 700 ? 0.8 : 0.4 }
-)
+    confidence = amount > 10_000 ? 0.3 : 0.9
+    DecisionAgent::Evaluation.new(
+      decision: amount > 10_000 ? "review" : "approve",
+      weight: confidence,
+      reason: "Fraud detection: amount #{amount > 10_000 ? 'exceeds' : 'within'} threshold",
+      evaluator_name: "FraudDetection"
+    )
+  end
+end
 
-engine = DecisionAgent::Engine.new([fraud_evaluator, credit_evaluator])
+class CreditScoreEvaluator < DecisionAgent::Evaluators::Base
+  def evaluate(context, feedback: {})
+    credit_score = context[:credit_score] || context["credit_score"]
+    return nil unless credit_score
 
-# Monitor the engine
-monitored_engine = DecisionAgent::Monitoring::MonitoredAgent.new(
-  engine,
+    confidence = credit_score >= 700 ? 0.8 : 0.4
+    DecisionAgent::Evaluation.new(
+      decision: credit_score >= 700 ? "approve" : "review",
+      weight: confidence,
+      reason: "Credit score: #{credit_score}",
+      evaluator_name: "CreditScore"
+    )
+  end
+end
+
+fraud_evaluator = FraudDetectionEvaluator.new
+credit_evaluator = CreditScoreEvaluator.new
+
+agent = DecisionAgent::Agent.new(evaluators: [fraud_evaluator, credit_evaluator])
+
+# Monitor the agent
+monitored_agent = DecisionAgent::Monitoring::MonitoredAgent.new(
+  agent: agent,
   metrics_collector: db_collector
 )
 
@@ -181,8 +204,8 @@ transactions = [
 
 puts "Processing #{transactions.size} transactions..."
 transactions.each_with_index do |transaction, i|
-  result = monitored_engine.evaluate(transaction)
-  decision = result.confidence >= 0.6 ? "approve" : "deny"
+  result = monitored_agent.decide(context: transaction)
+  decision = result.decision
 
   puts "  Transaction #{i + 1}: #{decision} (confidence: #{result.confidence.round(3)})"
 
@@ -332,7 +355,7 @@ puts "-" * 80
 
 # Record same data to memory storage
 transactions.each do |transaction|
-  engine.evaluate(transaction)
+  agent.decide(context: transaction)
   memory_collector.record_performance(
     operation: "process_transaction",
     duration_ms: rand(50..200),

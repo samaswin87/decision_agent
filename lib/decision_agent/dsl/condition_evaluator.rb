@@ -63,6 +63,9 @@ module DecisionAgent
         op = condition["op"]
         expected_value = condition["value"]
 
+        # Special handling for "don't care" conditions (from DMN "-" entries)
+        return true if field == "__always_match__" && op == "eq" && expected_value == true
+
         context_hash = context.to_h
         actual_value = get_nested_value(context_hash, field)
 

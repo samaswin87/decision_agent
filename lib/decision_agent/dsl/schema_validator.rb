@@ -256,7 +256,8 @@ module DecisionAgent
         # Validate decision
         decision = then_clause["decision"] || then_clause[:decision]
 
-        @errors << "#{rule_path}.then: Missing required field 'decision'" unless decision
+        # Check if decision exists (including false and 0, but not nil)
+        @errors << "#{rule_path}.then: Missing required field 'decision'" if decision.nil?
 
         # Validate optional weight
         weight = then_clause["weight"] || then_clause[:weight]
