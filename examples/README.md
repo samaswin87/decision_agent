@@ -139,6 +139,66 @@ ruby examples/05_monitoring_and_analytics.rb
 
 ---
 
+### 7. A/B Testing ([07_ab_testing.rb](07_ab_testing.rb))
+
+**What it covers:**
+- Creating A/B tests with champion and challenger versions
+- Traffic splitting and variant assignment
+- Statistical analysis and significance testing
+- Test lifecycle management
+- Results comparison and recommendations
+
+**Run it:**
+```bash
+ruby examples/07_ab_testing.rb
+```
+
+**Best for:** Comparing rule versions with statistical validation
+
+---
+
+### 8. Batch Testing ([08_batch_testing.rb](08_batch_testing.rb))
+
+**What it covers:**
+- Importing test scenarios from CSV/Excel files
+- Batch test execution with parallel processing
+- Result comparison and accuracy metrics
+- Test coverage analysis
+- Exporting results to CSV/JSON
+
+**Run it:**
+```bash
+ruby examples/08_batch_testing.rb
+```
+
+**Best for:** Validating rule changes against large datasets
+
+---
+
+### DMN Examples ([dmn/](dmn/))
+
+**What it covers:**
+- DMN 1.3 XML import and export
+- FEEL expression language usage
+- All hit policies (UNIQUE, FIRST, PRIORITY, ANY, COLLECT)
+- Combining DMN and JSON evaluators
+- Real-world pricing and routing scenarios
+- Error handling patterns
+
+**Run examples:**
+```bash
+ruby examples/dmn/basic_import.rb
+ruby examples/dmn/import_export.rb
+ruby examples/dmn/combining_evaluators.rb
+# ... and more (see dmn/README.md)
+```
+
+**Best for:** Working with industry-standard DMN decision models
+
+See [DMN Examples README](dmn/README.md) for complete documentation.
+
+---
+
 ## Additional Utility Examples
 
 These shorter examples demonstrate specific features:
