@@ -80,7 +80,8 @@ See [Code Examples](docs/CODE_EXAMPLES.md) for more comprehensive examples.
 - **Pluggable Architecture** - Custom evaluators, scoring, audit adapters
 - **Framework Agnostic** - Works with Rails, Sinatra, or standalone
 - **JSON Rule DSL** - Non-technical users can write rules
-- **Visual Rule Builder** - Web UI for rule management
+- **DMN 1.3 Support** - Industry-standard Decision Model and Notation with full FEEL expression language
+- **Visual Rule Builder** - Web UI for rule management and DMN modeler
 
 ### Production Features
 - **Real-time Monitoring** - Live dashboard with WebSocket updates
@@ -120,6 +121,40 @@ end
 ```
 
 See [Web UI Integration Guide](docs/WEB_UI_RAILS_INTEGRATION.md) for detailed setup.
+
+## DMN (Decision Model and Notation) Support
+
+DecisionAgent includes full support for **DMN 1.3**, the industry standard for decision modeling:
+
+```ruby
+require 'decision_agent'
+require 'decision_agent/dmn/importer'
+require 'decision_agent/evaluators/dmn_evaluator'
+
+# Import DMN XML file
+importer = DecisionAgent::Dmn::Importer.new
+result = importer.import('path/to/model.dmn', created_by: 'user@example.com')
+
+# Create DMN evaluator
+evaluator = DecisionAgent::Evaluators::DmnEvaluator.new(
+  model: result[:model],
+  decision_id: 'loan_approval'
+)
+
+# Use with Agent
+agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+result = agent.decide(context: { amount: 50000, credit_score: 750 })
+```
+
+**Features:**
+- **DMN 1.3 Standard** - Full OMG DMN 1.3 compliance
+- **FEEL Expressions** - Complete FEEL 1.3 language support (arithmetic, logical, functions)
+- **All Hit Policies** - UNIQUE, FIRST, PRIORITY, ANY, COLLECT
+- **Import/Export** - Round-trip conversion with other DMN tools (Camunda, Drools, IBM ODM)
+- **Visual Modeler** - Web-based DMN editor at `/dmn/editor`
+- **CLI Commands** - `decision_agent dmn import` and `decision_agent dmn export`
+
+See [DMN Guide](docs/DMN_GUIDE.md) for complete documentation and [DMN Examples](examples/dmn/README.md) for working examples.
 
 ## Monitoring & Analytics
 
@@ -170,6 +205,11 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 
 ### Core Features
 - [Advanced Operators](docs/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
+- [DMN Guide](docs/DMN_GUIDE.md) - Complete DMN 1.3 support guide
+- [DMN API Reference](docs/DMN_API.md) - DMN API documentation
+- [FEEL Reference](docs/FEEL_REFERENCE.md) - FEEL expression language reference
+- [DMN Migration Guide](docs/DMN_MIGRATION_GUIDE.md) - Migrating from JSON to DMN
+- [DMN Best Practices](docs/DMN_BEST_PRACTICES.md) - DMN modeling best practices
 - [Versioning System](docs/VERSIONING.md) - Version control for rules
 - [A/B Testing](docs/AB_TESTING.md) - Compare rule versions with statistical analysis
 - [Web UI](docs/WEB_UI.md) - Visual rule builder

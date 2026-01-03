@@ -10,6 +10,11 @@ Welcome to the DecisionAgent documentation.
 - [Examples](../examples/README.md) - Working examples with explanations
 
 ### Core Features
+- [**DMN Guide**](DMN_GUIDE.md) - Complete DMN 1.3 support guide
+- [**DMN API Reference**](DMN_API.md) - DMN API documentation
+- [**FEEL Reference**](FEEL_REFERENCE.md) - FEEL expression language reference
+- [**DMN Migration Guide**](DMN_MIGRATION_GUIDE.md) - Migrating from JSON to DMN
+- [**DMN Best Practices**](DMN_BEST_PRACTICES.md) - DMN modeling best practices
 - [**Versioning System**](VERSIONING.md) - Rule version control, rollback, and history
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
@@ -39,6 +44,11 @@ docs/
 │   └── See ../README.md and ../examples/README.md
 │
 ├── Core Features
+│   ├── DMN_GUIDE.md                - Complete DMN 1.3 support guide
+│   ├── DMN_API.md                 - DMN API documentation
+│   ├── FEEL_REFERENCE.md          - FEEL expression language reference
+│   ├── DMN_MIGRATION_GUIDE.md     - Migrating from JSON to DMN
+│   ├── DMN_BEST_PRACTICES.md      - DMN modeling best practices
 │   ├── VERSIONING.md               - Rule version control and management
 │   ├── WEB_UI.md                   - Web interface user guide
 │   ├── WEB_UI_SETUP.md             - Web interface setup
