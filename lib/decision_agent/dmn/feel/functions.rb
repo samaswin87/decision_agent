@@ -8,7 +8,9 @@ module DecisionAgent
       # Functions either map to ConditionEvaluator operators or provide custom evaluation
       module Functions
         # Function registry
+        # rubocop:disable Style/MutableConstant
         REGISTRY = {}
+        # rubocop:enable Style/MutableConstant
 
         # Base class for all functions
         class Base
