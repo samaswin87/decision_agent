@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "digest"
+require "zlib"
 
 module DecisionAgent
   module Dmn
@@ -209,9 +210,14 @@ module DecisionAgent
 
       def generate_context_hash(context)
         # Create a deterministic hash of the context
+        # Use CRC32 for better performance (much faster than SHA256, still deterministic)
         data = context.is_a?(Context) ? context.to_h : context
+        
+        # For deterministic hashing, sort keys and create a stable representation
+        # Use CRC32 which is faster than SHA256 while still being deterministic
         sorted_data = data.sort.to_h
-        Digest::SHA256.hexdigest(sorted_data.to_json)
+        json_str = sorted_data.to_json
+        Zlib.crc32(json_str)
       end
     end
 

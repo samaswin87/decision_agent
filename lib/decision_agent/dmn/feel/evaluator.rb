@@ -20,6 +20,8 @@ module DecisionAgent
           @parslet_parser = Parser.new
           @transformer = Transformer.new
           @cache = {}
+          @cache_mutex = Mutex.new
+          @ast_cache = {} # Cache for Parslet AST nodes
           @use_parslet = true # Enable full Parslet parser
         end
 
@@ -35,8 +37,21 @@ module DecisionAgent
           # Try Parslet parser first (Phase 2B)
           if @use_parslet
             begin
-              parse_tree = @parslet_parser.parse(expression.to_s.strip)
-              ast = @transformer.apply(parse_tree)
+              expr_key = expression.to_s.strip
+              
+              # Check AST cache first
+              ast = @cache_mutex.synchronize do
+                @ast_cache[expr_key]
+              end
+              
+              if ast.nil?
+                parse_tree = @parslet_parser.parse(expr_key)
+                ast = @transformer.apply(parse_tree)
+                @cache_mutex.synchronize do
+                  @ast_cache[expr_key] = ast
+                end
+              end
+              
               result = evaluate_ast_node(ast, context)
               # If result is nil and AST is a simple field reference that doesn't exist in context,
               # fall back to Phase 2A approach to return condition structure
@@ -53,10 +68,13 @@ module DecisionAgent
           end
 
           # Phase 2A approach: use condition structures
-          # Check cache first
+          # Check cache first (thread-safe)
           cache_key = "#{expression}::#{field_name}"
-          if @cache.key?(cache_key)
-            condition = @cache[cache_key]
+          condition = @cache_mutex.synchronize do
+            @cache[cache_key]
+          end
+          
+          if condition
             return Dsl::ConditionEvaluator.evaluate(condition, context)
           end
 
@@ -92,7 +110,10 @@ module DecisionAgent
             }
           end
 
-          @cache[cache_key] = condition
+          # Store in cache (thread-safe)
+          @cache_mutex.synchronize do
+            @cache[cache_key] = condition
+          end
 
           # For completely unsupported expressions (no patterns matched), return condition structure
           # This allows fallback to literal equality for unknown syntax

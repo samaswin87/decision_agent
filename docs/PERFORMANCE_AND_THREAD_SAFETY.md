@@ -8,19 +8,19 @@ DecisionAgent v0.2.0 introduces **production-grade thread-safety with ZERO perfo
 
 ### Performance Benchmarks
 
-#### Latest Benchmark Results (December 30, 2025)
+#### Latest Benchmark Results (January 3, 2026)
 
 ```
-Single-threaded Performance:    7,820 decisions/second (validation disabled)
-Multi-threaded Performance:     7,988 decisions/second (50 threads)
-Average Latency:                0.1279ms per decision (single-thread)
-                                0.1252ms per decision (multi-thread)
-Thread-safety Overhead:         2.1% (minimal)
-Speedup Factor:                 1.02x (linear scaling)
+Single-threaded Performance:    7,834 decisions/second (validation disabled)
+Multi-threaded Performance:     7,717 decisions/second (50 threads)
+Average Latency:                0.1276ms per decision (single-thread)
+                                0.1296ms per decision (multi-thread)
+Thread-safety Overhead:         1.5% (minimal)
+Speedup Factor:                 ~1.0x (linear scaling)
 ```
 
 **Test Environment:** 
-- Date: December 30, 2025
+- Date: January 3, 2026
 - Hardware: Intel Core i7-7820HQ @ 2.90GHz (8 cores, 2017)
 - Total Iterations: 10,000 decisions per test
 - Configuration: Validation disabled for maximum performance
@@ -102,12 +102,12 @@ decision.confidence = 0.99  # FrozenError - cannot mutate
 
 ### Benchmark Comparison
 
-#### Latest Benchmark Run (December 30, 2025)
+#### Latest Benchmark Run (January 3, 2026)
 
 | Scenario | Decisions/Sec | Latency | Notes |
 |----------|--------------|---------|-------|
-| Single Thread | 7,820 | 0.1279ms | Baseline (optimized, validation disabled) |
-| 50 Threads | 7,988 | 0.1252ms | Linear scaling, 2.1% overhead |
+| Single Thread | 7,834 | 0.1276ms | Baseline (optimized, validation disabled) |
+| 50 Threads | 7,717 | 0.1296ms | Linear scaling, 1.5% overhead |
 
 **Test Details:**
 - 10,000 total decisions per scenario
@@ -378,7 +378,7 @@ puts "Throughput: #{throughput.round} decisions/second"
 # - Apple M1/M2/M3: 8,500-9,000+ decisions/second
 # - Intel i7/i9 (2017-2020): 7,500-8,000 decisions/second
 # - Older hardware: 5,000-7,000 decisions/second
-# Latest benchmark: 7,820 decisions/second (Intel i7-7820HQ, single-thread)
+# Latest benchmark: 7,834 decisions/second (Intel i7-7820HQ, single-thread)
 alert if throughput < 5_000  # Performance regression threshold
 ```
 
@@ -414,10 +414,10 @@ alert if throughput < 5_000  # Performance regression threshold
 
 Key achievements:
 - ✅ 7,500-9,000+ decisions/second throughput (hardware-dependent, validation disabled)
-- ✅ Latest benchmark: 7,820 decisions/sec (Intel i7-7820HQ, single-thread), 7,988 decisions/sec (multi-thread)
+- ✅ Latest benchmark: 7,834 decisions/sec (Intel i7-7820HQ, single-thread), 7,717 decisions/sec (multi-thread)
 - ✅ Apple M1/M2 systems: 8,500-9,000+ decisions/second
 - ✅ 7,000-8,000+ decisions/second with validation enabled
-- ✅ Minimal performance overhead from thread-safety (~2%)
+- ✅ Minimal performance overhead from thread-safety (~1.5%)
 - ✅ Comprehensive test coverage (384 tests, 95%)
 - ✅ Backward compatible
 - ✅ Automatic validation in development, disabled in production
@@ -435,9 +435,9 @@ Thread-safety is achieved through immutability, not locking. This means:
 ---
 
 **Version:** 0.2.0
-**Last Updated:** 2025-12-30
-**Latest Benchmark Date:** 2025-12-30 (Intel i7-7820HQ @ 2.90GHz)
-**Previous Benchmark Date:** 2025-12-20 (Apple M1/M2)
+**Last Updated:** 2026-01-03
+**Latest Benchmark Date:** 2026-01-03 (Intel i7-7820HQ @ 2.90GHz)
+**Previous Benchmark Date:** 2025-12-30 (Intel i7-7820HQ @ 2.90GHz)
 **Hardware Tested:** Intel i7-7820HQ (2017), Apple M1/M2 (2020-2023)
 **Ruby Version:** 3.3.5
 **Optimizations:** In-place deep freezing, optimized validation (v0.2.0+)

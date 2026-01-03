@@ -37,7 +37,17 @@ module DecisionAgent
       end
 
       def evaluate(context, feedback: {})
-        # Find all matching rules
+        hit_policy = @decision.decision_table.hit_policy
+
+        # Short-circuit for FIRST and PRIORITY policies
+        if hit_policy == "FIRST" || hit_policy == "PRIORITY"
+          first_match = find_first_matching_evaluation(context, feedback: feedback)
+          return first_match if first_match
+          # If no match found, return nil (consistent with apply_first_policy behavior)
+          return nil
+        end
+
+        # For UNIQUE, ANY, COLLECT - need all matches
         matching_evaluations = find_all_matching_evaluations(context, feedback: feedback)
 
         # Apply hit policy to select the appropriate evaluation
@@ -48,6 +58,35 @@ module DecisionAgent
 
       def evaluator_name
         @name
+      end
+
+      # Find first matching rule (for short-circuiting)
+      def find_first_matching_evaluation(context, feedback: {})
+        ctx = context.is_a?(Context) ? context : Context.new(context)
+        rules = @rules_json["rules"] || []
+
+        rules.each do |rule|
+          if_clause = rule["if"]
+          next unless if_clause
+
+          next unless Dsl::ConditionEvaluator.evaluate(if_clause, ctx)
+
+          then_clause = rule["then"]
+          return Evaluation.new(
+            decision: then_clause["decision"],
+            weight: then_clause["weight"] || 1.0,
+            reason: then_clause["reason"] || "Rule matched",
+            evaluator_name: @name,
+            metadata: {
+              type: "dmn_rule",
+              rule_id: rule["id"],
+              ruleset: @rules_json["ruleset"],
+              hit_policy: @decision.decision_table.hit_policy
+            }
+          )
+        end
+
+        nil
       end
 
       # Find all matching rules (not just first)
