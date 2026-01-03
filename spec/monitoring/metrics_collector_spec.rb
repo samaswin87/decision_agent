@@ -3,17 +3,24 @@ require "decision_agent/monitoring/metrics_collector"
 
 RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
   let(:collector) { described_class.new(window_size: 60, storage: :memory) }
-  let(:decision) do
-    double(
-      "Decision",
+  let(:evaluation) do
+    DecisionAgent::Evaluation.new(
       decision: "approve",
-      confidence: 0.85,
-      evaluations: [
-        double("Evaluation", evaluator_name: "test_evaluator")
-      ]
+      weight: 0.9,
+      reason: "Test reason",
+      evaluator_name: "test_evaluator"
     )
   end
-  let(:context) { double("Context", to_h: { user: "test" }) }
+  let(:decision) do
+    DecisionAgent::Decision.new(
+      decision: "approve",
+      confidence: 0.85,
+      explanations: ["Test explanation"],
+      evaluations: [evaluation],
+      audit_payload: { timestamp: Time.now.utc.iso8601 }
+    )
+  end
+  let(:context) { DecisionAgent::Context.new({ user: "test" }) }
 
   describe "#initialize" do
     it "initializes with default window size" do
@@ -67,15 +74,6 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
   end
 
   describe "#record_evaluation" do
-    let(:evaluation) do
-      double(
-        "Evaluation",
-        decision: "approve",
-        weight: 0.9,
-        evaluator_name: "test_evaluator"
-      )
-    end
-
     it "records an evaluation metric" do
       metric = collector.record_evaluation(evaluation)
 
@@ -280,15 +278,6 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
   end
 
   describe "#record_evaluation" do
-    let(:evaluation) do
-      double(
-        "Evaluation",
-        decision: "approve",
-        weight: 0.9,
-        evaluator_name: "test_evaluator"
-      )
-    end
-
     it "notifies observers" do
       observed = []
       collector.add_observer do |type, metric|
@@ -361,11 +350,21 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
   describe "#statistics" do
     before do
       3.times do
-        evaluation = double("Evaluation", decision: "approve", weight: 0.8, evaluator_name: "eval1")
+        evaluation = DecisionAgent::Evaluation.new(
+          decision: "approve",
+          weight: 0.8,
+          reason: "Test reason",
+          evaluator_name: "eval1"
+        )
         collector.record_evaluation(evaluation)
       end
       2.times do
-        evaluation = double("Evaluation", decision: "reject", weight: 0.6, evaluator_name: "eval2")
+        evaluation = DecisionAgent::Evaluation.new(
+          decision: "reject",
+          weight: 0.6,
+          reason: "Test reason",
+          evaluator_name: "eval2"
+        )
         collector.record_evaluation(evaluation)
       end
     end
@@ -383,11 +382,12 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
     end
 
     it "handles decisions without duration_ms" do
-      decision_no_duration = double(
-        "Decision",
+      decision_no_duration = DecisionAgent::Decision.new(
         decision: "approve",
         confidence: 0.5,
-        evaluations: []
+        explanations: [],
+        evaluations: [],
+        audit_payload: {}
       )
       collector.record_decision(decision_no_duration, context)
       stats = collector.statistics
@@ -461,11 +461,12 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
 
   describe "decision status determination" do
     it "determines status for high confidence decisions" do
-      high_conf_decision = double(
-        "Decision",
+      high_conf_decision = DecisionAgent::Decision.new(
         decision: "approve",
         confidence: 0.9,
-        evaluations: []
+        explanations: [],
+        evaluations: [],
+        audit_payload: {}
       )
       collector.record_decision(high_conf_decision, context)
       # Just verify it records successfully
@@ -473,11 +474,12 @@ RSpec.describe DecisionAgent::Monitoring::MetricsCollector do
     end
 
     it "determines status for low confidence decisions" do
-      low_conf_decision = double(
-        "Decision",
+      low_conf_decision = DecisionAgent::Decision.new(
         decision: "approve",
         confidence: 0.2,
-        evaluations: []
+        explanations: [],
+        evaluations: [],
+        audit_payload: {}
       )
       collector.record_decision(low_conf_decision, context)
       expect(collector.metrics_count[:decisions]).to eq(1)

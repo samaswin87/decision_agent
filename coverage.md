@@ -1,16 +1,16 @@
 # Code Coverage Report
 
-**Last Updated:** 2026-01-03 07:12:44
+**Last Updated:** 2026-01-03 16:32:38
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| **Total Coverage** | **87.69%** |
+| **Total Coverage** | **87.7%** |
 | Total Files | 75 |
 | Total Relevant Lines | 6490 |
-| Lines Covered | 5691 |
-| Lines Missed | 799 |
+| Lines Covered | 5692 |
+| Lines Missed | 798 |
 
 > **Note:** This report excludes files in the `examples/` directory as they are sample code, not production code.
 
@@ -92,7 +92,7 @@
 | `lib/decision_agent/versioning/version_manager.rb` | ✅ 95.0% | 38 | 2 | 40 |
 | `lib/decision_agent/web/middleware/auth_middleware.rb` | ✅ 100.0% | 25 | 0 | 25 |
 | `lib/decision_agent/web/middleware/permission_middleware.rb` | ✅ 100.0% | 43 | 0 | 43 |
-| `lib/decision_agent/web/server.rb` | ❌ 68.26% | 499 | 232 | 731 |
+| `lib/decision_agent/web/server.rb` | ❌ 68.4% | 500 | 231 | 731 |
 
 ## Coverage Status
 

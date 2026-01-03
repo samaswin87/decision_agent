@@ -25,16 +25,14 @@ champion_rule = {
   ruleset: "transaction_approval",
   rules: [
     {
-      condition: { field: "amount", operator: "gt", value: 1000 },
-      decision: "approve",
-      weight: 1.0,
-      reason: "High-value transaction approved"
+      id: "champion_high_value",
+      if: { field: "amount", op: "gt", value: 1000 },
+      then: { decision: "approve", weight: 1.0, reason: "High-value transaction approved" }
     },
     {
-      condition: { field: "amount", operator: "lte", value: 1000 },
-      decision: "review",
-      weight: 1.0,
-      reason: "Lower-value transaction needs review"
+      id: "champion_low_value",
+      if: { field: "amount", op: "lte", value: 1000 },
+      then: { decision: "review", weight: 1.0, reason: "Lower-value transaction needs review" }
     }
   ]
 }
@@ -54,16 +52,14 @@ challenger_rule = {
   ruleset: "transaction_approval",
   rules: [
     {
-      condition: { field: "amount", operator: "gt", value: 500 },
-      decision: "approve",
-      weight: 1.0,
-      reason: "Lowered threshold for approval"
+      id: "challenger_high_value",
+      if: { field: "amount", op: "gt", value: 500 },
+      then: { decision: "approve", weight: 1.0, reason: "Lowered threshold for approval" }
     },
     {
-      condition: { field: "amount", operator: "lte", value: 500 },
-      decision: "review",
-      weight: 1.0,
-      reason: "Only low-value transactions need review"
+      id: "challenger_low_value",
+      if: { field: "amount", op: "lte", value: 500 },
+      then: { decision: "review", weight: 1.0, reason: "Only low-value transactions need review" }
     }
   ]
 }

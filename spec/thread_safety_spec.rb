@@ -299,12 +299,20 @@ RSpec.describe "Thread-Safety" do
     end
 
     it "raises error for unfrozen evaluations" do
-      # Create an evaluation and unfreeze it (for testing purposes)
+      # NOTE: Evaluation objects are always frozen in their initializer.
+      # To test the validator's frozen check, we need to create an unfrozen instance.
+      # Using allocate allows us to bypass the initializer (which would freeze the object)
+      # and manually set instance variables to create a valid but unfrozen evaluation.
+      # This tests the edge case where an evaluation might not be frozen (though
+      # this should never happen in practice with real Evaluation instances).
       evaluation = DecisionAgent::Evaluation.allocate
       evaluation.instance_variable_set(:@decision, "approve")
       evaluation.instance_variable_set(:@weight, 0.8)
       evaluation.instance_variable_set(:@reason, "Test")
-      evaluation.instance_variable_set(:@evaluator_name, "Test")
+      evaluation.instance_variable_set(:@evaluator_name, "TestEvaluator")
+
+      # Verify it's not frozen (this is the condition we're testing)
+      expect(evaluation).not_to be_frozen
 
       expect do
         DecisionAgent::EvaluationValidator.validate!(evaluation)

@@ -1439,6 +1439,300 @@ RSpec.describe "DecisionAgent Web UI Rack Integration" do
     end
   end
 
+  describe "Versioning API integration tests with real FileStorageAdapter" do
+    let(:temp_storage_path) { Dir.mktmpdir("versioning_test_") }
+    let(:authenticator) { DecisionAgent::Web::Server.authenticator }
+    let(:user) do
+      u = authenticator.create_user(
+        email: "versioninteg@example.com",
+        password: "password123",
+        roles: [:editor]
+      )
+      session = authenticator.login("versioninteg@example.com", "password123")
+      { user: u, session: session }
+    end
+
+    before do
+      # Create a real FileStorageAdapter and inject it into the server's version_manager
+      real_adapter = DecisionAgent::Versioning::FileStorageAdapter.new(storage_path: temp_storage_path)
+      real_version_manager = DecisionAgent::Versioning::VersionManager.new(adapter: real_adapter)
+
+      # Stub the version_manager method to return our real manager
+      allow_any_instance_of(DecisionAgent::Web::Server).to receive(:version_manager).and_return(real_version_manager)
+    end
+
+    after do
+      # Clean up temp directory
+      FileUtils.rm_rf(temp_storage_path)
+    end
+
+    describe "POST /api/versions" do
+      it "creates a version with real file storage" do
+        rule_content = {
+          version: "1.0",
+          ruleset: "test_rules",
+          rules: [{
+            id: "rule1",
+            if: { field: "amount", op: "gt", value: 100 },
+            then: { decision: "approve", weight: 0.9, reason: "High amount" }
+          }]
+        }
+
+        post "/api/versions",
+             {
+               rule_id: "integration_test_rule",
+               content: rule_content,
+               created_by: "integration@example.com",
+               changelog: "Integration test version"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(201)
+        json = JSON.parse(last_response.body)
+        expect(json["rule_id"]).to eq("integration_test_rule")
+        expect(json["version_number"]).to eq(1)
+        expect(json["status"]).to eq("active") # FileStorageAdapter defaults to "active"
+        expect(json["created_by"]).to eq("integration@example.com")
+
+        # Verify file was actually created
+        rule_dir = File.join(temp_storage_path, "integration_test_rule")
+        expect(Dir.exist?(rule_dir)).to be true
+        version_file = File.join(rule_dir, "1.json")
+        expect(File.exist?(version_file)).to be true
+
+        # Verify content
+        stored_content = JSON.parse(File.read(version_file))
+        # JSON parsing returns string keys, so we compare by converting both to same format
+        expected_content = JSON.parse(JSON.generate(rule_content))
+        expect(stored_content["content"]).to eq(expected_content)
+      end
+
+      it "creates multiple versions and increments version number" do
+        rule_content = { version: "1.0", ruleset: "test", rules: [] }
+
+        # Create first version
+        post "/api/versions",
+             {
+               rule_id: "multi_version_rule",
+               content: rule_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(201)
+        json1 = JSON.parse(last_response.body)
+        expect(json1["version_number"]).to eq(1)
+
+        # Create second version
+        post "/api/versions",
+             {
+               rule_id: "multi_version_rule",
+               content: rule_content.merge(version: "2.0"),
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(201)
+        json2 = JSON.parse(last_response.body)
+        expect(json2["version_number"]).to eq(2)
+      end
+    end
+
+    describe "GET /api/rules/:rule_id/versions" do
+      it "returns versions from real file storage" do
+        rule_content = { version: "1.0", ruleset: "test", rules: [] }
+
+        # Create two versions
+        post "/api/versions",
+             {
+               rule_id: "list_test_rule",
+               content: rule_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        post "/api/versions",
+             {
+               rule_id: "list_test_rule",
+               content: rule_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        # List versions
+        get "/api/rules/list_test_rule/versions", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json).to be_an(Array)
+        expect(json.length).to eq(2)
+        expect(json.first["version_number"]).to eq(2) # Most recent first
+        expect(json.last["version_number"]).to eq(1)
+      end
+
+      it "respects limit parameter" do
+        rule_content = { version: "1.0", ruleset: "test", rules: [] }
+
+        # Create three versions
+        3.times do
+          post "/api/versions",
+               {
+                 rule_id: "limit_test_rule",
+                 content: rule_content,
+                 created_by: "test@example.com"
+               }.to_json,
+               { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+        end
+
+        # List with limit
+        get "/api/rules/limit_test_rule/versions?limit=2", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json.length).to eq(2)
+      end
+    end
+
+    describe "GET /api/rules/:rule_id/history" do
+      it "returns history from real file storage" do
+        rule_content = { version: "1.0", ruleset: "test", rules: [] }
+
+        # Create a version
+        post "/api/versions",
+             {
+               rule_id: "history_test_rule",
+               content: rule_content,
+               created_by: "test@example.com",
+               changelog: "Test changelog"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        # Get history
+        get "/api/rules/history_test_rule/history", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json).to be_a(Hash)
+        expect(json["total_versions"]).to eq(1)
+        expect(json["versions"]).to be_an(Array)
+        expect(json["versions"].length).to eq(1)
+      end
+    end
+
+    describe "GET /api/versions/:version_id" do
+      it "retrieves a specific version from real file storage" do
+        rule_content = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [{ id: "test_rule", if: { field: "x", op: "eq", value: 1 }, then: { decision: "yes" } }]
+        }
+
+        # Create a version
+        post "/api/versions",
+             {
+               rule_id: "get_version_test",
+               content: rule_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        version_json = JSON.parse(last_response.body)
+        version_id = version_json["id"]
+
+        # Get the version
+        get "/api/versions/#{version_id}", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json["id"]).to eq(version_id)
+        expect(json["rule_id"]).to eq("get_version_test")
+        # JSON parsing returns string keys, so we compare by converting both to same format
+        expected_content = JSON.parse(JSON.generate(rule_content))
+        expect(json["content"]).to eq(expected_content)
+      end
+    end
+
+    describe "POST /api/versions/:version_id/activate" do
+      it "activates a version with real file storage" do
+        # Create admin user for deploy permission
+        authenticator.create_user(
+          email: "deployadmin@example.com",
+          password: "password123",
+          roles: [:admin]
+        )
+        admin_session = authenticator.login("deployadmin@example.com", "password123")
+
+        rule_content = { version: "1.0", ruleset: "test", rules: [] }
+
+        # Create a version
+        post "/api/versions",
+             {
+               rule_id: "activate_test_rule",
+               content: rule_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        version_json = JSON.parse(last_response.body)
+        version_id = version_json["id"]
+
+        # Activate the version
+        post "/api/versions/#{version_id}/activate",
+             { performed_by: "admin@example.com" }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{admin_session.token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json["id"]).to eq(version_id)
+        expect(json["status"]).to eq("active")
+
+        # Verify it's active by getting the version again
+        get "/api/versions/#{version_id}", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+        active_json = JSON.parse(last_response.body)
+        expect(active_json["status"]).to eq("active")
+      end
+    end
+
+    describe "GET /api/versions/:version_id_1/compare/:version_id_2" do
+      it "compares two versions from real file storage" do
+        base_content = { version: "1.0", ruleset: "test", rules: [{ id: "r1" }] }
+        modified_content = { version: "1.0", ruleset: "test", rules: [{ id: "r1" }, { id: "r2" }] }
+
+        # Create first version
+        post "/api/versions",
+             {
+               rule_id: "compare_test_rule",
+               content: base_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+        v1_json = JSON.parse(last_response.body)
+        v1_id = v1_json["id"]
+
+        # Create second version
+        post "/api/versions",
+             {
+               rule_id: "compare_test_rule",
+               content: modified_content,
+               created_by: "test@example.com"
+             }.to_json,
+             { "CONTENT_TYPE" => "application/json", "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+        v2_json = JSON.parse(last_response.body)
+        v2_id = v2_json["id"]
+
+        # Compare versions
+        get "/api/versions/#{v1_id}/compare/#{v2_id}", {}, { "HTTP_AUTHORIZATION" => "Bearer #{user[:session].token}" }
+
+        expect(last_response.status).to eq(200)
+        json = JSON.parse(last_response.body)
+        expect(json).to be_a(Hash)
+        expect(json).to have_key("version_1") # compare_versions returns version_1 and version_2
+        expect(json).to have_key("version_2")
+        expect(json).to have_key("differences")
+      end
+    end
+  end
+
   describe "Batch Testing API comprehensive tests" do
     describe "POST /api/testing/batch/import" do
       it "handles Excel file import" do

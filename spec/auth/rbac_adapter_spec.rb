@@ -547,4 +547,232 @@ RSpec.describe DecisionAgent::Auth::RbacAdapter do
       end
     end
   end
+
+  describe "Integration tests with real User and Role objects" do
+    let(:adapter) { DecisionAgent::Auth::DefaultAdapter.new }
+
+    describe "with real User and Role objects" do
+      it "checks permissions using real Role class" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user1",
+          email: "admin@example.com",
+          password: "password123",
+          roles: [:admin]
+        )
+
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :write)).to be true
+        expect(adapter.can?(user, :delete)).to be true
+        expect(adapter.can?(user, :manage_users)).to be true
+        expect(adapter.can?(user, :audit)).to be true
+      end
+
+      it "checks permissions for editor role" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user2",
+          email: "editor@example.com",
+          password: "password123",
+          roles: [:editor]
+        )
+
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :write)).to be true
+        expect(adapter.can?(user, :delete)).to be false
+        expect(adapter.can?(user, :manage_users)).to be false
+        expect(adapter.can?(user, :audit)).to be false
+      end
+
+      it "checks permissions for viewer role" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user3",
+          email: "viewer@example.com",
+          password: "password123",
+          roles: [:viewer]
+        )
+
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :write)).to be false
+        expect(adapter.can?(user, :delete)).to be false
+        expect(adapter.can?(user, :manage_users)).to be false
+      end
+
+      it "checks permissions for approver role" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user4",
+          email: "approver@example.com",
+          password: "password123",
+          roles: [:approver]
+        )
+
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :approve)).to be true
+        expect(adapter.can?(user, :write)).to be false
+        expect(adapter.can?(user, :delete)).to be false
+      end
+
+      it "checks permissions for auditor role" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user5",
+          email: "auditor@example.com",
+          password: "password123",
+          roles: [:auditor]
+        )
+
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :audit)).to be true
+        expect(adapter.can?(user, :write)).to be false
+        expect(adapter.can?(user, :delete)).to be false
+      end
+
+      it "checks permissions for user with multiple roles" do
+        user = DecisionAgent::Auth::User.new(
+          id: "user6",
+          email: "multi@example.com",
+          password: "password123",
+          roles: %i[viewer editor]
+        )
+
+        # Should have permissions from both roles
+        expect(adapter.can?(user, :read)).to be true  # from viewer
+        expect(adapter.can?(user, :write)).to be true # from editor
+        expect(adapter.can?(user, :delete)).to be false
+      end
+
+      it "checks role membership using real Role class" do
+        admin_user = DecisionAgent::Auth::User.new(
+          id: "admin1",
+          email: "admin@example.com",
+          password: "password123",
+          roles: [:admin]
+        )
+
+        expect(adapter.has_role?(admin_user, :admin)).to be true
+        expect(adapter.has_role?(admin_user, :editor)).to be false
+        expect(adapter.has_role?(admin_user, :viewer)).to be false
+
+        editor_user = DecisionAgent::Auth::User.new(
+          id: "editor1",
+          email: "editor@example.com",
+          password: "password123",
+          roles: [:editor]
+        )
+
+        expect(adapter.has_role?(editor_user, :editor)).to be true
+        expect(adapter.has_role?(editor_user, :admin)).to be false
+      end
+
+      it "checks role membership for users with multiple roles" do
+        user = DecisionAgent::Auth::User.new(
+          id: "multi1",
+          email: "multi@example.com",
+          password: "password123",
+          roles: %i[admin editor]
+        )
+
+        expect(adapter.has_role?(user, :admin)).to be true
+        expect(adapter.has_role?(user, :editor)).to be true
+        expect(adapter.has_role?(user, :viewer)).to be false
+      end
+
+      it "handles dynamic role assignment" do
+        user = DecisionAgent::Auth::User.new(
+          id: "dynamic1",
+          email: "dynamic@example.com",
+          password: "password123",
+          roles: []
+        )
+
+        expect(adapter.has_role?(user, :admin)).to be false
+        expect(adapter.can?(user, :read)).to be false
+
+        # Assign role dynamically
+        user.assign_role(:viewer)
+
+        expect(adapter.has_role?(user, :viewer)).to be true
+        expect(adapter.can?(user, :read)).to be true
+        expect(adapter.can?(user, :write)).to be false
+      end
+
+      it "handles role removal" do
+        user = DecisionAgent::Auth::User.new(
+          id: "remove1",
+          email: "remove@example.com",
+          password: "password123",
+          roles: %i[admin editor]
+        )
+
+        expect(adapter.has_role?(user, :admin)).to be true
+        expect(adapter.can?(user, :manage_users)).to be true
+
+        # Remove admin role
+        user.remove_role(:admin)
+
+        expect(adapter.has_role?(user, :admin)).to be false
+        expect(adapter.has_role?(user, :editor)).to be true
+        expect(adapter.can?(user, :manage_users)).to be false
+        expect(adapter.can?(user, :write)).to be true # Still has editor role
+      end
+
+      it "checks active status with real User objects" do
+        active_user = DecisionAgent::Auth::User.new(
+          id: "active1",
+          email: "active@example.com",
+          password: "password123",
+          roles: [:admin],
+          active: true
+        )
+
+        expect(adapter.active?(active_user)).to be true
+        expect(adapter.can?(active_user, :read)).to be true
+
+        inactive_user = DecisionAgent::Auth::User.new(
+          id: "inactive1",
+          email: "inactive@example.com",
+          password: "password123",
+          roles: [:admin],
+          active: false
+        )
+
+        expect(adapter.active?(inactive_user)).to be false
+        expect(adapter.can?(inactive_user, :read)).to be false # Inactive users can't do anything
+      end
+
+      it "gets user ID and email from real User objects" do
+        user = DecisionAgent::Auth::User.new(
+          id: "userid123",
+          email: "real@example.com",
+          password: "password123",
+          roles: [:admin]
+        )
+
+        expect(adapter.user_id(user)).to eq("userid123")
+        expect(adapter.user_email(user)).to eq("real@example.com")
+      end
+
+      it "verifies permission checking integrates with real Role.has_permission? method" do
+        # Test that the adapter correctly uses Role.has_permission? for all defined roles
+        roles_to_test = DecisionAgent::Auth::Role.all
+
+        roles_to_test.each do |role|
+          user = DecisionAgent::Auth::User.new(
+            id: "role_test_#{role}",
+            email: "#{role}@example.com",
+            password: "password123",
+            roles: [role]
+          )
+
+          # Get expected permissions from Role class
+          expected_permissions = DecisionAgent::Auth::Role.permissions_for(role)
+
+          # Verify adapter returns same permissions
+          all_permissions = %i[read write delete approve deploy manage_users audit]
+          all_permissions.each do |permission|
+            expected = expected_permissions.include?(permission)
+            actual = adapter.can?(user, permission)
+            expect(actual).to eq(expected), "Role #{role} permission #{permission} mismatch: expected #{expected}, got #{actual}"
+          end
+        end
+      end
+    end
+  end
 end

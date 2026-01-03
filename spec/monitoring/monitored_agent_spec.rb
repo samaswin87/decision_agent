@@ -5,14 +5,17 @@ require "decision_agent/monitoring/monitored_agent"
 RSpec.describe DecisionAgent::Monitoring::MonitoredAgent do
   let(:collector) { DecisionAgent::Monitoring::MetricsCollector.new(storage: :memory) }
   let(:evaluator) do
-    double(
-      "Evaluator",
-      evaluate: DecisionAgent::Evaluation.new(
-        decision: "approve",
-        weight: 0.9,
-        reason: "Test reason",
-        evaluator_name: "test_evaluator"
-      )
+    DecisionAgent::Evaluators::JsonRuleEvaluator.new(
+      rules_json: {
+        version: "1.0",
+        ruleset: "test",
+        rules: [{
+          id: "test_rule",
+          if: { field: "amount", op: "gt", value: 100 },
+          then: { decision: "approve", weight: 0.9, reason: "Test reason" }
+        }]
+      },
+      name: "test_evaluator"
     )
   end
   let(:agent) { DecisionAgent::Agent.new(evaluators: [evaluator]) }
@@ -133,14 +136,14 @@ RSpec.describe DecisionAgent::Monitoring::MonitoredAgent do
 
     it "measures decision duration accurately" do
       # Mock agent to introduce delay
-      allow(agent).to receive(:decide) do |*args|
+      allow(agent).to receive(:decide) do |context:, **_kwargs|
         sleep 0.01 # 10ms delay
-        evaluator.evaluate(args.first)
+        evaluation = evaluator.evaluate(context)
         DecisionAgent::Decision.new(
           decision: "approve",
           confidence: 0.9,
           explanations: ["Test"],
-          evaluations: [evaluator.evaluate(args.first)],
+          evaluations: [evaluation].compact, # Remove nils in case evaluation returns nil
           audit_payload: {}
         )
       end

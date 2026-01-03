@@ -1,4 +1,6 @@
 require "spec_helper"
+require "decision_agent/versioning/file_storage_adapter"
+require "decision_agent/ab_testing/storage/memory_adapter"
 
 RSpec.describe DecisionAgent::ABTesting::ABTestingAgent do
   let(:version_manager) { double("VersionManager") }
@@ -476,6 +478,178 @@ RSpec.describe DecisionAgent::ABTesting::ABTestingAgent do
       evaluator = agent.send(:build_evaluator_from_config, config)
       expect(evaluator).to be_a(DecisionAgent::Evaluators::StaticEvaluator)
       expect(evaluator.decision).to eq("reject")
+    end
+  end
+
+  describe "integration tests with real version manager" do
+    let(:temp_dir) { Dir.mktmpdir }
+    let(:file_storage_adapter) do
+      DecisionAgent::Versioning::FileStorageAdapter.new(storage_path: temp_dir)
+    end
+    let(:real_version_manager) do
+      DecisionAgent::Versioning::VersionManager.new(adapter: file_storage_adapter)
+    end
+    let(:storage_adapter) { DecisionAgent::ABTesting::Storage::MemoryAdapter.new }
+    let(:real_ab_test_manager) do
+      DecisionAgent::ABTesting::ABTestManager.new(
+        storage_adapter: storage_adapter,
+        version_manager: real_version_manager
+      )
+    end
+
+    before do
+      # Create test versions with real rules
+      @champion_version = real_version_manager.save_version(
+        rule_id: "approval_rule",
+        rule_content: {
+          version: "1.0",
+          ruleset: "approval",
+          rules: [{
+            id: "rule_1",
+            if: { field: "amount", op: "gt", value: 100 },
+            then: { decision: "approve", weight: 0.9, reason: "Champion rule" }
+          }]
+        },
+        created_by: "spec",
+        changelog: "Champion version"
+      )
+
+      @challenger_version = real_version_manager.save_version(
+        rule_id: "approval_rule",
+        rule_content: {
+          version: "1.0",
+          ruleset: "approval",
+          rules: [{
+            id: "rule_1",
+            if: { field: "amount", op: "gt", value: 200 },
+            then: { decision: "approve", weight: 0.95, reason: "Challenger rule" }
+          }]
+        },
+        created_by: "spec",
+        changelog: "Challenger version"
+      )
+
+      @ab_test = real_ab_test_manager.create_test(
+        name: "Approval Threshold Test",
+        champion_version_id: @champion_version[:id],
+        challenger_version_id: @challenger_version[:id],
+        traffic_split: { champion: 50, challenger: 50 }
+      )
+    end
+
+    after do
+      FileUtils.rm_rf(temp_dir)
+    end
+
+    it "uses real version manager to get version content" do
+      agent = described_class.new(
+        ab_test_manager: real_ab_test_manager,
+        version_manager: real_version_manager
+      )
+
+      result = agent.decide(
+        context: { amount: 150 },
+        ab_test_id: @ab_test.id,
+        user_id: "user_1"
+      )
+
+      expect(result[:decision]).to eq("approve")
+      expect(result[:ab_test]).not_to be_nil
+      expect(result[:ab_test][:test_id]).to eq(@ab_test.id)
+    end
+
+    it "builds real JsonRuleEvaluator from version content" do
+      agent = described_class.new(
+        ab_test_manager: real_ab_test_manager,
+        version_manager: real_version_manager
+      )
+
+      # Test with amount that matches champion (100 < amount < 200)
+      result = agent.decide(
+        context: { amount: 150 },
+        ab_test_id: @ab_test.id,
+        user_id: "user_1"
+      )
+
+      expect(result[:decision]).to eq("approve")
+      expect(result[:confidence]).to be > 0
+    end
+
+    it "handles variant assignment with real version manager" do
+      agent = described_class.new(
+        ab_test_manager: real_ab_test_manager,
+        version_manager: real_version_manager
+      )
+
+      # Make multiple decisions to test variant assignment
+      # Use amount 250 which will match both champion (> 100) and challenger (> 200) rules
+      results = []
+      10.times do |i|
+        result = agent.decide(
+          context: { amount: 250 },
+          ab_test_id: @ab_test.id,
+          user_id: "user_#{i}"
+        )
+        results << result
+      end
+
+      # At least one decision should have been made
+      expect(results.size).to eq(10)
+      # All should have ab_test information
+      expect(results.all? { |r| r[:ab_test] }).to be true
+    end
+
+    it "records decisions with real ab_test_manager" do
+      agent = described_class.new(
+        ab_test_manager: real_ab_test_manager,
+        version_manager: real_version_manager
+      )
+
+      result = agent.decide(
+        context: { amount: 150 },
+        ab_test_id: @ab_test.id,
+        user_id: "user_1"
+      )
+
+      # Verify decision was recorded (check that results are available)
+      expect(result[:decision]).to eq("approve")
+      expect(result[:ab_test]).not_to be_nil
+    end
+
+    it "handles version with evaluators configuration" do
+      version_with_evaluators = real_version_manager.save_version(
+        rule_id: "test_evaluator_rule",
+        rule_content: {
+          evaluators: [{
+            type: "static",
+            decision: "approve",
+            weight: 0.8,
+            reason: "Static evaluator from version"
+          }]
+        },
+        created_by: "spec",
+        changelog: "Version with evaluators"
+      )
+
+      static_test = real_ab_test_manager.create_test(
+        name: "Static Evaluator Test",
+        champion_version_id: @champion_version[:id],
+        challenger_version_id: version_with_evaluators[:id],
+        traffic_split: { champion: 50, challenger: 50 }
+      )
+
+      agent = described_class.new(
+        ab_test_manager: real_ab_test_manager,
+        version_manager: real_version_manager
+      )
+
+      result = agent.decide(
+        context: { amount: 50 }, # Low amount that won't match champion rule
+        ab_test_id: static_test.id,
+        user_id: "user_1"
+      )
+
+      expect(result[:decision]).to eq("approve")
     end
   end
 end
