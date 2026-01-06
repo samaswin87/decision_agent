@@ -75,6 +75,9 @@ module DecisionAgent
   # Global data enrichment configuration
   @data_enrichment_config = DataEnrichment::Config.new
   @data_enrichment_client = nil
+  @permission_checker = nil
+  @permission_checker_mutex = Mutex.new
+  @data_enrichment_client_mutex = Mutex.new
 
   class << self
     attr_reader :rbac_config, :data_enrichment_config
@@ -95,12 +98,19 @@ module DecisionAgent
       elsif adapter_type
         @rbac_config.use(adapter_type, **options)
       end
+      # Initialize permission checker at configuration time (thread-safe write-once pattern)
+      @permission_checker = Auth::PermissionChecker.new(adapter: @rbac_config.adapter)
       @rbac_config
     end
 
     # Get the configured permission checker
+    # Thread-safe: uses double-checked locking for lazy initialization fallback
     def permission_checker
-      @permission_checker ||= Auth::PermissionChecker.new(adapter: @rbac_config.adapter)
+      return @permission_checker if @permission_checker
+
+      @permission_checker_mutex.synchronize do
+        @permission_checker ||= Auth::PermissionChecker.new(adapter: @rbac_config.adapter)
+      end
     end
 
     # Set a custom permission checker
@@ -119,14 +129,19 @@ module DecisionAgent
     #   end
     def configure_data_enrichment
       yield @data_enrichment_config if block_given?
-      # Reset client to use new configuration
-      @data_enrichment_client = nil
+      # Initialize client at configuration time (thread-safe write-once pattern)
+      @data_enrichment_client = DataEnrichment::Client.new(config: @data_enrichment_config)
       @data_enrichment_config
     end
 
     # Get the data enrichment client
+    # Thread-safe: uses double-checked locking for lazy initialization fallback
     def data_enrichment_client
-      @data_enrichment_client ||= DataEnrichment::Client.new(config: @data_enrichment_config)
+      return @data_enrichment_client if @data_enrichment_client
+
+      @data_enrichment_client_mutex.synchronize do
+        @data_enrichment_client ||= DataEnrichment::Client.new(config: @data_enrichment_config)
+      end
     end
 
     # Set a custom data enrichment client

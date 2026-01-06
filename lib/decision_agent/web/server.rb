@@ -45,21 +45,19 @@ module DecisionAgent
       @authenticator = nil
       @permission_checker = nil
       @access_audit_logger = nil
-
-      def self.batch_test_storage
-        @batch_test_storage ||= {}
-      end
-
-      def self.batch_test_storage_mutex
-        @batch_test_storage_mutex ||= Mutex.new
-      end
+      @auth_mutex = Mutex.new
 
       class << self
+        attr_reader :batch_test_storage, :batch_test_storage_mutex
         attr_writer :authenticator
       end
 
       def self.authenticator
-        @authenticator ||= Auth::Authenticator.new
+        return @authenticator if @authenticator
+
+        @auth_mutex.synchronize do
+          @authenticator ||= Auth::Authenticator.new
+        end
       end
 
       class << self
@@ -67,7 +65,11 @@ module DecisionAgent
       end
 
       def self.permission_checker
-        @permission_checker ||= Auth::PermissionChecker.new(adapter: DecisionAgent.rbac_config.adapter)
+        return @permission_checker if @permission_checker
+
+        @auth_mutex.synchronize do
+          @permission_checker ||= Auth::PermissionChecker.new(adapter: DecisionAgent.rbac_config.adapter)
+        end
       end
 
       class << self
@@ -75,7 +77,11 @@ module DecisionAgent
       end
 
       def self.access_audit_logger
-        @access_audit_logger ||= Auth::AccessAuditLogger.new
+        return @access_audit_logger if @access_audit_logger
+
+        @auth_mutex.synchronize do
+          @access_audit_logger ||= Auth::AccessAuditLogger.new
+        end
       end
 
       # Enable CORS for API calls

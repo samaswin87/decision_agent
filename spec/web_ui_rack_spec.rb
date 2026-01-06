@@ -2078,26 +2078,20 @@ RSpec.describe "DecisionAgent Web UI Rack Integration" do
     end
 
     describe ".batch_test_storage" do
-      it "initializes storage hash if nil" do
-        original_storage = DecisionAgent::Web::Server.instance_variable_get(:@batch_test_storage)
-        DecisionAgent::Web::Server.instance_variable_set(:@batch_test_storage, nil)
-
+      it "returns the initialized storage hash" do
         storage = DecisionAgent::Web::Server.batch_test_storage
         expect(storage).to be_a(Hash)
-
-        DecisionAgent::Web::Server.instance_variable_set(:@batch_test_storage, original_storage)
+        # Storage is initialized at class load time, so it should always be present
+        expect(DecisionAgent::Web::Server.instance_variable_get(:@batch_test_storage)).to be_a(Hash)
       end
     end
 
     describe ".batch_test_storage_mutex" do
-      it "initializes mutex if nil" do
-        original_mutex = DecisionAgent::Web::Server.instance_variable_get(:@batch_test_storage_mutex)
-        DecisionAgent::Web::Server.instance_variable_set(:@batch_test_storage_mutex, nil)
-
+      it "returns the mutex instance" do
         mutex = DecisionAgent::Web::Server.batch_test_storage_mutex
         expect(mutex).to be_a(Mutex)
-
-        DecisionAgent::Web::Server.instance_variable_set(:@batch_test_storage_mutex, original_mutex)
+        # Mutex is initialized at class level, so it should always be present
+        expect(DecisionAgent::Web::Server.instance_variable_get(:@batch_test_storage_mutex)).to be_a(Mutex)
       end
     end
 
