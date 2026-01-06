@@ -102,6 +102,8 @@ module DecisionAgent
       end
     end
 
+    public
+
     def ==(other)
       other.is_a?(Decision) &&
         @decision == other.decision &&

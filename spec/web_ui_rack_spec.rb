@@ -88,8 +88,12 @@ RSpec.describe "DecisionAgent Web UI Rack Integration" do
       json = JSON.parse(last_response.body)
       expect(json["success"]).to be true
       expect(json["decision"]).to eq("approve")
-      expect(json["weight"]).to eq(0.9)
+      expect(json["confidence"]).to eq(0.9)
       expect(json["reason"]).to eq("High value")
+      # Verify explainability-first structure
+      expect(json["because"]).to be_an(Array)
+      expect(json["failed_conditions"]).to be_an(Array)
+      expect(json["explainability"]).to be_a(Hash)
     end
 
     it "serves example rules" do
