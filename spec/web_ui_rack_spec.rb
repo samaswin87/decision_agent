@@ -1356,7 +1356,7 @@ RSpec.describe "DecisionAgent Web UI Rack Integration" do
     end
 
     describe "DELETE /api/versions/:version_id" do
-      xit "deletes a version" do
+      it "deletes a version" do
         # Need delete permission, create admin user
         authenticator.create_user(
           email: "delete@example.com",

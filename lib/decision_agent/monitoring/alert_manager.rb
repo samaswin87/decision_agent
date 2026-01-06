@@ -16,6 +16,7 @@ module DecisionAgent
         @alert_handlers = []
         @check_interval = 60 # seconds
         @monitoring_thread = nil
+        @rule_counter = 0
         freeze_config
       end
 
@@ -198,7 +199,10 @@ module DecisionAgent
       end
 
       def generate_rule_id(name)
-        "#{sanitize_name(name)}_#{Time.now.to_i}_#{rand(1000)}"
+        synchronize do
+          @rule_counter += 1
+          "#{sanitize_name(name)}_#{Time.now.to_i}_#{@rule_counter}"
+        end
       end
 
       def sanitize_name(name)
