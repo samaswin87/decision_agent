@@ -1072,11 +1072,16 @@ module DecisionAgent
       end
 
       # Checks if two values can be compared with <, >, <=, >=
-      # Only allows comparison between values of the same type
+      # Allows comparison between numeric types (Float, Integer, etc.) or same string types
       def self.comparable?(val1, val2)
-        (val1.is_a?(Numeric) || val1.is_a?(String)) &&
-          (val2.is_a?(Numeric) || val2.is_a?(String)) &&
-          val1.instance_of?(val2.class)
+        # Both are numeric - allow comparison between different numeric types
+        # (e.g., Integer and Float are comparable in Ruby)
+        return true if val1.is_a?(Numeric) && val2.is_a?(Numeric)
+        
+        # Both are strings - require exact same type
+        return val1.instance_of?(val2.class) if val1.is_a?(String) && val2.is_a?(String)
+        
+        false
       end
 
       # Helper methods for new operators

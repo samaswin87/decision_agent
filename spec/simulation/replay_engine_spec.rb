@@ -49,6 +49,51 @@ RSpec.describe DecisionAgent::Simulation::ReplayEngine do
       ]
     end
 
+    # Setup database for tests that use version_manager
+    before(:each) do
+      if defined?(ActiveRecord)
+        # Setup in-memory SQLite database for testing
+        ActiveRecord::Base.establish_connection(
+          adapter: "sqlite3",
+          database: ":memory:"
+        )
+
+        # Create the schema
+        ActiveRecord::Schema.define do
+          create_table :rule_versions, force: true do |t|
+            t.string :rule_id, null: false
+            t.integer :version_number, null: false
+            t.text :content, null: false
+            t.string :created_by, null: false, default: "system"
+            t.text :changelog
+            t.string :status, null: false, default: "draft"
+            t.timestamps
+          end
+
+          add_index :rule_versions, %i[rule_id version_number], unique: true
+          add_index :rule_versions, %i[rule_id status]
+        end
+
+        # Define RuleVersion model if not already defined
+        unless defined?(RuleVersion)
+          class RuleVersion < ActiveRecord::Base
+            validates :rule_id, presence: true
+            validates :version_number, presence: true, uniqueness: { scope: :rule_id }
+            validates :content, presence: true
+            validates :status, inclusion: { in: %w[draft active archived] }
+            validates :created_by, presence: true
+          end
+        end
+      end
+    end
+
+    after(:each) do
+      if defined?(ActiveRecord) && ActiveRecord::Base.connected?
+        ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS rule_versions")
+        ActiveRecord::Base.connection.close
+      end
+    end
+
     it "replays historical decisions" do
       results = engine.replay(historical_data: historical_data)
 
@@ -338,6 +383,53 @@ RSpec.describe DecisionAgent::Simulation::ReplayEngine do
 
   describe "#backtest" do
     let(:historical_data) { [{ amount: 1500 }, { amount: 500 }] }
+
+    before(:each) do
+      # Only run database tests if ActiveRecord is available
+      unless defined?(ActiveRecord)
+        skip "ActiveRecord not available"
+      end
+
+      # Setup in-memory SQLite database for testing
+      ActiveRecord::Base.establish_connection(
+        adapter: "sqlite3",
+        database: ":memory:"
+      )
+
+      # Create the schema
+      ActiveRecord::Schema.define do
+        create_table :rule_versions, force: true do |t|
+          t.string :rule_id, null: false
+          t.integer :version_number, null: false
+          t.text :content, null: false
+          t.string :created_by, null: false, default: "system"
+          t.text :changelog
+          t.string :status, null: false, default: "draft"
+          t.timestamps
+        end
+
+        add_index :rule_versions, %i[rule_id version_number], unique: true
+        add_index :rule_versions, %i[rule_id status]
+      end
+
+      # Define RuleVersion model if not already defined
+      unless defined?(RuleVersion)
+        class RuleVersion < ActiveRecord::Base
+          validates :rule_id, presence: true
+          validates :version_number, presence: true, uniqueness: { scope: :rule_id }
+          validates :content, presence: true
+          validates :status, inclusion: { in: %w[draft active archived] }
+          validates :created_by, presence: true
+        end
+      end
+    end
+
+    after(:each) do
+      if defined?(ActiveRecord) && ActiveRecord::Base.connected?
+        ActiveRecord::Base.connection.execute("DROP TABLE IF EXISTS rule_versions")
+        ActiveRecord::Base.connection.close
+      end
+    end
 
     it "backtests proposed version against baseline" do
       # Create versions

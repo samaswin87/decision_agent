@@ -124,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Fixed iteration count tracking - now correctly reports requested iterations even when all iterations fail
     - Fixed confidence level handling in empty statistics - now preserves custom confidence level in results
     - Fixed statistics calculation to use requested iterations count instead of successful results count
+    - Fixed numeric type comparison in condition evaluator - now allows comparisons between Float and Integer values (e.g., `650.0 < 700`), fixing Monte Carlo simulations that generate Float values from distributions but compare against Integer rule values
   - **ScenarioEngine**
     - Fixed `NoEvaluationsError` handling in parallel execution - now gracefully handles cases where evaluators don't match context
     - Added database schema setup for versioning tests to support ActiveRecord adapter
