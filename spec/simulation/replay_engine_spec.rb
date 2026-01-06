@@ -279,10 +279,13 @@ RSpec.describe DecisionAgent::Simulation::ReplayEngine do
         temp_db_path = temp_db.path
         temp_db.unlink
 
-        # Setup separate connection
+        # Setup separate connection using a named class to avoid "Anonymous class is not allowed" error
+        connection_class_name = "TestReplayConnection_#{object_id}_#{Time.now.to_f.to_s.gsub(/[^0-9]/, '')}"
         connection_class = Class.new(ActiveRecord::Base) do
           self.abstract_class = true
         end
+        # Set the class name properly
+        DecisionAgent::ReplayConnections.const_set(connection_class_name, connection_class) if defined?(DecisionAgent::ReplayConnections)
         connection_class.establish_connection(
           adapter: "sqlite3",
           database: temp_db_path
@@ -319,9 +322,8 @@ RSpec.describe DecisionAgent::Simulation::ReplayEngine do
     context "without ActiveRecord" do
       it "raises error when trying to use database queries without ActiveRecord" do
         # This test verifies the error message when ActiveRecord is not available
-        # In a real scenario where ActiveRecord is not loaded, the error would be raised
-        # We can't easily test this without breaking the test environment, so we'll
-        # just verify the error handling code path exists
+        # Since ActiveRecord is loaded in the test environment, we'll test with an invalid adapter
+        # which will raise an error that gets wrapped in InvalidHistoricalDataError
         db_config = {
           database: {
             connection: { adapter: "invalid", database: "test" },
@@ -329,7 +331,7 @@ RSpec.describe DecisionAgent::Simulation::ReplayEngine do
           }
         }
 
-        # This will fail on connection, but the error handling should work
+        # This will fail on connection, and the error should be wrapped
         expect do
           engine.replay(historical_data: db_config)
         end.to raise_error(DecisionAgent::Simulation::InvalidHistoricalDataError)

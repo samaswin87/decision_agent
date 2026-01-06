@@ -184,17 +184,31 @@ module DecisionAgent
               context = scenario[:context] || scenario["context"] || scenario
               metadata = scenario[:metadata] || scenario["metadata"] || {}
               ctx = context.is_a?(Context) ? context : Context.new(context)
-              decision = analysis_agent.decide(context: ctx)
-
-              result = {
-                scenario_id: scenario[:id] || scenario["id"] || generate_scenario_id,
-                context: ctx.to_h,
-                decision: decision.decision,
-                confidence: decision.confidence,
-                explanations: decision.explanations,
-                metadata: metadata,
-                executed_at: Time.now.utc.iso8601
-              }
+              
+              begin
+                decision = analysis_agent.decide(context: ctx)
+                result = {
+                  scenario_id: scenario[:id] || scenario["id"] || generate_scenario_id,
+                  context: ctx.to_h,
+                  decision: decision.decision,
+                  confidence: decision.confidence,
+                  explanations: decision.explanations,
+                  metadata: metadata,
+                  executed_at: Time.now.utc.iso8601
+                }
+              rescue NoEvaluationsError
+                # If no evaluators match, return a result with nil decision
+                result = {
+                  scenario_id: scenario[:id] || scenario["id"] || generate_scenario_id,
+                  context: ctx.to_h,
+                  decision: nil,
+                  confidence: 0.0,
+                  explanations: [],
+                  metadata: metadata,
+                  executed_at: Time.now.utc.iso8601,
+                  error: "No evaluators returned a decision"
+                }
+              end
 
               yield result
             end

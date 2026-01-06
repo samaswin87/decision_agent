@@ -79,8 +79,8 @@ module DecisionAgent
           options: options
         )
 
-        # Calculate statistics
-        calculate_statistics(results, options[:confidence_level])
+        # Calculate statistics (pass requested iterations count)
+        calculate_statistics(results, options[:confidence_level], requested_iterations: iterations)
       end
 
       # Run sensitivity analysis using Monte Carlo simulation
@@ -254,7 +254,9 @@ module DecisionAgent
           run_parallel_iterations(distributions, base_context, iterations, agent, options)
         else
           results = []
+          attempted = 0
           iterations.times do
+            attempted += 1
             context = sample_context(distributions, base_context)
             begin
               decision = agent.decide(context: Context.new(context))
@@ -270,6 +272,8 @@ module DecisionAgent
               next
             end
           end
+          # Store attempted count in results metadata
+          results.instance_variable_set(:@attempted_iterations, attempted) if results.respond_to?(:instance_variable_set)
           results
         end
       end
@@ -281,7 +285,9 @@ module DecisionAgent
         threads = Array.new(thread_count) do
           Thread.new do
             thread_results = []
+            thread_attempted = 0
             iterations_per_thread.times do
+              thread_attempted += 1
               begin
                 context = sample_context(distributions, base_context)
                 decision = agent.decide(context: Context.new(context))
@@ -297,13 +303,23 @@ module DecisionAgent
                 next
               end
             end
-            # Collect results in thread, then add to shared results outside mutex
+            # Store attempted count in thread results
+            thread_results.instance_variable_set(:@attempted_iterations, thread_attempted) if thread_results.respond_to?(:instance_variable_set)
             thread_results
           end
         end
 
         # Collect all results from threads
         all_results = threads.map(&:value).flatten.compact
+        
+        # Calculate total attempted iterations
+        total_attempted = threads.map do |t|
+          results = t.value
+          results.instance_variable_get(:@attempted_iterations) if results.respond_to?(:instance_variable_get)
+        end.compact.sum
+        
+        # Store attempted count
+        all_results.instance_variable_set(:@attempted_iterations, total_attempted) if all_results.respond_to?(:instance_variable_set)
         
         # Limit to exact iteration count (in case of rounding)
         all_results.first(iterations)
@@ -385,9 +401,13 @@ module DecisionAgent
         end
       end
 
-      def calculate_statistics(results, confidence_level)
+      def calculate_statistics(results, confidence_level, requested_iterations: nil)
+        # Use requested iterations if provided, otherwise use results size
+        # The iterations count should reflect the number of iterations requested/attempted
+        iterations_count = requested_iterations || results.size
+        
         total = results.size
-        return empty_statistics if total == 0
+        return empty_statistics(iterations_count, confidence_level) if total == 0
 
         # Decision probabilities
         decision_counts = results.group_by { |r| r[:decision] }.transform_values(&:count)
@@ -430,7 +450,7 @@ module DecisionAgent
         end
 
         {
-          iterations: total,
+          iterations: iterations_count,
           decision_counts: decision_counts,
           decision_probabilities: decision_probabilities,
           decision_stats: decision_stats,
@@ -461,15 +481,15 @@ module DecisionAgent
         }
       end
 
-      def empty_statistics
+      def empty_statistics(attempted_iterations = 0, confidence_level = 0.95)
         {
-          iterations: 0,
+          iterations: attempted_iterations,
           decision_counts: {},
           decision_probabilities: {},
           decision_stats: {},
           average_confidence: 0.0,
           confidence_stddev: 0.0,
-          confidence_intervals: { confidence: { lower: 0.0, upper: 0.0 }, level: 0.95 },
+          confidence_intervals: { confidence: { lower: 0.0, upper: 0.0 }, level: confidence_level },
           results: []
         }
       end

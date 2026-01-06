@@ -20,6 +20,31 @@ RSpec.describe DecisionAgent::Simulation::ScenarioEngine do
   let(:version_manager) { DecisionAgent::Versioning::VersionManager.new }
   let(:engine) { described_class.new(agent: agent, version_manager: version_manager) }
 
+  # Set up database for versioning tests if ActiveRecord is available
+  before(:all) do
+    if defined?(ActiveRecord)
+      ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: ":memory:")
+      ActiveRecord::Schema.define do
+        create_table :rule_versions, force: true do |t|
+          t.string :rule_id, null: false
+          t.integer :version_number, null: false
+          t.text :content, null: false
+          t.string :status, default: "draft"
+          t.string :created_by
+          t.text :changelog
+          t.timestamps
+        end
+        add_index :rule_versions, [:rule_id, :version_number], unique: true
+        add_index :rule_versions, [:rule_id, :status]
+      end
+
+      # Define RuleVersion model if not already defined
+      unless defined?(::RuleVersion)
+        Object.const_set(:RuleVersion, Class.new(ActiveRecord::Base))
+      end
+    end
+  end
+
   describe "#initialize" do
     it "creates a scenario engine with agent and version manager" do
       expect(engine.agent).to eq(agent)

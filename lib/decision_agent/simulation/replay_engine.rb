@@ -102,7 +102,17 @@ module DecisionAgent
       def load_csv(file_path)
         contexts = []
         CSV.foreach(file_path, headers: true, header_converters: :symbol) do |row|
-          contexts << row.to_h
+          context = row.to_h
+          # Convert numeric strings to numbers for better evaluator compatibility
+          context = context.transform_values do |v|
+            # Try to convert to number if it looks like a number
+            if v.is_a?(String) && v.match?(/^-?\d+(\.\d+)?$/)
+              v.include?('.') ? v.to_f : v.to_i
+            else
+              v
+            end
+          end
+          contexts << context
         end
         contexts
       rescue StandardError => e
@@ -130,6 +140,11 @@ module DecisionAgent
 
         raise InvalidHistoricalDataError, "Database config must include :connection" unless connection_config
 
+        # Check if query or table is provided
+        unless query || table
+          raise InvalidHistoricalDataError, "Database config must include :query or :table"
+        end
+
         # Establish connection
         connection = establish_database_connection(connection_config)
 
@@ -140,6 +155,10 @@ module DecisionAgent
       rescue ActiveRecord::ActiveRecordError => e
         raise InvalidHistoricalDataError, "Database query failed: #{e.message}"
       rescue StandardError => e
+        # Check if it's the missing query/table error
+        if e.message.include?("query or :table")
+          raise InvalidHistoricalDataError, "Database config must include :query or :table"
+        end
         raise InvalidHistoricalDataError, "Failed to load from database: #{e.message}"
       end
 
@@ -156,10 +175,21 @@ module DecisionAgent
             ActiveRecord::Base.connection
           end
         elsif config.is_a?(Hash)
-          # Create a new connection using a dedicated class
+          # Create a properly named class to avoid "Anonymous class is not allowed" error
+          # Generate a unique class name
+          class_name = "DecisionAgentReplayConnection#{object_id}#{Thread.current.object_id}#{Time.now.to_f.to_s.gsub(/[^0-9]/, '')}"
+          
+          # Create the class in the DecisionAgent module namespace
+          unless defined?(DecisionAgent::ReplayConnections)
+            DecisionAgent.const_set(:ReplayConnections, Module.new)
+          end
+          
           connection_class = Class.new(ActiveRecord::Base) do
             self.abstract_class = true
           end
+          
+          # Set the class name properly to avoid anonymous class error
+          DecisionAgent::ReplayConnections.const_set(class_name, connection_class)
           connection_class.establish_connection(config)
           connection_class.connection
         else
@@ -371,8 +401,27 @@ module DecisionAgent
       def execute_single_replay(context, replay_agent, baseline_agent)
         ctx = context.is_a?(Context) ? context : Context.new(context)
 
-        replay_decision = replay_agent.decide(context: ctx)
-        baseline_decision = baseline_agent&.decide(context: ctx)
+        begin
+          replay_decision = replay_agent.decide(context: ctx)
+        rescue NoEvaluationsError
+          # If no evaluators match, return a default result
+          return {
+            context: ctx.to_h,
+            replay_decision: nil,
+            replay_confidence: 0.0,
+            baseline_decision: nil,
+            baseline_confidence: 0.0,
+            changed: false,
+            confidence_delta: nil,
+            error: "No evaluators returned a decision"
+          }
+        end
+
+        begin
+          baseline_decision = baseline_agent&.decide(context: ctx)
+        rescue NoEvaluationsError
+          baseline_decision = nil
+        end
 
         {
           context: ctx.to_h,
@@ -380,21 +429,23 @@ module DecisionAgent
           replay_confidence: replay_decision.confidence,
           baseline_decision: baseline_decision&.decision,
           baseline_confidence: baseline_decision&.confidence,
-          changed: baseline_decision ? (replay_decision.decision != baseline_decision.decision) : false,
+          changed: (baseline_decision&.decision || nil) != replay_decision.decision,
           confidence_delta: baseline_decision ? (replay_decision.confidence - baseline_decision.confidence) : nil
         }
       end
 
       def build_comparison_report(results, baseline_agent)
-        total = results.size
-        changed = results.count { |r| r[:changed] }
-        unchanged = total - changed
+        # Filter out results with errors for statistics, but count all for total_decisions
+        valid_results = results.reject { |r| r[:error] }
+        total = results.size  # Total contexts processed
+        changed = valid_results.count { |r| r[:changed] }
+        unchanged = valid_results.size - changed
 
-        confidence_deltas = results.map { |r| r[:confidence_delta] }.compact
+        confidence_deltas = valid_results.map { |r| r[:confidence_delta] }.compact
         avg_confidence_delta = confidence_deltas.any? ? confidence_deltas.sum / confidence_deltas.size : 0
 
-        decision_distribution = results.group_by { |r| r[:replay_decision] }.transform_values(&:count)
-        baseline_distribution = results.select { |r| r[:baseline_decision] }
+        decision_distribution = valid_results.group_by { |r| r[:replay_decision] }.transform_values(&:count)
+        baseline_distribution = valid_results.select { |r| r[:baseline_decision] }
                                       .group_by { |r| r[:baseline_decision] }
                                       .transform_values(&:count)
 
@@ -402,12 +453,13 @@ module DecisionAgent
           total_decisions: total,
           changed_decisions: changed,
           unchanged_decisions: unchanged,
-          change_rate: total > 0 ? (changed.to_f / total) : 0,
+          change_rate: valid_results.size > 0 ? (changed.to_f / valid_results.size) : 0,
           average_confidence_delta: avg_confidence_delta,
           decision_distribution: decision_distribution,
           baseline_distribution: baseline_distribution,
           results: results,
-          has_baseline: !baseline_agent.nil?
+          has_baseline: !baseline_agent.nil?,
+          errors: results.count { |r| r[:error] }
         }
       end
     end

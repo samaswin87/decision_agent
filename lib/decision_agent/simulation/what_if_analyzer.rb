@@ -347,9 +347,14 @@ module DecisionAgent
               confidence: decision.confidence
             }
           rescue DecisionAgent::NoEvaluationsError
-            # Skip points where no evaluators return a decision
-            # This can happen when rules don't match the context
-            next
+            # Add point with nil decision when no evaluators match
+            # This ensures we have points for all parameter values
+            points << {
+              parameter: param_name,
+              value: value,
+              decision: nil,
+              confidence: 0.0
+            }
           end
         end
 
@@ -375,7 +380,7 @@ module DecisionAgent
           range: { min: min, max: max },
           points: points,
           boundaries: boundaries,
-          decision_distribution: points.group_by { |p| p[:decision] }.transform_values(&:count)
+          decision_distribution: points.any? ? points.group_by { |p| p[:decision] }.transform_values(&:count) : {}
         }
 
         format_visualization_output(result, options)

@@ -27,29 +27,42 @@ module DecisionAgent
         ctx = context.is_a?(Context) ? context : Context.new(context)
 
         # Execute production decision
-        production_decision = @production_agent.decide(context: ctx)
+        begin
+          production_decision = @production_agent.decide(context: ctx)
+        rescue NoEvaluationsError
+          production_decision = nil
+        end
 
         # Build shadow agent and execute
         shadow_agent = build_shadow_agent(shadow_version)
-        shadow_decision = shadow_agent.decide(context: ctx)
+        begin
+          shadow_decision = shadow_agent.decide(context: ctx)
+        rescue NoEvaluationsError
+          shadow_decision = nil
+        end
 
         # Compare results
+        prod_decision = production_decision&.decision
+        prod_confidence = production_decision&.confidence || 0.0
+        shadow_dec = shadow_decision&.decision
+        shadow_conf = shadow_decision&.confidence || 0.0
+        
         result = {
           context: ctx.to_h,
-          production_decision: production_decision.decision,
-          production_confidence: production_decision.confidence,
-          shadow_decision: shadow_decision.decision,
-          shadow_confidence: shadow_decision.confidence,
-          matches: production_decision.decision == shadow_decision.decision,
-          confidence_delta: shadow_decision.confidence - production_decision.confidence,
+          production_decision: prod_decision,
+          production_confidence: prod_confidence,
+          shadow_decision: shadow_dec,
+          shadow_confidence: shadow_conf,
+          matches: prod_decision == shadow_dec,
+          confidence_delta: shadow_conf - prod_confidence,
           timestamp: Time.now.utc.iso8601
         }
 
         if options[:track_differences] && !result[:matches]
           result[:differences] = {
             decision_mismatch: true,
-            production_explanations: production_decision.explanations,
-            shadow_explanations: shadow_decision.explanations
+            production_explanations: production_decision&.explanations || [],
+            shadow_explanations: shadow_decision&.explanations || []
           }
         end
 
@@ -195,25 +208,40 @@ module DecisionAgent
               break unless context
 
               ctx = context.is_a?(Context) ? context : Context.new(context)
-              production_decision = @production_agent.decide(context: ctx)
-              shadow_decision = shadow_agent.decide(context: ctx)
+              
+              begin
+                production_decision = @production_agent.decide(context: ctx)
+              rescue NoEvaluationsError
+                production_decision = nil
+              end
+              
+              begin
+                shadow_decision = shadow_agent.decide(context: ctx)
+              rescue NoEvaluationsError
+                shadow_decision = nil
+              end
+
+              prod_decision = production_decision&.decision
+              prod_confidence = production_decision&.confidence || 0.0
+              shadow_dec = shadow_decision&.decision
+              shadow_conf = shadow_decision&.confidence || 0.0
 
               result = {
                 context: ctx.to_h,
-                production_decision: production_decision.decision,
-                production_confidence: production_decision.confidence,
-                shadow_decision: shadow_decision.decision,
-                shadow_confidence: shadow_decision.confidence,
-                matches: production_decision.decision == shadow_decision.decision,
-                confidence_delta: shadow_decision.confidence - production_decision.confidence,
+                production_decision: prod_decision,
+                production_confidence: prod_confidence,
+                shadow_decision: shadow_dec,
+                shadow_confidence: shadow_conf,
+                matches: prod_decision == shadow_dec,
+                confidence_delta: shadow_conf - prod_confidence,
                 timestamp: Time.now.utc.iso8601
               }
 
               if options[:track_differences] && !result[:matches]
                 result[:differences] = {
                   decision_mismatch: true,
-                  production_explanations: production_decision.explanations,
-                  shadow_explanations: shadow_decision.explanations
+                  production_explanations: production_decision&.explanations || [],
+                  shadow_explanations: shadow_decision&.explanations || []
                 }
               end
 
