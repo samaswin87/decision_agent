@@ -39,3 +39,8 @@ file::memory:?cache=shared
 file::memory:?cache=shared-shm
 file::memory:?cache=shared-wal
 versions
+benchmarks/baselines/basic_baseline_3.3.json
+benchmarks/results/results_3.3_1767669962.json
+benchmarks/results/results_3.3_1767670824.json
+benchmarks/results
+benchmarks/baselines

@@ -29,6 +29,7 @@ Welcome to the DecisionAgent documentation.
 ### Performance & Thread-Safety
 - [**Performance & Thread-Safety Summary**](PERFORMANCE_AND_THREAD_SAFETY.md) - Executive summary, benchmarks, and production readiness
 - [**Thread-Safety Implementation**](THREAD_SAFETY.md) - Detailed implementation guide and migration notes
+- [**Benchmarks**](../benchmarks/README.md) - Comprehensive benchmark suite, performance testing, and regression tracking
 
 ### Reference
 - [**API Contract**](API_CONTRACT.md) - Complete API specifications
@@ -63,7 +64,8 @@ docs/
 │
 ├── Performance & Thread-Safety
 │   ├── PERFORMANCE_AND_THREAD_SAFETY.md  - Executive summary and benchmarks
-│   └── THREAD_SAFETY.md                  - Implementation details
+│   ├── THREAD_SAFETY.md                  - Implementation details
+│   └── ../benchmarks/README.md           - Benchmark suite and performance testing
 │
 └── Reference
     ├── API_CONTRACT.md             - Full API reference

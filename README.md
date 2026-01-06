@@ -274,6 +274,7 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 ### Performance & Thread-Safety
 - [Performance & Thread-Safety Summary](docs/PERFORMANCE_AND_THREAD_SAFETY.md) - Benchmarks and production readiness
 - [Thread-Safety Implementation](docs/THREAD_SAFETY.md) - Technical implementation guide
+- [Benchmarks](benchmarks/README.md) - Comprehensive benchmark suite and performance testing
 
 ### Reference
 - [API Contract](docs/API_CONTRACT.md) - Full API reference
@@ -296,6 +297,19 @@ DecisionAgent is designed to be **thread-safe and FAST** for use in multi-thread
 All data structures are deeply frozen to prevent mutation, ensuring safe concurrent access without race conditions.
 
 See [Thread-Safety Guide](docs/THREAD_SAFETY.md) and [Performance Analysis](docs/PERFORMANCE_AND_THREAD_SAFETY.md) for details.
+
+**Run Benchmarks:**
+```bash
+# Run all benchmarks
+rake benchmark:all
+
+# Run specific benchmarks
+rake benchmark:basic      # Basic decision performance
+rake benchmark:threads    # Thread-safety and scalability
+rake benchmark:regression # Compare against baseline
+
+# See [Benchmarks Guide](benchmarks/README.md) for complete documentation
+```
 
 ## Contributing
 

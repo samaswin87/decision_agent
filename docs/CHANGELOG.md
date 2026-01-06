@@ -62,6 +62,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Added to `SUPPORTED_OPERATORS` list
     - Special validation for `fetch_from_api` value structure (endpoint, params, mapping)
 
+- **Comprehensive Benchmark Testing Suite** ⚡
+  - **Benchmark Scripts** - Complete performance testing framework
+    - `basic_decision_benchmark.rb` - Core decision-making performance (single/multiple conditions, large rule sets)
+    - `thread_safety_benchmark.rb` - Multi-threaded performance and scalability (1, 10, 50, 100 threads)
+    - `evaluator_comparison.rb` - JSON vs DMN evaluator performance comparison
+    - `operator_performance.rb` - Performance impact analysis for all operator types
+    - `memory_benchmark.rb` - Memory usage patterns, allocations, and GC impact
+    - `batch_throughput.rb` - Real-world high-throughput scenarios (loan approval, fraud detection)
+    - `regression_benchmark.rb` - Performance regression detection with baseline comparison
+  - **Rake Tasks** - Convenient benchmark execution
+    - `rake benchmark:all` - Run all benchmarks
+    - `rake benchmark:basic` - Run basic decision benchmark
+    - `rake benchmark:threads` - Run thread-safety benchmark
+    - `rake benchmark:evaluators` - Run evaluator comparison
+    - `rake benchmark:operators` - Run operator performance
+    - `rake benchmark:memory` - Run memory benchmark
+    - `rake benchmark:batch` - Run batch throughput
+    - `rake benchmark:regression` - Run regression test
+    - `rake benchmark:baseline` - Update baseline for current Ruby version
+    - `rake benchmark:all_versions` - Run benchmarks for all Ruby versions
+  - **Baseline Management** - Version-specific performance tracking
+    - Separate baseline files per Ruby version (3.0, 3.1, 3.2, 3.3)
+    - JSON-based baseline storage with metadata (timestamp, git commit, hardware info)
+    - Automatic regression detection (>10% performance degradation alerts)
+    - Baseline comparison and reporting
+  - **Docker Support** - Containerized benchmark execution
+    - `Dockerfile` - Standardized benchmark environment
+    - `docker-compose.yml` - Multi-version Ruby testing (3.0, 3.1, 3.2, 3.3)
+    - Resource limits for consistent testing (CPU, memory)
+    - Volume mounts for results and baselines
+  - **CI/CD Integration** - Automated performance testing
+    - GitHub Actions workflow (`.github/workflows/benchmark.yml`)
+    - Runs on pull requests when `lib/**` or `benchmarks/**` change
+    - Weekly scheduled runs (Sunday at midnight)
+    - Matrix strategy for all Ruby versions
+    - Artifact upload for benchmark results
+  - **Documentation** - Complete benchmark guide
+    - `benchmarks/README.md` - Comprehensive usage guide
+    - Performance expectations by hardware type
+    - Baseline management instructions
+    - Best practices and troubleshooting
+    - Docker usage instructions
+  - **Dependencies** - Benchmark tooling
+    - Added `benchmark-ips` gem for better statistics
+    - Added `memory_profiler` gem for memory analysis
+    - Added `ruby-prof` gem for detailed profiling (optional)
+  - **Metrics Tracked** - Comprehensive performance measurement
+    - Throughput (decisions per second)
+    - Latency (average, min, max, p95, p99)
+    - Memory usage (allocations, peak memory, memory per decision)
+    - Thread-safety overhead (single-threaded vs multi-threaded)
+    - Scalability (performance with increasing thread counts)
+    - Operator performance impact
+    - Evaluator comparison (JSON vs DMN)
+    - GC impact analysis
+
+### Fixed
+
+- **FileStorageAdapter Thread-Safety Performance Improvement**
+  - **Problem:** Single global mutex serialized all operations, even for different rules
+    - Thread A reading `loan_approval` blocked Thread B reading `fraud_detection`
+    - Zero parallelism for read operations on different rules
+    - Unnecessary performance bottleneck in multi-tenant scenarios
+  - **Solution:** Implemented per-rule locking with Hash of mutexes
+    - Each rule_id gets its own Mutex (lazy-created)
+    - Different rules can be read/written in parallel
+    - Same rule operations still properly serialized
+    - Thread-safe Hash access via `@rule_mutexes_lock`
+  - **Impact:**
+    - ~5x potential speedup for concurrent reads of different rules
+    - Better CPU utilization in multi-threaded environments
+    - Maintains all thread-safety guarantees
+  - **Files Changed:**
+    - `lib/decision_agent/versioning/file_storage_adapter.rb` - Replaced global mutex with per-rule locking
+    - Added `with_rule_lock` helper method for thread-safe per-rule operations
+  - **Testing:** Added performance benchmark specs demonstrating parallelism improvements
+
 ## [0.3.0] - 2026-01-03
 
 ### Added

@@ -1,0 +1,16 @@
+.git/
+.gitignore
+node_modules/
+tmp/
+coverage/
+*.gem
+pkg/
+*.log
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.iml
+

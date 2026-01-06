@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  benchmark-3.0:
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile
+      args:
+        RUBY_VERSION: 3.0
+    volumes:
+      - ../:/app
+      - ./results:/app/benchmarks/results
+      - ./baselines:/app/benchmarks/baselines
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  benchmark-3.1:
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile
+      args:
+        RUBY_VERSION: 3.1
+    volumes:
+      - ../:/app
+      - ./results:/app/benchmarks/results
+      - ./baselines:/app/benchmarks/baselines
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  benchmark-3.2:
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile
+      args:
+        RUBY_VERSION: 3.2
+    volumes:
+      - ../:/app
+      - ./results:/app/benchmarks/results
+      - ./baselines:/app/benchmarks/baselines
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 4G
+
+  benchmark-3.3:
+    build:
+      context: ..
+      dockerfile: benchmarks/Dockerfile
+      args:
+        RUBY_VERSION: 3.3
+    volumes:
+      - ../:/app
+      - ./results:/app/benchmarks/results
+      - ./baselines:/app/benchmarks/baselines
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 4G
+

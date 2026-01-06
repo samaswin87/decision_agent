@@ -211,5 +211,59 @@ RSpec.describe "RFC 8785 JSON Canonicalization" do
 
       expect(elapsed).to be < 1.0, "100 decisions should complete in under 1 second"
     end
+
+    it "caches hash computations for identical inputs" do
+      context = { amount: 100, user: { id: 123, name: "Alice" } }
+
+      # Clear cache before test
+      DecisionAgent::Agent.hash_cache_mutex.synchronize do
+        DecisionAgent::Agent.hash_cache.clear
+      end
+
+      initial_cache_size = DecisionAgent::Agent.hash_cache_mutex.synchronize do
+        DecisionAgent::Agent.hash_cache.size
+      end
+
+      # Make multiple decisions with same context
+      decision1 = agent.decide(context: context)
+      decision2 = agent.decide(context: context)
+      decision3 = agent.decide(context: context)
+
+      # All should have same hash (deterministic)
+      expect(decision1.audit_payload[:deterministic_hash]).to eq(decision2.audit_payload[:deterministic_hash])
+      expect(decision2.audit_payload[:deterministic_hash]).to eq(decision3.audit_payload[:deterministic_hash])
+
+      # Cache should have entries (at least one for the canonical JSON)
+      final_cache_size = DecisionAgent::Agent.hash_cache_mutex.synchronize do
+        DecisionAgent::Agent.hash_cache.size
+      end
+
+      # Cache should have grown (at least one entry for the repeated context)
+      expect(final_cache_size).to be > initial_cache_size
+    end
+
+    it "handles cache eviction when cache size limit is reached" do
+      # Clear cache before test
+      DecisionAgent::Agent.hash_cache_mutex.synchronize do
+        DecisionAgent::Agent.hash_cache.clear
+      end
+
+      # Create many unique contexts to fill cache
+      max_size = DecisionAgent::Agent.hash_cache_max_size
+      unique_contexts = (0..max_size).map { |i| { amount: i, id: i, data: "context_#{i}" } }
+
+      # Make decisions with unique contexts
+      unique_contexts.each do |ctx|
+        agent.decide(context: ctx)
+      end
+
+      # Cache should not exceed max size (eviction should occur)
+      final_cache_size = DecisionAgent::Agent.hash_cache_mutex.synchronize do
+        DecisionAgent::Agent.hash_cache.size
+      end
+
+      # Cache should be at or below max size
+      expect(final_cache_size).to be <= DecisionAgent::Agent.hash_cache_max_size
+    end
   end
 end

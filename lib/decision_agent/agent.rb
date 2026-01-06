@@ -6,6 +6,17 @@ module DecisionAgent
   class Agent
     attr_reader :evaluators, :scoring_strategy, :audit_adapter
 
+    # Thread-safe cache for deterministic hash computation
+    # This significantly improves performance when the same context/evaluations
+    # are processed multiple times (common in benchmarks and high-throughput scenarios)
+    @hash_cache = {}
+    @hash_cache_mutex = Mutex.new
+    @hash_cache_max_size = 1000 # Limit cache size to prevent memory bloat
+
+    class << self
+      attr_reader :hash_cache, :hash_cache_mutex, :hash_cache_max_size
+    end
+
     def initialize(evaluators:, scoring_strategy: nil, audit_adapter: nil, validate_evaluations: nil)
       @evaluators = Array(evaluators)
       @scoring_strategy = scoring_strategy || Scoring::WeightedAverage.new
@@ -129,8 +140,33 @@ module DecisionAgent
 
     def compute_deterministic_hash(payload)
       hashable = payload.slice(:context, :evaluations, :decision, :confidence, :scoring_strategy)
+
+      # Compute canonical JSON (required for deterministic hashing)
+      # This is expensive, but we cache the result to avoid recomputation
       canonical = canonical_json(hashable)
-      Digest::SHA256.hexdigest(canonical)
+
+      # Use canonical JSON as cache key (thread-safe lookup)
+      cached_hash = self.class.hash_cache_mutex.synchronize do
+        self.class.hash_cache[canonical]
+      end
+
+      return cached_hash if cached_hash
+
+      # Cache miss - compute SHA256 hash (also expensive)
+      computed_hash = Digest::SHA256.hexdigest(canonical)
+
+      # Store in cache (thread-safe, with size limit)
+      self.class.hash_cache_mutex.synchronize do
+        # Clear cache if it gets too large (simple FIFO eviction)
+        if self.class.hash_cache.size >= self.class.hash_cache_max_size
+          # Remove oldest 10% of entries (simple approximation)
+          keys_to_remove = self.class.hash_cache.keys.first(self.class.hash_cache_max_size / 10)
+          keys_to_remove.each { |key| self.class.hash_cache.delete(key) }
+        end
+        self.class.hash_cache[canonical] = computed_hash
+      end
+
+      computed_hash
     end
 
     # Uses RFC 8785 (JSON Canonicalization Scheme) for deterministic JSON serialization

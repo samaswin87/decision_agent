@@ -5,11 +5,14 @@ gemspec
 group :development, :test do
   gem "activerecord", "~> 7.0"
   gem "activesupport", "< 7.2" # Pin to version compatible with Ruby 3.0+
+  gem "benchmark-ips" # Better benchmark statistics
   gem "connection_pool", "< 3.0" # Pin to version compatible with Ruby 3.0+
+  gem "memory_profiler" # Memory profiling
   gem "minitest", "< 6.0" # Pin to version compatible with Ruby 3.0+
   gem "puma"
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.12"
+  gem "ruby-prof" # Detailed profiling (optional)
   gem "securerandom", "< 0.4" # Pin to version compatible with Ruby 3.0+
   gem "simplecov", "~> 0.22", require: false
   gem "sqlite3", "~> 1.6"
