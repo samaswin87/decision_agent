@@ -1,16 +1,16 @@
 # Code Coverage Report
 
-**Last Updated:** 2026-01-06 07:29:56
+**Last Updated:** 2026-01-06 22:13:58
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| **Total Coverage** | **88.0%** |
-| Total Files | 81 |
-| Total Relevant Lines | 6835 |
-| Lines Covered | 6015 |
-| Lines Missed | 820 |
+| **Total Coverage** | **86.28%** |
+| Total Files | 90 |
+| Total Relevant Lines | 8623 |
+| Lines Covered | 7440 |
+| Lines Missed | 1183 |
 
 > **Note:** This report excludes files in the `examples/` directory as they are sample code, not production code.
 
@@ -18,14 +18,14 @@
 
 | File | Coverage | Lines Covered | Lines Missed | Total Lines |
 |------|----------|---------------|--------------|-------------|
-| `lib/decision_agent.rb` | ✅ 100.0% | 80 | 0 | 80 |
+| `lib/decision_agent.rb` | ✅ 97.75% | 87 | 2 | 89 |
 | `lib/decision_agent/ab_testing/ab_test.rb` | ✅ 93.98% | 78 | 5 | 83 |
 | `lib/decision_agent/ab_testing/ab_test_assignment.rb` | ✅ 100.0% | 28 | 0 | 28 |
 | `lib/decision_agent/ab_testing/ab_test_manager.rb` | ✅ 92.54% | 124 | 10 | 134 |
 | `lib/decision_agent/ab_testing/ab_testing_agent.rb` | ✅ 100.0% | 63 | 0 | 63 |
 | `lib/decision_agent/ab_testing/storage/adapter.rb` | ✅ 100.0% | 20 | 0 | 20 |
 | `lib/decision_agent/ab_testing/storage/memory_adapter.rb` | ✅ 100.0% | 67 | 0 | 67 |
-| `lib/decision_agent/agent.rb` | ✅ 100.0% | 66 | 0 | 66 |
+| `lib/decision_agent/agent.rb` | ✅ 100.0% | 81 | 0 | 81 |
 | `lib/decision_agent/audit/adapter.rb` | ✅ 100.0% | 5 | 0 | 5 |
 | `lib/decision_agent/audit/logger_adapter.rb` | ✅ 100.0% | 12 | 0 | 12 |
 | `lib/decision_agent/audit/null_adapter.rb` | ✅ 100.0% | 4 | 0 | 4 |
@@ -54,7 +54,7 @@
 | `lib/decision_agent/dmn/decision_tree.rb` | ✅ 96.39% | 80 | 3 | 83 |
 | `lib/decision_agent/dmn/errors.rb` | ✅ 100.0% | 11 | 0 | 11 |
 | `lib/decision_agent/dmn/exporter.rb` | ⚠️ 80.19% | 85 | 21 | 106 |
-| `lib/decision_agent/dmn/feel/evaluator.rb` | ❌ 58.98% | 220 | 153 | 373 |
+| `lib/decision_agent/dmn/feel/evaluator.rb` | ❌ 63.9% | 246 | 139 | 385 |
 | `lib/decision_agent/dmn/feel/functions.rb` | ✅ 99.55% | 220 | 1 | 221 |
 | `lib/decision_agent/dmn/feel/parser.rb` | ✅ 91.94% | 114 | 10 | 124 |
 | `lib/decision_agent/dmn/feel/simple_parser.rb` | ✅ 97.83% | 135 | 3 | 138 |
@@ -64,9 +64,9 @@
 | `lib/decision_agent/dmn/model.rb` | ✅ 98.37% | 121 | 2 | 123 |
 | `lib/decision_agent/dmn/parser.rb` | ✅ 95.29% | 81 | 4 | 85 |
 | `lib/decision_agent/dmn/validator.rb` | ⚠️ 87.58% | 141 | 20 | 161 |
-| `lib/decision_agent/dsl/condition_evaluator.rb` | ⚠️ 84.62% | 671 | 122 | 793 |
+| `lib/decision_agent/dsl/condition_evaluator.rb` | ⚠️ 84.63% | 672 | 122 | 794 |
 | `lib/decision_agent/dsl/rule_parser.rb` | ✅ 100.0% | 15 | 0 | 15 |
-| `lib/decision_agent/dsl/schema_validator.rb` | ✅ 97.37% | 148 | 4 | 152 |
+| `lib/decision_agent/dsl/schema_validator.rb` | ✅ 97.56% | 160 | 4 | 164 |
 | `lib/decision_agent/errors.rb` | ✅ 96.72% | 59 | 2 | 61 |
 | `lib/decision_agent/evaluation.rb` | ✅ 96.55% | 28 | 1 | 29 |
 | `lib/decision_agent/evaluation_validator.rb` | ✅ 100.0% | 37 | 0 | 37 |
@@ -74,7 +74,7 @@
 | `lib/decision_agent/evaluators/dmn_evaluator.rb` | ✅ 91.01% | 81 | 8 | 89 |
 | `lib/decision_agent/evaluators/json_rule_evaluator.rb` | ✅ 97.37% | 37 | 1 | 38 |
 | `lib/decision_agent/evaluators/static_evaluator.rb` | ✅ 100.0% | 13 | 0 | 13 |
-| `lib/decision_agent/monitoring/alert_manager.rb` | ✅ 91.11% | 123 | 12 | 135 |
+| `lib/decision_agent/monitoring/alert_manager.rb` | ✅ 91.3% | 126 | 12 | 138 |
 | `lib/decision_agent/monitoring/metrics_collector.rb` | ✅ 94.71% | 161 | 9 | 170 |
 | `lib/decision_agent/monitoring/monitored_agent.rb` | ✅ 100.0% | 25 | 0 | 25 |
 | `lib/decision_agent/monitoring/prometheus_exporter.rb` | ✅ 100.0% | 126 | 0 | 126 |
@@ -87,18 +87,27 @@
 | `lib/decision_agent/scoring/max_weight.rb` | ✅ 100.0% | 7 | 0 | 7 |
 | `lib/decision_agent/scoring/threshold.rb` | ✅ 100.0% | 19 | 0 | 19 |
 | `lib/decision_agent/scoring/weighted_average.rb` | ✅ 100.0% | 13 | 0 | 13 |
+| `lib/decision_agent/simulation.rb` | ✅ 100.0% | 10 | 0 | 10 |
+| `lib/decision_agent/simulation/errors.rb` | ✅ 100.0% | 7 | 0 | 7 |
+| `lib/decision_agent/simulation/impact_analyzer.rb` | ✅ 90.28% | 195 | 21 | 216 |
+| `lib/decision_agent/simulation/monte_carlo_simulator.rb` | ⚠️ 89.05% | 244 | 30 | 274 |
+| `lib/decision_agent/simulation/replay_engine.rb` | ⚠️ 79.22% | 183 | 48 | 231 |
+| `lib/decision_agent/simulation/scenario_engine.rb` | ⚠️ 87.5% | 126 | 18 | 144 |
+| `lib/decision_agent/simulation/scenario_library.rb` | ✅ 98.21% | 55 | 1 | 56 |
+| `lib/decision_agent/simulation/shadow_test_engine.rb` | ⚠️ 84.5% | 109 | 20 | 129 |
+| `lib/decision_agent/simulation/what_if_analyzer.rb` | ✅ 92.05% | 405 | 35 | 440 |
 | `lib/decision_agent/testing/batch_test_importer.rb` | ⚠️ 87.18% | 136 | 20 | 156 |
 | `lib/decision_agent/testing/batch_test_runner.rb` | ✅ 94.55% | 104 | 6 | 110 |
 | `lib/decision_agent/testing/test_coverage_analyzer.rb` | ✅ 96.43% | 81 | 3 | 84 |
 | `lib/decision_agent/testing/test_result_comparator.rb` | ✅ 97.62% | 82 | 2 | 84 |
 | `lib/decision_agent/testing/test_scenario.rb` | ✅ 94.74% | 18 | 1 | 19 |
-| `lib/decision_agent/versioning/activerecord_adapter.rb` | ✅ 90.2% | 46 | 5 | 51 |
+| `lib/decision_agent/versioning/activerecord_adapter.rb` | ⚠️ 83.93% | 47 | 9 | 56 |
 | `lib/decision_agent/versioning/adapter.rb` | ✅ 100.0% | 31 | 0 | 31 |
 | `lib/decision_agent/versioning/file_storage_adapter.rb` | ✅ 90.68% | 146 | 15 | 161 |
 | `lib/decision_agent/versioning/version_manager.rb` | ✅ 95.0% | 38 | 2 | 40 |
 | `lib/decision_agent/web/middleware/auth_middleware.rb` | ✅ 100.0% | 25 | 0 | 25 |
 | `lib/decision_agent/web/middleware/permission_middleware.rb` | ✅ 100.0% | 43 | 0 | 43 |
-| `lib/decision_agent/web/server.rb` | ❌ 68.4% | 500 | 231 | 731 |
+| `lib/decision_agent/web/server.rb` | ❌ 55.08% | 526 | 429 | 955 |
 
 ## Coverage Status
 

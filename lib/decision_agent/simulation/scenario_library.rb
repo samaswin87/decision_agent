@@ -21,7 +21,7 @@ module DecisionAgent
       # @return [Hash] Scenario definition
       def self.create_scenario(template_name, overrides: {})
         template = get_template(template_name)
-        raise ScenarioExecutionError, "Template not found: #{template_name}" unless template
+        raise DecisionAgent::Simulation::ScenarioExecutionError, "Template not found: #{template_name}" unless template
 
         scenario = template.dup
         merge_overrides(scenario, overrides)
