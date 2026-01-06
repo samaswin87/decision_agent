@@ -55,35 +55,54 @@ module DecisionAgent
         base_decision = analysis_agent.decide(context: Context.new(base_scenario))
         base_decision_value = base_decision.decision
 
-        sensitivity_results = {}
+        sensitivity_results = analyze_field_variations(
+          base_scenario, variations, base_decision_value, analysis_agent
+        )
 
-        variations.each do |field, values|
-          field_results = []
-          values.each do |value|
-            modified_scenario = base_scenario.dup
-            set_nested_value(modified_scenario, field, value)
-            decision = analysis_agent.decide(context: Context.new(modified_scenario))
+        build_sensitivity_result(
+          base_scenario, base_decision_value, base_decision.confidence, sensitivity_results
+        )
+      end
 
-            field_results << {
-              value: value,
-              decision: decision.decision,
-              confidence: decision.confidence,
-              changed: decision.decision != base_decision_value
-            }
-          end
-
-          changed_count = field_results.count { |r| r[:changed] }
-          sensitivity_results[field] = {
-            impact: changed_count.to_f / values.size,
-            results: field_results,
-            base_decision: base_decision_value
-          }
+      def analyze_field_variations(base_scenario, variations, base_decision_value, analysis_agent)
+        variations.each_with_object({}) do |(field, values), results|
+          field_results = test_field_values(base_scenario, field, values, base_decision_value, analysis_agent)
+          results[field] = build_field_sensitivity(field_results, values.size, base_decision_value)
         end
+      end
 
+      def test_field_values(base_scenario, field, values, base_decision_value, analysis_agent)
+        values.map do |value|
+          modified_scenario = base_scenario.dup
+          set_nested_value(modified_scenario, field, value)
+          decision = analysis_agent.decide(context: Context.new(modified_scenario))
+          build_field_result(value, decision, base_decision_value)
+        end
+      end
+
+      def build_field_result(value, decision, base_decision_value)
+        {
+          value: value,
+          decision: decision.decision,
+          confidence: decision.confidence,
+          changed: decision.decision != base_decision_value
+        }
+      end
+
+      def build_field_sensitivity(field_results, values_size, base_decision_value)
+        changed_count = field_results.count { |r| r[:changed] }
+        {
+          impact: changed_count.to_f / values_size,
+          results: field_results,
+          base_decision: base_decision_value
+        }
+      end
+
+      def build_sensitivity_result(base_scenario, base_decision_value, base_confidence, sensitivity_results)
         {
           base_scenario: base_scenario,
           base_decision: base_decision_value,
-          base_confidence: base_decision.confidence,
+          base_confidence: base_confidence,
           field_sensitivity: sensitivity_results,
           most_sensitive_fields: sensitivity_results.sort_by { |_k, v| -v[:impact] }.to_h.keys
         }
@@ -116,9 +135,17 @@ module DecisionAgent
         if param_keys.size == 1
           visualize_1d_boundary(base_scenario, param_keys.first, parameters[param_keys.first], analysis_agent, options)
         else
-          visualize_2d_boundary(base_scenario, param_keys[0], param_keys[1],
-                                parameters[param_keys[0]], parameters[param_keys[1]],
-                                analysis_agent, resolution, options)
+          config = {
+            base_scenario: base_scenario,
+            param1_name: param_keys[0],
+            param2_name: param_keys[1],
+            param1_config: parameters[param_keys[0]],
+            param2_config: parameters[param_keys[1]],
+            analysis_agent: analysis_agent,
+            resolution: resolution,
+            output_options: options
+          }
+          visualize_2d_boundary(config)
         end
       end
 
@@ -385,14 +412,55 @@ module DecisionAgent
       end
 
       # Generate 2D decision boundary visualization
-      def visualize_2d_boundary(base_scenario, param1_name, param2_name,
-                                param1_config, param2_config, analysis_agent, resolution, options)
-        min1, max1, min2, max2 = extract_2d_params(param1_config, param2_config)
-        grid = generate_2d_grid(base_scenario, param1_name, param2_name, min1, max1, min2, max2, resolution, analysis_agent)
-        boundaries = identify_2d_boundaries(grid, resolution)
-        result = build_2d_result(param1_name, param2_name, min1, max1, min2, max2, resolution, grid, boundaries)
+      def visualize_2d_boundary(config)
+        params = extract_2d_params(config[:param1_config], config[:param2_config])
+        grid_config = GridConfig.build(
+          base_scenario: config[:base_scenario],
+          param1_name: config[:param1_name],
+          param2_name: config[:param2_name],
+          params: params,
+          resolution: config[:resolution],
+          analysis_agent: config[:analysis_agent]
+        )
+        grid = generate_2d_grid(grid_config)
+        boundaries = identify_2d_boundaries(grid, config[:resolution])
+        result = build_2d_result(grid_config, grid, boundaries)
 
-        format_visualization_output(result, options)
+        format_visualization_output(result, config[:output_options])
+      end
+
+      # Configuration object for 2D grid generation
+      class GridConfig
+        attr_reader :base_scenario, :param1_name, :param2_name, :min1, :max1, :min2, :max2, :resolution, :analysis_agent
+
+        def self.build(base_scenario:, param1_name:, param2_name:, params:, resolution:, analysis_agent:)
+          config_hash = {
+            base_scenario: base_scenario,
+            param1_name: param1_name,
+            param2_name: param2_name,
+            min1: params[:min1],
+            max1: params[:max1],
+            min2: params[:min2],
+            max2: params[:max2],
+            resolution: resolution,
+            analysis_agent: analysis_agent
+          }
+          new(config_hash)
+        end
+
+        private
+
+        def initialize(config)
+          @base_scenario = config[:base_scenario]
+          @param1_name = config[:param1_name]
+          @param2_name = config[:param2_name]
+          @min1 = config[:min1]
+          @max1 = config[:max1]
+          @min2 = config[:min2]
+          @max2 = config[:max2]
+          @resolution = config[:resolution]
+          @analysis_agent = config[:analysis_agent]
+        end
       end
 
       def extract_2d_params(param1_config, param2_config)
@@ -403,49 +471,49 @@ module DecisionAgent
 
         raise ArgumentError, "Parameter configs must include :min and :max" unless min1 && max1 && min2 && max2
 
-        [min1, max1, min2, max2]
+        { min1: min1, max1: max1, min2: min2, max2: max2 }
       end
 
-      def generate_2d_grid(base_scenario, param1_name, param2_name, min1, max1, min2, max2, resolution, analysis_agent)
-        step1 = (max1 - min1).to_f / resolution
-        step2 = (max2 - min2).to_f / resolution
+      def generate_2d_grid(grid_config)
+        step1 = (grid_config.max1 - grid_config.min1).to_f / grid_config.resolution
+        step2 = (grid_config.max2 - grid_config.min2).to_f / grid_config.resolution
 
-        (0..resolution).each_with_object([]) do |i, grid|
-          value1 = min1 + (step1 * i)
-          row = generate_2d_row(base_scenario, param1_name, param2_name, value1, min2, step2, resolution, analysis_agent)
+        (0..grid_config.resolution).each_with_object([]) do |i, grid|
+          value1 = grid_config.min1 + (step1 * i)
+          row = generate_2d_row(grid_config, value1, min2: grid_config.min2, step2: step2)
           grid << row
         end
       end
 
-      def generate_2d_row(base_scenario, param1_name, param2_name, value1, min2, step2, resolution, analysis_agent)
-        (0..resolution).each_with_object([]) do |j, row|
+      def generate_2d_row(grid_config, value1, min2:, step2:)
+        (0..grid_config.resolution).each_with_object([]) do |j, row|
           value2 = min2 + (step2 * j)
-          point = evaluate_2d_point(base_scenario, param1_name, param2_name, value1, value2, analysis_agent)
+          point = evaluate_2d_point(grid_config, value1, value2)
           row << point.merge(param1: value1, param2: value2)
         end
       end
 
-      def evaluate_2d_point(base_scenario, param1_name, param2_name, value1, value2, analysis_agent)
-        modified_scenario = base_scenario.dup
-        set_nested_value(modified_scenario, param1_name, value1)
-        set_nested_value(modified_scenario, param2_name, value2)
+      def evaluate_2d_point(grid_config, value1, value2)
+        modified_scenario = grid_config.base_scenario.dup
+        set_nested_value(modified_scenario, grid_config.param1_name, value1)
+        set_nested_value(modified_scenario, grid_config.param2_name, value2)
 
-        decision = analysis_agent.decide(context: Context.new(modified_scenario))
+        decision = grid_config.analysis_agent.decide(context: Context.new(modified_scenario))
         { decision: decision.decision, confidence: decision.confidence }
       rescue DecisionAgent::NoEvaluationsError
         { decision: nil, confidence: 0.0 }
       end
 
-      def build_2d_result(param1_name, param2_name, min1, max1, min2, max2, resolution, grid, boundaries)
+      def build_2d_result(grid_config, grid, boundaries)
         decision_counts = grid.flatten.group_by { |p| p[:decision] }.transform_values(&:count)
 
         {
           type: "2d_boundary",
-          parameter1: param1_name,
-          parameter2: param2_name,
-          range1: { min: min1, max: max1 },
-          range2: { min: min2, max: max2 },
-          resolution: resolution,
+          parameter1: grid_config.param1_name,
+          parameter2: grid_config.param2_name,
+          range1: { min: grid_config.min1, max: grid_config.max1 },
+          range2: { min: grid_config.min2, max: grid_config.max2 },
+          resolution: grid_config.resolution,
           grid: grid,
           boundaries: boundaries,
           decision_distribution: decision_counts
@@ -763,41 +831,50 @@ module DecisionAgent
       end
 
       def setup_2d_chart(data)
+        dimensions = calculate_chart_dimensions
+        decision_colors = build_decision_colors(data)
+        scales = calculate_2d_scales(data, dimensions)
+
+        dimensions.merge(decision_colors).merge(scales)
+      end
+
+      def calculate_chart_dimensions
         width = 600
         height = 600
         margin = { top: 40, right: 40, bottom: 60, left: 60 }
         chart_width = width - margin[:left] - margin[:right]
         chart_height = height - margin[:top] - margin[:bottom]
 
-        decisions = data[:grid].flatten.map { |p| p[:decision] }.uniq
-        colors = ["#58a6ff", "#3fb950", "#d29922", "#da3633", "#bc8cff", "#ff79c6", "#bd93f9"]
-        decision_colors = decisions.each_with_index.to_h { |d, i| [d, colors[i % colors.size]] }
-
-        min1 = data[:range1][:min]
-        max1 = data[:range1][:max]
-        min2 = data[:range2][:min]
-        max2 = data[:range2][:max]
-
-        x_scale = chart_width.to_f / (max1 - min1)
-        y_scale = chart_height.to_f / (max2 - min2)
-        cell_width = chart_width.to_f / data[:resolution]
-        cell_height = chart_height.to_f / data[:resolution]
-
         {
           width: width,
           height: height,
           margin: margin,
           chart_width: chart_width,
-          chart_height: chart_height,
-          decision_colors: decision_colors,
+          chart_height: chart_height
+        }
+      end
+
+      def build_decision_colors(data)
+        decisions = data[:grid].flatten.map { |p| p[:decision] }.uniq
+        colors = ["#58a6ff", "#3fb950", "#d29922", "#da3633", "#bc8cff", "#ff79c6", "#bd93f9"]
+        { decision_colors: decisions.each_with_index.to_h { |d, i| [d, colors[i % colors.size]] } }
+      end
+
+      def calculate_2d_scales(data, dimensions)
+        min1 = data[:range1][:min]
+        max1 = data[:range1][:max]
+        min2 = data[:range2][:min]
+        max2 = data[:range2][:max]
+
+        {
           min1: min1,
           max1: max1,
           min2: min2,
           max2: max2,
-          x_scale: x_scale,
-          y_scale: y_scale,
-          cell_width: cell_width,
-          cell_height: cell_height
+          x_scale: dimensions[:chart_width].to_f / (max1 - min1),
+          y_scale: dimensions[:chart_height].to_f / (max2 - min2),
+          cell_width: dimensions[:chart_width].to_f / data[:resolution],
+          cell_height: dimensions[:chart_height].to_f / data[:resolution]
         }
       end
 
@@ -817,18 +894,33 @@ module DecisionAgent
       def draw_2d_boundaries(data, config)
         sampled_boundaries = data[:boundaries].sample([data[:boundaries].size, 500].min)
         sampled_boundaries.each_with_object("") do |boundary, svg|
-          if boundary[:type] == "vertical"
-            x = config[:margin][:left] + (boundary[:col] * config[:cell_width]) + config[:cell_width]
-            y1 = config[:margin][:top] + (boundary[:row] * config[:cell_height])
-            y2 = y1 + config[:cell_height]
-            svg << "<line x1='#{x}' y1='#{y1}' x2='#{x}' y2='#{y2}' stroke='#000' stroke-width='2'/>"
-          elsif boundary[:type] == "horizontal"
-            x1 = config[:margin][:left] + (boundary[:col] * config[:cell_width])
-            x2 = x1 + config[:cell_width]
-            y = config[:margin][:top] + (boundary[:row] * config[:cell_height]) + config[:cell_height]
-            svg << "<line x1='#{x1}' y1='#{y}' x2='#{x2}' y2='#{y}' stroke='#000' stroke-width='2'/>"
-          end
+          svg << draw_boundary_line(boundary, config)
         end
+      end
+
+      def draw_boundary_line(boundary, config)
+        case boundary[:type]
+        when "vertical"
+          draw_vertical_boundary(boundary, config)
+        when "horizontal"
+          draw_horizontal_boundary(boundary, config)
+        else
+          ""
+        end
+      end
+
+      def draw_vertical_boundary(boundary, config)
+        x = config[:margin][:left] + (boundary[:col] * config[:cell_width]) + config[:cell_width]
+        y1 = config[:margin][:top] + (boundary[:row] * config[:cell_height])
+        y2 = y1 + config[:cell_height]
+        "<line x1='#{x}' y1='#{y1}' x2='#{x}' y2='#{y2}' stroke='#000' stroke-width='2'/>"
+      end
+
+      def draw_horizontal_boundary(boundary, config)
+        x1 = config[:margin][:left] + (boundary[:col] * config[:cell_width])
+        x2 = x1 + config[:cell_width]
+        y = config[:margin][:top] + (boundary[:row] * config[:cell_height]) + config[:cell_height]
+        "<line x1='#{x1}' y1='#{y}' x2='#{x2}' y2='#{y}' stroke='#000' stroke-width='2'/>"
       end
 
       def draw_2d_axes(data, config)

@@ -54,37 +54,58 @@ module DecisionAgent
         analysis_agent = build_agent_from_version(rule_version) if rule_version
         analysis_agent ||= @agent
 
+        results = execute_scenarios_with_progress(
+          scenarios, analysis_agent, rule_version, options
+        )
+
+        build_batch_report(results)
+      end
+
+      def execute_scenarios_with_progress(scenarios, analysis_agent, rule_version, options)
         results = []
         mutex = Mutex.new
-        completed = 0
-        total = scenarios.size
+        progress_tracker = ProgressTracker.new(scenarios.size, options[:progress_callback])
 
         if options[:parallel] && scenarios.size > 1
           execute_parallel(scenarios, analysis_agent, options, mutex) do |result|
             mutex.synchronize do
               results << result
-              completed += 1
-              options[:progress_callback]&.call(
-                completed: completed,
-                total: total,
-                percentage: (completed.to_f / total * 100).round(2)
-              )
+              progress_tracker.increment
             end
           end
         else
-          scenarios.each_with_index do |scenario, index|
-            result = execute(scenario: scenario, rule_version: rule_version)
-            results << result
-            completed = index + 1
-            options[:progress_callback]&.call(
-              completed: completed,
-              total: total,
-              percentage: (completed.to_f / total * 100).round(2)
-            )
-          end
+          execute_sequential(scenarios, rule_version, results, progress_tracker)
         end
 
-        build_batch_report(results)
+        results
+      end
+
+      def execute_sequential(scenarios, rule_version, results, progress_tracker)
+        scenarios.each_with_index do |scenario, _index|
+          result = execute(scenario: scenario, rule_version: rule_version)
+          results << result
+          progress_tracker.increment
+        end
+      end
+
+      # Helper class for tracking progress
+      class ProgressTracker
+        def initialize(total, callback)
+          @total = total
+          @callback = callback
+          @completed = 0
+        end
+
+        def increment
+          @completed += 1
+          return unless @callback
+
+          @callback.call(
+            completed: @completed,
+            total: @total,
+            percentage: (@completed.to_f / @total * 100).round(2)
+          )
+        end
       end
 
       # Compare scenarios across different rule versions

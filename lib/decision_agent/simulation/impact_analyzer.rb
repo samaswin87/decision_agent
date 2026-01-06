@@ -234,26 +234,21 @@ module DecisionAgent
       end
 
       def build_impact_report(results, options)
+        report = build_base_report(results)
+        report[:confidence_impact] = build_confidence_impact(results)
+        report[:rule_execution_frequency] = build_rule_frequency(results)
+        report[:performance_impact] = calculate_performance_impact(results)
+        add_risk_analysis(report, results, options)
+        report
+      end
+
+      def build_base_report(results)
         total = results.size
         decision_changes = results.count { |r| r[:decision_changed] }
-        confidence_deltas = results.map { |r| r[:confidence_delta] }.compact
-
-        # Decision distribution changes
         baseline_distribution = results.group_by { |r| r[:baseline_decision] }.transform_values(&:count)
         proposed_distribution = results.group_by { |r| r[:proposed_decision] }.transform_values(&:count)
 
-        # Confidence statistics
-        avg_confidence_delta = confidence_deltas.any? ? confidence_deltas.sum / confidence_deltas.size : 0
-        max_confidence_shift = confidence_deltas.map(&:abs).max || 0
-
-        # Rule execution frequency (approximate from decision distribution)
-        baseline_frequency = calculate_rule_frequency(results, :baseline_decision)
-        proposed_frequency = calculate_rule_frequency(results, :proposed_decision)
-
-        # Performance impact estimation
-        performance_impact = calculate_performance_impact(results)
-
-        report = {
+        {
           total_contexts: total,
           decision_changes: decision_changes,
           change_rate: total.positive? ? (decision_changes.to_f / total) : 0,
@@ -261,26 +256,35 @@ module DecisionAgent
             baseline: baseline_distribution,
             proposed: proposed_distribution
           },
-          confidence_impact: {
-            average_delta: avg_confidence_delta,
-            max_shift: max_confidence_shift,
-            positive_shifts: confidence_deltas.count(&:positive?),
-            negative_shifts: confidence_deltas.count(&:negative?)
-          },
-          rule_execution_frequency: {
-            baseline: baseline_frequency,
-            proposed: proposed_frequency
-          },
-          performance_impact: performance_impact,
           results: results
         }
+      end
 
-        if options[:calculate_risk]
-          report[:risk_score] = calculate_risk_score(results)
-          report[:risk_level] = categorize_risk(report[:risk_score])
-        end
+      def build_confidence_impact(results)
+        confidence_deltas = results.map { |r| r[:confidence_delta] }.compact
+        avg_confidence_delta = confidence_deltas.any? ? confidence_deltas.sum / confidence_deltas.size : 0
+        max_confidence_shift = confidence_deltas.map(&:abs).max || 0
 
-        report
+        {
+          average_delta: avg_confidence_delta,
+          max_shift: max_confidence_shift,
+          positive_shifts: confidence_deltas.count(&:positive?),
+          negative_shifts: confidence_deltas.count(&:negative?)
+        }
+      end
+
+      def build_rule_frequency(results)
+        {
+          baseline: calculate_rule_frequency(results, :baseline_decision),
+          proposed: calculate_rule_frequency(results, :proposed_decision)
+        }
+      end
+
+      def add_risk_analysis(report, results, options)
+        return unless options[:calculate_risk]
+
+        report[:risk_score] = calculate_risk_score(results)
+        report[:risk_level] = categorize_risk(report[:risk_score])
       end
 
       def calculate_rule_frequency(results, decision_key)
@@ -395,36 +399,48 @@ module DecisionAgent
 
       def build_performance_impact_hash(latency_stats, throughput_stats, complexity_stats, performance_deltas)
         {
-          latency: {
-            baseline: {
-              average_ms: latency_stats[:baseline_avg].round(4),
-              min_ms: latency_stats[:baseline_min].round(4),
-              max_ms: latency_stats[:baseline_max].round(4)
-            },
-            proposed: {
-              average_ms: latency_stats[:proposed_avg].round(4),
-              min_ms: latency_stats[:proposed_min].round(4),
-              max_ms: latency_stats[:proposed_max].round(4)
-            },
-            delta_ms: performance_deltas[:avg_delta_ms].round(4),
-            delta_percent: performance_deltas[:avg_delta_percent].round(2)
-          },
-          throughput: {
-            baseline_decisions_per_second: throughput_stats[:baseline].round(2),
-            proposed_decisions_per_second: throughput_stats[:proposed].round(2),
-            delta_percent: performance_deltas[:throughput_delta_percent].round(2)
-          },
-          rule_complexity: {
-            baseline_avg_evaluations: complexity_stats[:baseline_avg].round(2),
-            proposed_avg_evaluations: complexity_stats[:proposed_avg].round(2),
-            evaluations_delta: complexity_stats[:delta].round(2)
-          },
+          latency: build_latency_impact(latency_stats, performance_deltas),
+          throughput: build_throughput_impact(throughput_stats, performance_deltas),
+          rule_complexity: build_complexity_impact(complexity_stats),
           impact_level: categorize_performance_impact(performance_deltas[:avg_delta_percent]),
           summary: build_performance_summary(
             performance_deltas[:avg_delta_percent],
             performance_deltas[:throughput_delta_percent],
             complexity_stats[:delta]
           )
+        }
+      end
+
+      def build_latency_impact(latency_stats, performance_deltas)
+        {
+          baseline: {
+            average_ms: latency_stats[:baseline_avg].round(4),
+            min_ms: latency_stats[:baseline_min].round(4),
+            max_ms: latency_stats[:baseline_max].round(4)
+          },
+          proposed: {
+            average_ms: latency_stats[:proposed_avg].round(4),
+            min_ms: latency_stats[:proposed_min].round(4),
+            max_ms: latency_stats[:proposed_max].round(4)
+          },
+          delta_ms: performance_deltas[:avg_delta_ms].round(4),
+          delta_percent: performance_deltas[:avg_delta_percent].round(2)
+        }
+      end
+
+      def build_throughput_impact(throughput_stats, performance_deltas)
+        {
+          baseline_decisions_per_second: throughput_stats[:baseline].round(2),
+          proposed_decisions_per_second: throughput_stats[:proposed].round(2),
+          delta_percent: performance_deltas[:throughput_delta_percent].round(2)
+        }
+      end
+
+      def build_complexity_impact(complexity_stats)
+        {
+          baseline_avg_evaluations: complexity_stats[:baseline_avg].round(2),
+          proposed_avg_evaluations: complexity_stats[:proposed_avg].round(2),
+          evaluations_delta: complexity_stats[:delta].round(2)
         }
       end
 

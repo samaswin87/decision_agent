@@ -109,51 +109,78 @@ module DecisionAgent
 
         srand(options[:seed]) if options[:seed]
 
-        sensitivity_results = {}
-
-        sensitivity_params.each do |field, param_variations|
-          field_results = {}
-
-          param_variations.each do |param_name, param_values|
-            param_results = []
-
-            param_values.each do |param_value|
-              # Create modified distribution
-              modified_distributions = base_distributions.dup
-              modified_distributions[field] = modified_distributions[field].dup
-              modified_distributions[field][param_name] = param_value
-
-              # Run simulation with modified distribution
-              result = simulate(
-                distributions: modified_distributions,
-                iterations: iterations,
-                base_context: base_context,
-                options: options.merge(parallel: false)
-              )
-
-              param_results << {
-                param_value: param_value,
-                decision_probabilities: result[:decision_probabilities],
-                average_confidence: result[:average_confidence],
-                confidence_intervals: result[:confidence_intervals]
-              }
-            end
-
-            field_results[param_name] = {
-              parameter: param_name,
-              values_tested: param_values,
-              results: param_results,
-              impact_analysis: analyze_parameter_impact(param_results)
-            }
-          end
-
-          sensitivity_results[field] = field_results
-        end
+        sensitivity_results = analyze_sensitivity_params(
+          base_distributions, sensitivity_params, iterations, base_context, options
+        )
 
         {
           sensitivity_results: sensitivity_results,
           base_distributions: base_distributions,
           iterations_per_test: iterations
+        }
+      end
+
+      def analyze_sensitivity_params(base_distributions, sensitivity_params, iterations, base_context, options)
+        sensitivity_params.each_with_object({}) do |(field, param_variations), results|
+          results[field] = analyze_field_sensitivity(
+            base_distributions, field, param_variations, iterations, base_context, options
+          )
+        end
+      end
+
+      def analyze_field_sensitivity(base_distributions, field, param_variations, iterations, base_context, options)
+        param_variations.each_with_object({}) do |(param_name, param_values), field_results|
+          config = {
+            base_distributions: base_distributions,
+            field: field,
+            param_name: param_name,
+            param_values: param_values,
+            iterations: iterations,
+            base_context: base_context,
+            options: options
+          }
+          param_results = run_parameter_variations(config)
+          field_results[param_name] = build_parameter_result(param_name, param_values, param_results)
+        end
+      end
+
+      def run_parameter_variations(config)
+        config[:param_values].map do |param_value|
+          modified_distributions = create_modified_distribution(
+            config[:base_distributions], config[:field], config[:param_name], param_value
+          )
+          result = simulate(
+            distributions: modified_distributions,
+            iterations: config[:iterations],
+            base_context: config[:base_context],
+            options: config[:options].merge(parallel: false)
+          )
+          build_param_result(param_value, result)
+        end
+      end
+
+      def create_modified_distribution(base_distributions, field, param_name, param_value)
+        modified = base_distributions.dup
+        modified[field] = modified[field].dup
+        modified[field][param_name] = param_value
+        modified
+      end
+
+      def build_param_result(param_value, result)
+        {
+          param_value: param_value,
+          decision_probabilities: result[:decision_probabilities],
+          average_confidence: result[:average_confidence],
+          confidence_intervals: result[:confidence_intervals]
+        }
+      end
+
+      def build_parameter_result(param_name, param_values, param_results)
+        {
+          parameter: param_name,
+          values_tested: param_values,
+          results: param_results,
+          impact_analysis: analyze_parameter_impact(param_results)
         }
       end
 
@@ -316,47 +343,68 @@ module DecisionAgent
         thread_count = [options[:thread_count], iterations].min
         iterations_per_thread = (iterations.to_f / thread_count).ceil
 
-        threads = Array.new(thread_count) do
+        threads = create_iteration_threads(
+          thread_count, iterations_per_thread, distributions, base_context, agent
+        )
+        all_results = collect_thread_results(threads)
+        limit_results_to_count(all_results, iterations)
+      end
+
+      def create_iteration_threads(thread_count, iterations_per_thread, distributions, base_context, agent)
+        Array.new(thread_count) do
           Thread.new do
-            thread_results = []
-            thread_attempted = 0
-            iterations_per_thread.times do
-              thread_attempted += 1
-              begin
-                context = sample_context(distributions, base_context)
-                decision = agent.decide(context: Context.new(context))
-                thread_results << {
-                  context: context,
-                  decision: decision.decision,
-                  confidence: decision.confidence,
-                  explanations: decision.explanations
-                }
-              rescue StandardError
-                # Log error but continue - some iterations may fail
-                # In production, you might want to handle this differently
-                next
-              end
-            end
-            # Store attempted count in thread results
-            thread_results.instance_variable_set(:@attempted_iterations, thread_attempted) if thread_results.respond_to?(:instance_variable_set)
-            thread_results
+            run_thread_iterations(iterations_per_thread, distributions, base_context, agent)
           end
         end
+      end
 
-        # Collect all results from threads
+      def run_thread_iterations(iterations_per_thread, distributions, base_context, agent)
+        thread_results = []
+        thread_attempted = 0
+        iterations_per_thread.times do
+          thread_attempted += 1
+          result = attempt_iteration(distributions, base_context, agent)
+          thread_results << result if result
+        end
+        store_attempted_count(thread_results, thread_attempted)
+        thread_results
+      end
+
+      def attempt_iteration(distributions, base_context, agent)
+        context = sample_context(distributions, base_context)
+        decision = agent.decide(context: Context.new(context))
+        {
+          context: context,
+          decision: decision.decision,
+          confidence: decision.confidence,
+          explanations: decision.explanations
+        }
+      rescue StandardError
+        nil
+      end
+
+      def store_attempted_count(results, attempted)
+        return unless results.respond_to?(:instance_variable_set)
+
+        results.instance_variable_set(:@attempted_iterations, attempted)
+      end
+
+      def collect_thread_results(threads)
         all_results = threads.map(&:value).flatten.compact
+        total_attempted = calculate_total_attempted(threads)
+        store_attempted_count(all_results, total_attempted)
+        all_results
+      end
 
-        # Calculate total attempted iterations
-        total_attempted = threads.map do |t|
+      def calculate_total_attempted(threads)
+        threads.map do |t|
           results = t.value
           results.instance_variable_get(:@attempted_iterations) if results.respond_to?(:instance_variable_get)
         end.compact.sum
+      end
 
-        # Store attempted count
-        all_results.instance_variable_set(:@attempted_iterations, total_attempted) if all_results.respond_to?(:instance_variable_set)
-
-        # Limit to exact iteration count (in case of rounding)
-        all_results.first(iterations)
+      def limit_results_to_count(results, iterations)
+        results.first(iterations)
       end
 
       def sample_context(distributions, base_context)

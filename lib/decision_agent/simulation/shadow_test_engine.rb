@@ -91,37 +91,56 @@ module DecisionAgent
         }.merge(options)
 
         shadow_agent = build_shadow_agent(shadow_version)
+        results = execute_contexts_with_progress(contexts, shadow_version, shadow_agent, options)
+
+        build_batch_report(results)
+      end
+
+      def execute_contexts_with_progress(contexts, shadow_version, shadow_agent, options)
         results = []
         mutex = Mutex.new
-        completed = 0
-        total = contexts.size
+        progress_tracker = ProgressTracker.new(contexts.size, options[:progress_callback])
 
         if options[:parallel] && contexts.size > 1
           execute_parallel(contexts, shadow_agent, options, mutex) do |result|
             mutex.synchronize do
               results << result
-              completed += 1
-              options[:progress_callback]&.call(
-                completed: completed,
-                total: total,
-                percentage: (completed.to_f / total * 100).round(2)
-              )
+              progress_tracker.increment
             end
           end
         else
-          contexts.each_with_index do |context, index|
-            result = test(context: context, shadow_version: shadow_version, options: options)
-            results << result
-            completed = index + 1
-            options[:progress_callback]&.call(
-              completed: completed,
-              total: total,
-              percentage: (completed.to_f / total * 100).round(2)
-            )
-          end
+          execute_sequential_contexts(contexts, shadow_version, options, results, progress_tracker)
         end
 
-        build_batch_report(results)
+        results
+      end
+
+      def execute_sequential_contexts(contexts, shadow_version, options, results, progress_tracker)
+        contexts.each_with_index do |context, _index|
+          result = test(context: context, shadow_version: shadow_version, options: options)
+          results << result
+          progress_tracker.increment
+        end
+      end
+
+      # Helper class for tracking progress
+      class ProgressTracker
+        def initialize(total, callback)
+          @total = total
+          @callback = callback
+          @completed = 0
+        end
+
+        def increment
+          @completed += 1
+          return unless @callback
+
+          @callback.call(
+            completed: @completed,
+            total: @total,
+            percentage: (@completed.to_f / @total * 100).round(2)
+          )
+        end
       end
 
       # Get shadow test summary statistics
