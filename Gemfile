@@ -13,4 +13,5 @@ group :development, :test do
   gem "securerandom", "< 0.4" # Pin to version compatible with Ruby 3.0+
   gem "simplecov", "~> 0.22", require: false
   gem "sqlite3", "~> 1.6"
+  gem "webmock", "~> 3.18" # For HTTP request mocking in tests
 end

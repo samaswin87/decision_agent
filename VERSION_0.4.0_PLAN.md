@@ -138,9 +138,13 @@ end
 - ✅ `lib/decision_agent/data_enrichment/circuit_breaker.rb`
 - ✅ `lib/decision_agent/data_enrichment/errors.rb`
 - ✅ `lib/decision_agent/dsl/condition_evaluator.rb` (extended with fetch_from_api operator)
+- ✅ `lib/decision_agent/dsl/schema_validator.rb` (updated with fetch_from_api operator validation)
 - ✅ `spec/data_enrichment/config_spec.rb`
 - ✅ `spec/data_enrichment/cache/memory_adapter_spec.rb`
 - ✅ `spec/data_enrichment/circuit_breaker_spec.rb`
+- ✅ `spec/data_enrichment/client_spec.rb` (comprehensive client integration tests)
+- ✅ `spec/data_enrichment/fetch_from_api_integration_spec.rb` (operator integration tests)
+- ✅ `examples/data_enrichment_example.rb` (complete working example)
 - ✅ `docs/DATA_ENRICHMENT.md` (comprehensive documentation)
 
 **Implementation Notes:**
@@ -151,6 +155,10 @@ end
 - Authentication support for API key, Basic Auth, and Bearer tokens
 - Comprehensive error handling with graceful degradation
 - Full documentation and test suite included
+- Schema validator updated to recognize `fetch_from_api` operator with proper validation
+- Complete integration tests for client and operator usage
+- Working example file demonstrating all features
+- Added `webmock` gem as development dependency for HTTP mocking in tests
 
 ---
 
@@ -602,8 +610,10 @@ workflow_json = {
 - ✅ Caching layer with MemoryAdapter (Redis adapter as future enhancement)
 - ✅ Circuit breaker and retry logic
 - ✅ DSL integration (`fetch_from_api` operator)
-- ✅ Comprehensive test suite
+- ✅ Comprehensive test suite (config, cache, circuit breaker, client, operator integration)
 - ✅ Full documentation (DATA_ENRICHMENT.md)
+- ✅ Working example file (examples/data_enrichment_example.rb)
+- ✅ Schema validator updated with `fetch_from_api` operator support
 
 **Success Criteria:**
 - ✅ Can fetch data from external APIs in rules
@@ -612,6 +622,9 @@ workflow_json = {
 - ✅ All error cases handled gracefully
 - ✅ Authentication support (API key, Basic, Bearer)
 - ✅ Template parameter expansion for context values
+- ✅ Complete test coverage including integration tests
+- ✅ Example file demonstrating all features
+- ✅ Schema validation for `fetch_from_api` operator
 
 ---
 

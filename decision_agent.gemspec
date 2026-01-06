@@ -40,4 +40,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec", "~> 3.12"
   spec.add_development_dependency "rubocop", "~> 1.60"
+  spec.add_development_dependency "webmock", "~> 3.18" # For HTTP request mocking in tests
 end

@@ -81,4 +81,3 @@ RSpec.describe DecisionAgent::DataEnrichment::Cache::MemoryAdapter do
     end
   end
 end
-

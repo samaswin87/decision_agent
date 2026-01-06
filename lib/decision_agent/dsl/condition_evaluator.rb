@@ -1068,8 +1068,8 @@ module DecisionAgent
       def self.expand_template_params(params, context_hash)
         return {} unless params.is_a?(Hash)
 
-        params.each_with_object({}) do |(key, value), result|
-          result[key] = expand_template_value(value, context_hash)
+        params.transform_values do |value|
+          expand_template_value(value, context_hash)
         end
       end
 

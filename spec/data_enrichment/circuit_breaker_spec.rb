@@ -13,11 +13,9 @@ RSpec.describe DecisionAgent::DataEnrichment::CircuitBreaker do
 
     it "opens circuit after failure threshold is reached" do
       3.times do
-        begin
-          breaker.call { raise StandardError, "error" }
-        rescue StandardError
-          # Expected
-        end
+        breaker.call { raise StandardError, "error" }
+      rescue StandardError
+        # Expected
       end
 
       expect(breaker.open?).to be true
@@ -27,11 +25,9 @@ RSpec.describe DecisionAgent::DataEnrichment::CircuitBreaker do
     it "closes circuit after timeout and successful calls" do
       # Open the circuit
       3.times do
-        begin
-          breaker.call { raise StandardError, "error" }
-        rescue StandardError
-          # Expected
-        end
+        breaker.call { raise StandardError, "error" }
+      rescue StandardError
+        # Expected
       end
 
       expect(breaker.open?).to be true
@@ -65,11 +61,9 @@ RSpec.describe DecisionAgent::DataEnrichment::CircuitBreaker do
     it "resets circuit breaker to closed state" do
       # Open the circuit
       3.times do
-        begin
-          breaker.call { raise StandardError }
-        rescue StandardError
-          # Expected
-        end
+        breaker.call { raise StandardError }
+      rescue StandardError
+        # Expected
       end
 
       breaker.reset
@@ -83,4 +77,3 @@ RSpec.describe DecisionAgent::DataEnrichment::CircuitBreaker do
     end
   end
 end
-

@@ -51,9 +51,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - API reference
     - Troubleshooting guide
   - **Test Suite** - Comprehensive test coverage
-    - Configuration tests
-    - Cache adapter tests
-    - Circuit breaker tests
+    - Configuration tests (`spec/data_enrichment/config_spec.rb`)
+    - Cache adapter tests (`spec/data_enrichment/cache/memory_adapter_spec.rb`)
+    - Circuit breaker tests (`spec/data_enrichment/circuit_breaker_spec.rb`)
+    - Client integration tests (`spec/data_enrichment/client_spec.rb`)
+    - `fetch_from_api` operator integration tests (`spec/data_enrichment/fetch_from_api_integration_spec.rb`)
+  - **Example File** - Complete working example
+    - `examples/data_enrichment_example.rb` - Demonstrates configuration, usage, caching, and error handling
+  - **Schema Validation** - `fetch_from_api` operator validation
+    - Added to `SUPPORTED_OPERATORS` list
+    - Special validation for `fetch_from_api` value structure (endpoint, params, mapping)
 
 ## [0.3.0] - 2026-01-03
 

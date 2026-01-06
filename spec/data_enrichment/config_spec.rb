@@ -95,4 +95,3 @@ RSpec.describe DecisionAgent::DataEnrichment::Config do
     end
   end
 end
-

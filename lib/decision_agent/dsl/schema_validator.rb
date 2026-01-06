@@ -20,6 +20,7 @@ module DecisionAgent
         join length
         contains_all contains_any intersects subset_of
         within_radius in_polygon
+        fetch_from_api
       ].freeze
 
       CONDITION_TYPES = %w[all any field].freeze
@@ -177,10 +178,13 @@ module DecisionAgent
 
         validate_operator(operator, path)
 
-        # Validate value (not required for 'present' and 'blank')
-        if !%w[present blank].include?(operator.to_s) && value.nil?
+        # Validate value (not required for 'present', 'blank', and 'fetch_from_api' has special validation)
+        if !%w[present blank fetch_from_api].include?(operator.to_s) && value.nil?
           @errors << "#{path}: Field condition missing 'value' key for operator '#{operator}'"
         end
+
+        # Special validation for fetch_from_api operator
+        validate_fetch_from_api_value(value, path) if (operator.to_s == "fetch_from_api") && value
 
         # Validate dot-notation in field path
         validate_field_path(field, path) if field
@@ -274,6 +278,24 @@ module DecisionAgent
         return unless reason && !reason.is_a?(String)
 
         @errors << "#{rule_path}.then.reason: Must be a string, got #{reason.class}"
+      end
+
+      def validate_fetch_from_api_value(value, path)
+        unless value.is_a?(Hash)
+          @errors << "#{path}: 'fetch_from_api' operator requires 'value' to be a hash with 'endpoint', 'params', and optional 'mapping'"
+          return
+        end
+
+        endpoint = value["endpoint"] || value[:endpoint]
+        @errors << "#{path}: 'fetch_from_api' operator requires 'endpoint' in value hash" unless endpoint
+
+        params = value["params"] || value[:params]
+        @errors << "#{path}: 'fetch_from_api' operator 'params' must be a hash if provided" unless params.nil? || params.is_a?(Hash)
+
+        mapping = value["mapping"] || value[:mapping]
+        return if mapping.nil? || mapping.is_a?(Hash)
+
+        @errors << "#{path}: 'fetch_from_api' operator 'mapping' must be a hash if provided"
       end
 
       def format_errors

@@ -11,7 +11,7 @@ module DecisionAgent
         include MonitorMixin
 
         def initialize
-          super()
+          super
           @cache = {}
         end
 
@@ -84,4 +84,3 @@ module DecisionAgent
     end
   end
 end
-

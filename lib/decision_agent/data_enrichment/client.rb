@@ -37,6 +37,7 @@ module DecisionAgent
         @cache_adapter = cache_adapter || Cache::MemoryAdapter.new
         @circuit_breakers = {}
         @circuit_breaker_default = circuit_breaker || CircuitBreaker.new
+        @circuit_breaker = @circuit_breaker_default
       end
 
       # Fetch data from configured endpoint
@@ -66,9 +67,7 @@ module DecisionAgent
         end
 
         # Cache response
-        if use_cache && endpoint_config[:cache][:ttl] > 0
-          @cache_adapter.set(cache_key, response_data, endpoint_config[:cache][:ttl])
-        end
+        @cache_adapter.set(cache_key, response_data, endpoint_config[:cache][:ttl]) if use_cache && endpoint_config[:cache][:ttl].positive?
 
         response_data
       rescue CircuitBreaker::CircuitOpenError => e
@@ -86,10 +85,8 @@ module DecisionAgent
         if endpoint_name
           # Clear cache entries for this endpoint (requires cache adapter support)
           # For now, just clear all if endpoint-specific clearing isn't supported
-          @cache_adapter.clear
-        else
-          @cache_adapter.clear
         end
+        @cache_adapter.clear
       end
 
       private
@@ -106,9 +103,7 @@ module DecisionAgent
 
         request = build_request(uri, method, endpoint_config, params)
 
-        start_time = Time.now
         response = http.request(request)
-        duration = (Time.now - start_time) * 1000 # milliseconds
 
         handle_response(response, endpoint_name)
       rescue Net::OpenTimeout, Net::ReadTimeout => e
@@ -219,4 +214,3 @@ module DecisionAgent
     end
   end
 end
-

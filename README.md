@@ -69,6 +69,7 @@ See [Code Examples](docs/CODE_EXAMPLES.md) for more comprehensive examples.
 - **Conflict Resolution** - Weighted average, consensus, threshold, max weight
 - **Rich Context** - Nested data, dot notation, flexible operators
 - **Advanced Operators** - String, numeric, date/time, collection, and geospatial operators
+- **REST API Data Enrichment** - Fetch external data during decision-making with caching and circuit breaker
 
 ### Auditability & Compliance
 - **Complete Audit Trails** - Every decision fully logged
@@ -156,6 +157,57 @@ result = agent.decide(context: { amount: 50000, credit_score: 750 })
 
 See [DMN Guide](docs/DMN_GUIDE.md) for complete documentation and [DMN Examples](examples/dmn/README.md) for working examples.
 
+## REST API Data Enrichment
+
+DecisionAgent supports fetching external data during decision-making without manual context assembly:
+
+```ruby
+require 'decision_agent'
+
+# Configure data enrichment endpoints
+DecisionAgent.configure_data_enrichment do |config|
+  config.add_endpoint(:credit_bureau,
+    url: "https://api.creditbureau.com/v1/score",
+    method: :post,
+    auth: { type: :api_key, header: "X-API-Key" },
+    cache: { ttl: 3600, adapter: :memory }
+  )
+end
+
+# Use in rules with fetch_from_api operator
+rules = {
+  version: "1.0",
+  ruleset: "loan_approval",
+  rules: [{
+    id: "check_credit",
+    if: {
+      field: "credit_score",
+      op: "fetch_from_api",
+      value: {
+        endpoint: "credit_bureau",
+        params: { ssn: "{{customer.ssn}}" },
+        mapping: { score: "credit_score" }
+      }
+    },
+    then: { decision: "approve", weight: 0.8 }
+  }]
+}
+
+evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+result = agent.decide(context: { customer: { ssn: "123-45-6789" } })
+```
+
+**Features:**
+- **HTTP Client** - Support for GET, POST, PUT, DELETE methods
+- **Response Caching** - Configurable TTL per endpoint with memory adapter
+- **Circuit Breaker** - Fail-fast after N failures to prevent cascading failures
+- **Authentication** - API key, Basic Auth, and Bearer token support
+- **Template Parameters** - Use `{{path}}` syntax to reference context values
+- **Error Handling** - Graceful degradation with cached data fallback
+
+See [Data Enrichment Guide](docs/DATA_ENRICHMENT.md) for complete documentation and [Data Enrichment Example](examples/data_enrichment_example.rb) for working examples.
+
 ## Monitoring & Analytics
 
 Real-time monitoring, metrics, and alerting for production environments.
@@ -205,6 +257,7 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 
 ### Core Features
 - [Advanced Operators](docs/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
+- [Data Enrichment](docs/DATA_ENRICHMENT.md) - REST API data enrichment with caching and circuit breaker
 - [DMN Guide](docs/DMN_GUIDE.md) - Complete DMN 1.3 support guide
 - [DMN API Reference](docs/DMN_API.md) - DMN API documentation
 - [FEEL Reference](docs/FEEL_REFERENCE.md) - FEEL expression language reference

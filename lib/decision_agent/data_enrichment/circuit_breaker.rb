@@ -122,9 +122,7 @@ module DecisionAgent
             @success_count = 0
           when CLOSED
             # Open circuit if failure threshold is met
-            if @failure_count >= @failure_threshold
-              @state = OPEN
-            end
+            @state = OPEN if @failure_count >= @failure_threshold
           end
         end
       end
@@ -135,4 +133,3 @@ module DecisionAgent
     end
   end
 end
-

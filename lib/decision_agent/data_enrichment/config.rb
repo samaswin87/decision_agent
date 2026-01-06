@@ -33,7 +33,7 @@ module DecisionAgent
       #     cache: { ttl: 3600, adapter: :redis },
       #     retry_config: { max_attempts: 3, backoff: :exponential }
       #   )
-      def add_endpoint(name, url:, method: :get, auth: nil, cache: nil, retry_config: nil, timeout: nil, headers: {}, rate_limit: nil)
+      def add_endpoint(name, url:, method: :get, auth: nil, cache: nil, retry_config: nil, timeout: nil, headers: {}, rate_limit: nil) # rubocop:disable Metrics/ParameterLists
         @endpoints[name.to_sym] = {
           url: url,
           method: method.to_sym,
@@ -76,4 +76,3 @@ module DecisionAgent
     end
   end
 end
-

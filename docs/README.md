@@ -10,6 +10,7 @@ Welcome to the DecisionAgent documentation.
 - [Examples](../examples/README.md) - Working examples with explanations
 
 ### Core Features
+- [**Data Enrichment**](DATA_ENRICHMENT.md) - REST API data enrichment with caching and circuit breaker
 - [**DMN Guide**](DMN_GUIDE.md) - Complete DMN 1.3 support guide
 - [**DMN API Reference**](DMN_API.md) - DMN API documentation
 - [**FEEL Reference**](FEEL_REFERENCE.md) - FEEL expression language reference
@@ -44,6 +45,7 @@ docs/
 │   └── See ../README.md and ../examples/README.md
 │
 ├── Core Features
+│   ├── DATA_ENRICHMENT.md          - REST API data enrichment guide
 │   ├── DMN_GUIDE.md                - Complete DMN 1.3 support guide
 │   ├── DMN_API.md                 - DMN API documentation
 │   ├── FEEL_REFERENCE.md          - FEEL expression language reference
