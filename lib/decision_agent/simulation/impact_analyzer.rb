@@ -3,6 +3,7 @@ require_relative "errors"
 module DecisionAgent
   module Simulation
     # Analyzer for quantifying rule change impact
+    # rubocop:disable Metrics/ClassLength
     class ImpactAnalyzer
       attr_reader :version_manager
 
@@ -491,6 +492,7 @@ module DecisionAgent
           "#{parts.join('. ')}."
         end
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

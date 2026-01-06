@@ -12,6 +12,7 @@ end
 module DecisionAgent
   module Simulation
     # Engine for replaying historical decisions and backtesting rule changes
+    # rubocop:disable Metrics/ClassLength
     class ReplayEngine
       attr_reader :agent, :version_manager
 
@@ -479,6 +480,7 @@ module DecisionAgent
           errors: results.count { |r| r[:error] }
         }
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

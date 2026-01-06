@@ -25,6 +25,7 @@ module DecisionAgent
     #
     #   puts "Decision probabilities: #{results[:decision_probabilities]}"
     #   puts "Average confidence: #{results[:average_confidence]}"
+    # rubocop:disable Metrics/ClassLength
     class MonteCarloSimulator
       attr_reader :agent, :version_manager
 
@@ -628,6 +629,7 @@ module DecisionAgent
         end
         target[last_key.to_sym] = value
       end
+      # rubocop:enable Metrics/ClassLength
     end
   end
 end

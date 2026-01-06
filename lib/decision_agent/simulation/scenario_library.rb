@@ -41,35 +41,31 @@ module DecisionAgent
           scenarios << { context: edge_scenario, metadata: { type: "edge_case", field: key, value: "nil" } }
         end
 
-        # Generate scenarios with extreme numeric values
+        # Generate scenarios with extreme numeric values and empty strings
         base_context.each do |key, value|
-          next unless value.is_a?(Numeric)
+          if value.is_a?(Numeric)
+            # Zero value
+            zero_scenario = base_context.dup
+            zero_scenario[key] = 0
+            scenarios << { context: zero_scenario, metadata: { type: "edge_case", field: key, value: "zero" } }
 
-          # Zero value
-          zero_scenario = base_context.dup
-          zero_scenario[key] = 0
-          scenarios << { context: zero_scenario, metadata: { type: "edge_case", field: key, value: "zero" } }
+            # Negative value (if positive)
+            if value.positive?
+              neg_scenario = base_context.dup
+              neg_scenario[key] = -value
+              scenarios << { context: neg_scenario, metadata: { type: "edge_case", field: key, value: "negative" } }
+            end
 
-          # Negative value (if positive)
-          if value.positive?
-            neg_scenario = base_context.dup
-            neg_scenario[key] = -value
-            scenarios << { context: neg_scenario, metadata: { type: "edge_case", field: key, value: "negative" } }
+            # Very large value
+            large_scenario = base_context.dup
+            large_scenario[key] = value * 1000
+            scenarios << { context: large_scenario, metadata: { type: "edge_case", field: key, value: "large" } }
+          elsif value.is_a?(String)
+            # Empty string
+            empty_scenario = base_context.dup
+            empty_scenario[key] = ""
+            scenarios << { context: empty_scenario, metadata: { type: "edge_case", field: key, value: "empty_string" } }
           end
-
-          # Very large value
-          large_scenario = base_context.dup
-          large_scenario[key] = value * 1000
-          scenarios << { context: large_scenario, metadata: { type: "edge_case", field: key, value: "large" } }
-        end
-
-        # Generate scenarios with empty strings for string fields
-        base_context.each do |key, value|
-          next unless value.is_a?(String)
-
-          empty_scenario = base_context.dup
-          empty_scenario[key] = ""
-          scenarios << { context: empty_scenario, metadata: { type: "edge_case", field: key, value: "empty_string" } }
         end
 
         scenarios
