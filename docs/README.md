@@ -17,6 +17,7 @@ Welcome to the DecisionAgent documentation.
 - [**DMN Migration Guide**](DMN_MIGRATION_GUIDE.md) - Migrating from JSON to DMN
 - [**DMN Best Practices**](DMN_BEST_PRACTICES.md) - DMN modeling best practices
 - [**Versioning System**](VERSIONING.md) - Rule version control, rollback, and history
+- [**Simulation and What-If Analysis**](SIMULATION.md) - Historical replay, what-if analysis, impact analysis, and shadow testing
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
 - [**Web UI Rails Integration**](WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
@@ -53,6 +54,7 @@ docs/
 │   ├── DMN_MIGRATION_GUIDE.md     - Migrating from JSON to DMN
 │   ├── DMN_BEST_PRACTICES.md      - DMN modeling best practices
 │   ├── VERSIONING.md               - Rule version control and management
+│   ├── SIMULATION.md               - Simulation, what-if analysis, and shadow testing
 │   ├── WEB_UI.md                   - Web interface user guide
 │   ├── WEB_UI_SETUP.md             - Web interface setup
 │   ├── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps

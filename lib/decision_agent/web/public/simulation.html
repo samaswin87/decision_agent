@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DecisionAgent Simulation Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .simulation-dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .header-links {
+            margin-top: 20px;
+        }
+
+        .header-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-dashboard">
+        <header>
+            <h1>🧪 DecisionAgent Simulation Dashboard</h1>
+            <p class="subtitle">Test rule changes, predict impact, and validate decisions before deployment</p>
+            <div class="header-links">
+                <a href="/">🏠 Rule Builder</a>
+                <a href="/testing/batch">📊 Batch Testing</a>
+                <a href="/dmn/editor">📋 DMN Editor</a>
+            </div>
+        </header>
+
+        <div class="feature-grid">
+            <a href="/simulation/replay" class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-title">Historical Replay / Backtesting</div>
+                <div class="feature-description">
+                    Replay historical decisions with different rule versions to see how outcomes would change. 
+                    Compare baseline vs. proposed versions and analyze decision changes.
+                </div>
+            </a>
+
+            <a href="/simulation/whatif" class="feature-card">
+                <div class="feature-icon">❓</div>
+                <div class="feature-title">What-If Analysis</div>
+                <div class="feature-description">
+                    Simulate different scenarios and analyze how decisions change based on input variations. 
+                    Perform sensitivity analysis to identify which inputs matter most.
+                </div>
+            </a>
+
+            <a href="/simulation/impact" class="feature-card">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">Impact Analysis</div>
+                <div class="feature-description">
+                    Quantify the impact of rule changes before deploying to production. 
+                    Get risk scores, decision distribution changes, and confidence shifts.
+                </div>
+            </a>
+
+            <a href="/simulation/shadow" class="feature-card">
+                <div class="feature-icon">👻</div>
+                <div class="feature-title">Shadow Testing</div>
+                <div class="feature-description">
+                    Compare new rules against production without affecting actual outcomes. 
+                    Test on production traffic with zero impact on real decisions.
+                </div>
+            </a>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: var(--panel-bg); border-radius: 10px;">
+            <h2>Quick Start</h2>
+            <p>Choose a simulation type above to get started:</p>
+            <ul style="line-height: 2;">
+                <li><strong>Historical Replay:</strong> Upload historical data (CSV/JSON) and replay with different rule versions</li>
+                <li><strong>What-If Analysis:</strong> Define scenarios and see how decisions change</li>
+                <li><strong>Impact Analysis:</strong> Compare two rule versions to assess change impact</li>
+                <li><strong>Shadow Testing:</strong> Test new rules alongside production without affecting outcomes</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+

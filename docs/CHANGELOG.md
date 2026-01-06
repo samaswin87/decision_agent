@@ -9,6 +9,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Simulation and What-If Analysis** 🧪
+  - **Historical Replay / Backtesting** - ReplayEngine for replaying historical decisions
+    - Support for CSV and JSON file import
+    - Replay with different rule versions
+    - Compare outcomes between baseline and proposed versions
+    - Impact analysis reports (decision changes, confidence shifts)
+    - Parallel execution support for large datasets (10k+ decisions)
+    - Backtesting against historical data to validate rule changes
+  - **What-If Analysis** - WhatIfAnalyzer for scenario simulation
+    - Analyze multiple scenarios with different context values
+    - Sensitivity analysis to identify which inputs affect decisions most
+    - Field impact calculation and most sensitive field identification
+    - Decision distribution analysis
+    - Average confidence calculation
+    - Parallel execution support
+  - **Impact Analysis** - ImpactAnalyzer for quantifying rule change effects
+    - Compare baseline vs proposed rule versions
+    - Decision distribution changes (before/after)
+    - Confidence impact metrics (average delta, max shift, positive/negative shifts)
+    - Rule execution frequency changes
+    - Risk score calculation (0.0 to 1.0) with risk level categorization (low, medium, high, critical)
+    - Parallel execution support
+  - **Shadow Testing** - ShadowTestEngine for production comparison without affecting outcomes
+    - Compare new rules against production without affecting actual decisions
+    - Single context and batch shadow testing
+    - Match rate analysis and decision distribution comparison
+    - Confidence delta tracking
+    - Difference tracking for mismatched decisions
+    - Zero impact on production traffic
+  - **Scenario Engine** - ScenarioEngine for managing and executing test scenarios
+    - Single scenario execution
+    - Batch scenario execution with parallel processing
+    - Version comparison across multiple rule versions
+    - Decision distribution and confidence statistics
+    - Progress tracking callbacks
+  - **Scenario Library** - ScenarioLibrary for pre-defined test scenario templates
+    - Pre-defined templates for common use cases (loan approval, fraud detection, pricing)
+    - Template customization with overrides
+    - Edge case generation (nil values, zero values, negative values, large values, empty strings)
+    - Template listing and retrieval
+  - **Error Handling** - Comprehensive error handling
+    - Custom error classes (SimulationError, ScenarioExecutionError, InvalidHistoricalDataError, VersionComparisonError, InvalidShadowTestError)
+    - Clear error messages with context
+  - **Documentation** - Complete guide in `docs/SIMULATION.md`
+    - Historical replay tutorial
+    - What-if analysis examples
+    - Impact analysis interpretation
+    - Shadow testing guide
+    - Scenario engine usage
+    - Best practices and performance considerations
+  - **Web UI Integration** - Complete web interface for all simulation features
+    - Simulation dashboard at `/simulation` with feature overview
+    - Historical replay UI at `/simulation/replay` with CSV/JSON upload support
+    - What-if analysis UI at `/simulation/whatif` with interactive scenario builder
+    - Impact analysis UI at `/simulation/impact` with risk visualization
+    - Shadow testing UI at `/simulation/shadow` for production comparison
+    - Version selection dropdowns integrated with version manager
+    - Real-time results visualization with metrics and tables
+    - Parallel execution configuration in UI
+    - File upload support for historical data and test contexts
+  - **Test Suite** - Comprehensive test coverage
+    - ReplayEngine tests (`spec/simulation/replay_engine_spec.rb`)
+    - WhatIfAnalyzer tests (`spec/simulation/what_if_analyzer_spec.rb`)
+    - ImpactAnalyzer tests (`spec/simulation/impact_analyzer_spec.rb`)
+    - ShadowTestEngine tests (`spec/simulation/shadow_test_engine_spec.rb`)
+    - ScenarioEngine tests (`spec/simulation/scenario_engine_spec.rb`)
+    - ScenarioLibrary tests (`spec/simulation/scenario_library_spec.rb`)
+  - **Example File** - Complete working example
+    - `examples/simulation_example.rb` - Demonstrates all simulation features with comprehensive examples
+  - **Files Created:**
+    - `lib/decision_agent/simulation/errors.rb` - Error classes
+    - `lib/decision_agent/simulation/replay_engine.rb` - Historical replay engine
+    - `lib/decision_agent/simulation/what_if_analyzer.rb` - What-if analysis engine
+    - `lib/decision_agent/simulation/impact_analyzer.rb` - Impact analysis engine
+    - `lib/decision_agent/simulation/shadow_test_engine.rb` - Shadow testing engine
+    - `lib/decision_agent/simulation/scenario_engine.rb` - Scenario management engine
+    - `lib/decision_agent/simulation/scenario_library.rb` - Scenario template library
+    - `lib/decision_agent/simulation.rb` - Main simulation module
+    - `spec/simulation/` - Comprehensive test suite (6 test files)
+    - `examples/simulation_example.rb` - Complete working examples
+    - `docs/SIMULATION.md` - Comprehensive documentation guide
+    - `lib/decision_agent/web/public/simulation.html` - Simulation dashboard UI
+    - `lib/decision_agent/web/public/simulation_replay.html` - Historical replay UI
+    - `lib/decision_agent/web/public/simulation_whatif.html` - What-if analysis UI
+    - `lib/decision_agent/web/public/simulation_impact.html` - Impact analysis UI
+    - `lib/decision_agent/web/public/simulation_shadow.html` - Shadow testing UI
+    - API endpoints in `lib/decision_agent/web/server.rb` for all simulation features
+
 - **REST API Data Enrichment** 🔌
   - **HTTP Client Integration** - Full HTTP client for external API requests
     - Support for GET, POST, PUT, DELETE methods

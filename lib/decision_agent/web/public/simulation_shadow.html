@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Testing</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .simulation-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step-section {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .context-builder {
+            margin-top: 15px;
+        }
+
+        .context-item {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .context-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .field-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-input label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .header-links {
+            margin-top: 20px;
+        }
+
+        .header-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--hover-bg);
+            font-weight: 600;
+        }
+
+        .match-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .match-yes {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .match-no {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <header>
+            <h1>👻 Shadow Testing</h1>
+            <p class="subtitle">Compare new rules against production without affecting outcomes</p>
+            <div class="header-links">
+                <a href="/simulation">← Back to Simulation Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Step 1: Configure Production Rules -->
+        <div class="step-section">
+            <h2>Production Rules</h2>
+            <p>Configure the production rules (or use active version)</p>
+            
+            <div class="form-group">
+                <label for="productionRulesJson">Production Rules JSON:</label>
+                <textarea id="productionRulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="useActiveVersion" checked> Use active version (if available)
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 2: Configure Shadow Rules -->
+        <div class="step-section">
+            <h2>Shadow Rules</h2>
+            <p>Configure the shadow rules to test (or select a version)</p>
+            
+            <div class="form-group">
+                <label for="shadowRulesJson">Shadow Rules JSON:</label>
+                <textarea id="shadowRulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="shadowVersion">Or select shadow version:</label>
+                <select id="shadowVersion" class="input">
+                    <option value="">-- Select Version --</option>
+                </select>
+            </div>
+
+            <div class="actions">
+                <label for="importShadowRulesFile" class="btn btn-secondary">📁 Import Shadow Rules JSON
+                    <input type="file" id="importShadowRulesFile" accept=".json" style="display: none;">
+                </label>
+            </div>
+        </div>
+
+        <!-- Step 3: Define Contexts -->
+        <div class="step-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Test Contexts</h2>
+                <button class="btn btn-primary" id="addContextBtn">+ Add Context</button>
+            </div>
+            
+            <div id="contextsContainer" class="context-builder">
+                <div class="context-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong>Context 1</strong>
+                        <button class="btn btn-secondary" onclick="removeContext(this)" style="padding: 5px 10px;">Remove</button>
+                    </div>
+                    <div class="context-fields" id="contextFields1">
+                        <div class="field-input">
+                            <label>Field Name</label>
+                            <input type="text" class="input context-field-name" placeholder="e.g., credit_score">
+                        </div>
+                        <div class="field-input">
+                            <label>Value</label>
+                            <input type="text" class="input context-field-value" placeholder="e.g., 650">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addField(this)" style="margin-top: 10px; padding: 5px 10px;">+ Add Field</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Run Shadow Test -->
+        <div class="step-section">
+            <h2>Run Shadow Test</h2>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="parallelExecution" checked> Parallel execution (for batch)
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="threadCount">Thread count:</label>
+                <input type="number" id="threadCount" value="4" min="1" max="16" class="input" style="width: 100px;">
+            </div>
+
+            <button class="btn btn-primary" id="runShadowBtn">▶ Run Shadow Test</button>
+
+            <div id="runStatus" class="hidden"></div>
+        </div>
+
+        <!-- Step 5: Results -->
+        <div class="step-section" id="resultsSection" style="display: none;">
+            <h2>Shadow Test Results</h2>
+
+            <!-- Statistics -->
+            <div id="statisticsSection" class="hidden">
+                <h3>Statistics</h3>
+                <div class="metrics-grid" id="statisticsGrid"></div>
+            </div>
+
+            <!-- Results Table -->
+            <div id="resultsTableSection" class="hidden">
+                <h3>Detailed Results</h3>
+                <div id="resultsTableContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getBasePath() {
+            const baseTag = document.querySelector('base');
+            if (baseTag && baseTag.href) {
+                try {
+                    const baseUrl = new URL(baseTag.href, window.location.href);
+                    let path = baseUrl.pathname;
+                    if (path && !path.endsWith('/')) path += '/';
+                    return path;
+                } catch (e) {
+                    if (baseTag.href.startsWith('/')) {
+                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
+                        if (match && match[2]) {
+                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
+                        }
+                    }
+                }
+            }
+            const pathname = window.location.pathname;
+            if (pathname.includes('/decision_agent')) {
+                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
+                if (match) {
+                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
+                }
+            }
+            return pathname.substring(0, pathname.lastIndexOf('/') + 1) || '/';
+        }
+
+        const basePath = getBasePath();
+        let contextCount = 1;
+
+        // Load versions
+        function loadVersions() {
+            fetch(`${basePath}api/versions`)
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('shadowVersion');
+                    select.innerHTML = '<option value="">-- Select Version --</option>';
+                    if (data.versions) {
+                        data.versions.forEach(v => {
+                            const option = document.createElement('option');
+                            option.value = v.id;
+                            option.textContent = `${v.rule_id} v${v.version_number} (${v.status})`;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading versions:', error));
+        }
+
+        loadVersions();
+
+        // Add context
+        document.getElementById('addContextBtn').addEventListener('click', () => {
+            contextCount++;
+            const container = document.getElementById('contextsContainer');
+            const context = document.createElement('div');
+            context.className = 'context-item';
+            context.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong>Context ${contextCount}</strong>
+                    <button class="btn btn-secondary" onclick="removeContext(this)" style="padding: 5px 10px;">Remove</button>
+                </div>
+                <div class="context-fields" id="contextFields${contextCount}">
+                    <div class="field-input">
+                        <label>Field Name</label>
+                        <input type="text" class="input context-field-name" placeholder="e.g., credit_score">
+                    </div>
+                    <div class="field-input">
+                        <label>Value</label>
+                        <input type="text" class="input context-field-value" placeholder="e.g., 650">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="addField(this)" style="margin-top: 10px; padding: 5px 10px;">+ Add Field</button>
+            `;
+            container.appendChild(context);
+        });
+
+        function removeContext(btn) {
+            btn.closest('.context-item').remove();
+        }
+
+        function addField(btn) {
+            const fieldsContainer = btn.previousElementSibling;
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'field-input';
+            fieldDiv.innerHTML = `
+                <label>Field Name</label>
+                <input type="text" class="input context-field-name" placeholder="e.g., amount">
+                <label style="margin-top: 5px;">Value</label>
+                <input type="text" class="input context-field-value" placeholder="e.g., 100000">
+            `;
+            fieldsContainer.appendChild(fieldDiv);
+        }
+
+        // Import shadow rules
+        document.getElementById('importShadowRulesFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        document.getElementById('shadowRulesJson').value = JSON.stringify(json, null, 2);
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Run shadow test
+        document.getElementById('runShadowBtn').addEventListener('click', () => {
+            // Collect contexts
+            const contexts = [];
+            document.querySelectorAll('.context-item').forEach(item => {
+                const context = {};
+                const fields = item.querySelectorAll('.context-fields');
+                fields.forEach(fieldContainer => {
+                    const names = fieldContainer.querySelectorAll('.context-field-name');
+                    const values = fieldContainer.querySelectorAll('.context-field-value');
+                    names.forEach((name, i) => {
+                        if (name.value && values[i] && values[i].value) {
+                            const value = values[i].value;
+                            context[name.value] = isNaN(value) ? value : parseFloat(value);
+                        }
+                    });
+                });
+                if (Object.keys(context).length > 0) {
+                    contexts.push(context);
+                }
+            });
+
+            if (contexts.length === 0) {
+                alert('Please define at least one context');
+                return;
+            }
+
+            const productionRules = document.getElementById('productionRulesJson').value;
+            const shadowRules = document.getElementById('shadowRulesJson').value;
+            const shadowVersion = document.getElementById('shadowVersion').value;
+            const useActiveVersion = document.getElementById('useActiveVersion').checked;
+
+            if (!shadowRules.trim() && !shadowVersion) {
+                alert('Please provide shadow rules JSON or select a version');
+                return;
+            }
+
+            if (!productionRules.trim() && !useActiveVersion) {
+                alert('Please provide production rules JSON or enable "Use active version"');
+                return;
+            }
+
+            try {
+                const prodRules = productionRules.trim() ? JSON.parse(productionRules) : null;
+                const shadRules = shadowRules.trim() ? JSON.parse(shadowRules) : null;
+                
+                const runStatus = document.getElementById('runStatus');
+                runStatus.className = 'hidden';
+
+                const isBatch = contexts.length > 1;
+                const endpoint = isBatch ? `${basePath}api/simulation/shadow/batch` : `${basePath}api/simulation/shadow`;
+                
+                const requestData = {
+                    contexts: isBatch ? contexts : contexts[0],
+                    options: {
+                        parallel: document.getElementById('parallelExecution').checked,
+                        thread_count: parseInt(document.getElementById('threadCount').value) || 4
+                    }
+                };
+
+                if (prodRules) {
+                    requestData.production_rules = prodRules;
+                }
+                if (shadRules) {
+                    requestData.shadow_rules = shadRules;
+                }
+                if (shadowVersion) {
+                    requestData.shadow_version = shadowVersion;
+                }
+
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        runStatus.className = 'error-message';
+                        runStatus.textContent = `Error: ${data.error}`;
+                        runStatus.classList.remove('hidden');
+                    } else {
+                        runStatus.className = 'success-message';
+                        runStatus.textContent = 'Shadow test completed successfully!';
+                        runStatus.classList.remove('hidden');
+                        displayResults(data, isBatch);
+                    }
+                })
+                .catch(error => {
+                    runStatus.className = 'error-message';
+                    runStatus.textContent = `Error: ${error.message}`;
+                    runStatus.classList.remove('hidden');
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        function displayResults(data, isBatch) {
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            if (isBatch) {
+                const results = data.results;
+                
+                // Statistics
+                if (results.match_rate !== undefined) {
+                    const statsGrid = document.getElementById('statisticsGrid');
+                    statsGrid.innerHTML = `
+                        <div class="metric-card">
+                            <div class="metric-value">${(results.match_rate * 100).toFixed(2)}%</div>
+                            <div class="metric-label">Match Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">${results.matches || 0}</div>
+                            <div class="metric-label">Matches</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value">${results.mismatches || 0}</div>
+                            <div class="metric-label">Mismatches</div>
+                        </div>
+                    `;
+                    document.getElementById('statisticsSection').classList.remove('hidden');
+                }
+
+                // Results table
+                if (results.results) {
+                    const tableContent = document.getElementById('resultsTableContent');
+                    let html = '<table class="results-table"><thead><tr><th>Context</th><th>Production Decision</th><th>Shadow Decision</th><th>Match</th><th>Confidence Delta</th></tr></thead><tbody>';
+                    results.results.forEach(r => {
+                        html += `<tr>
+                            <td>${JSON.stringify(r.context)}</td>
+                            <td>${r.production_decision}</td>
+                            <td>${r.shadow_decision}</td>
+                            <td><span class="match-badge ${r.matches ? 'match-yes' : 'match-no'}">${r.matches ? '✓ Match' : '✗ Mismatch'}</span></td>
+                            <td>${r.confidence_delta ? r.confidence_delta.toFixed(3) : 'N/A'}</td>
+                        </tr>`;
+                    });
+                    html += '</tbody></table>';
+                    tableContent.innerHTML = html;
+                    document.getElementById('resultsTableSection').classList.remove('hidden');
+                }
+            } else {
+                const result = data.result;
+                
+                // Statistics
+                const statsGrid = document.getElementById('statisticsGrid');
+                statsGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value"><span class="match-badge ${result.matches ? 'match-yes' : 'match-no'}">${result.matches ? '✓ Match' : '✗ Mismatch'}</span></div>
+                        <div class="metric-label">Result</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${result.confidence_delta ? result.confidence_delta.toFixed(3) : 'N/A'}</div>
+                        <div class="metric-label">Confidence Delta</div>
+                    </div>
+                `;
+                document.getElementById('statisticsSection').classList.remove('hidden');
+
+                // Results table
+                const tableContent = document.getElementById('resultsTableContent');
+                let html = '<table class="results-table"><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>';
+                html += `<tr><td>Production Decision</td><td>${result.production_decision}</td></tr>`;
+                html += `<tr><td>Shadow Decision</td><td>${result.shadow_decision}</td></tr>`;
+                html += `<tr><td>Production Confidence</td><td>${result.production_confidence ? result.production_confidence.toFixed(3) : 'N/A'}</td></tr>`;
+                html += `<tr><td>Shadow Confidence</td><td>${result.shadow_confidence ? result.shadow_confidence.toFixed(3) : 'N/A'}</td></tr>`;
+                html += `<tr><td>Matches</td><td>${result.matches ? 'Yes' : 'No'}</td></tr>`;
+                html += '</tbody></table>';
+                tableContent.innerHTML = html;
+                document.getElementById('resultsTableSection').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
+

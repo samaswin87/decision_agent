@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What-If Analysis</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .simulation-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step-section {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .scenario-builder {
+            margin-top: 15px;
+        }
+
+        .scenario-item {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .scenario-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .scenario-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .field-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field-input label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .header-links {
+            margin-top: 20px;
+        }
+
+        .header-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--hover-bg);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <header>
+            <h1>❓ What-If Analysis</h1>
+            <p class="subtitle">Simulate different scenarios and analyze how decisions change</p>
+            <div class="header-links">
+                <a href="/simulation">← Back to Simulation Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Step 1: Configure Rules -->
+        <div class="step-section">
+            <h2>Configure Rules</h2>
+            <p>Paste your rules JSON or select a version to use</p>
+            
+            <div class="form-group">
+                <label for="rulesJson">Rules JSON:</label>
+                <textarea id="rulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="ruleVersion">Or select version:</label>
+                <select id="ruleVersion" class="input">
+                    <option value="">-- Select Version --</option>
+                </select>
+            </div>
+
+            <div class="actions">
+                <label for="importRulesFile" class="btn btn-secondary">📁 Import Rules JSON
+                    <input type="file" id="importRulesFile" accept=".json" style="display: none;">
+                </label>
+                <button class="btn btn-secondary" id="validateRulesBtn">✓ Validate Rules</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Define Scenarios -->
+        <div class="step-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>Define Scenarios</h2>
+                <button class="btn btn-primary" id="addScenarioBtn">+ Add Scenario</button>
+            </div>
+            
+            <div id="scenariosContainer" class="scenario-builder">
+                <div class="scenario-item">
+                    <div class="scenario-item-header">
+                        <strong>Scenario 1</strong>
+                        <button class="btn btn-secondary" onclick="removeScenario(this)" style="padding: 5px 10px;">Remove</button>
+                    </div>
+                    <div class="scenario-fields" id="scenarioFields1">
+                        <div class="field-input">
+                            <label>Field Name</label>
+                            <input type="text" class="input scenario-field-name" placeholder="e.g., credit_score">
+                        </div>
+                        <div class="field-input">
+                            <label>Value</label>
+                            <input type="text" class="input scenario-field-value" placeholder="e.g., 650">
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="addField(this)" style="margin-top: 10px; padding: 5px 10px;">+ Add Field</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Run Analysis -->
+        <div class="step-section">
+            <h2>Run What-If Analysis</h2>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="parallelExecution" checked> Parallel execution
+                </label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="sensitivityAnalysis"> Perform sensitivity analysis
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="threadCount">Thread count:</label>
+                <input type="number" id="threadCount" value="4" min="1" max="16" class="input" style="width: 100px;">
+            </div>
+
+            <button class="btn btn-primary" id="runAnalysisBtn">▶ Run Analysis</button>
+
+            <div id="runStatus" class="hidden"></div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="step-section" id="resultsSection" style="display: none;">
+            <h2>Analysis Results</h2>
+
+            <!-- Statistics -->
+            <div id="statisticsSection" class="hidden">
+                <h3>Statistics</h3>
+                <div class="metrics-grid" id="statisticsGrid"></div>
+            </div>
+
+            <!-- Decision Distribution -->
+            <div id="distributionSection" class="hidden">
+                <h3>Decision Distribution</h3>
+                <div id="distributionContent"></div>
+            </div>
+
+            <!-- Scenario Results -->
+            <div id="scenarioResultsSection" class="hidden">
+                <h3>Scenario Results</h3>
+                <div id="scenarioResultsContent"></div>
+            </div>
+
+            <!-- Sensitivity Analysis -->
+            <div id="sensitivitySection" class="hidden">
+                <h3>Sensitivity Analysis</h3>
+                <div id="sensitivityContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getBasePath() {
+            const baseTag = document.querySelector('base');
+            if (baseTag && baseTag.href) {
+                try {
+                    const baseUrl = new URL(baseTag.href, window.location.href);
+                    let path = baseUrl.pathname;
+                    if (path && !path.endsWith('/')) path += '/';
+                    return path;
+                } catch (e) {
+                    if (baseTag.href.startsWith('/')) {
+                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
+                        if (match && match[2]) {
+                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
+                        }
+                    }
+                }
+            }
+            const pathname = window.location.pathname;
+            if (pathname.includes('/decision_agent')) {
+                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
+                if (match) {
+                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
+                }
+            }
+            return pathname.substring(0, pathname.lastIndexOf('/') + 1) || '/';
+        }
+
+        const basePath = getBasePath();
+        let scenarioCount = 1;
+
+        // Load versions
+        function loadVersions() {
+            fetch(`${basePath}api/versions`)
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('ruleVersion');
+                    select.innerHTML = '<option value="">-- Select Version --</option>';
+                    if (data.versions) {
+                        data.versions.forEach(v => {
+                            const option = document.createElement('option');
+                            option.value = v.id;
+                            option.textContent = `${v.rule_id} v${v.version_number} (${v.status})`;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading versions:', error));
+        }
+
+        loadVersions();
+
+        // Add scenario
+        document.getElementById('addScenarioBtn').addEventListener('click', () => {
+            scenarioCount++;
+            const container = document.getElementById('scenariosContainer');
+            const scenario = document.createElement('div');
+            scenario.className = 'scenario-item';
+            scenario.innerHTML = `
+                <div class="scenario-item-header">
+                    <strong>Scenario ${scenarioCount}</strong>
+                    <button class="btn btn-secondary" onclick="removeScenario(this)" style="padding: 5px 10px;">Remove</button>
+                </div>
+                <div class="scenario-fields" id="scenarioFields${scenarioCount}">
+                    <div class="field-input">
+                        <label>Field Name</label>
+                        <input type="text" class="input scenario-field-name" placeholder="e.g., credit_score">
+                    </div>
+                    <div class="field-input">
+                        <label>Value</label>
+                        <input type="text" class="input scenario-field-value" placeholder="e.g., 650">
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="addField(this)" style="margin-top: 10px; padding: 5px 10px;">+ Add Field</button>
+            `;
+            container.appendChild(scenario);
+        });
+
+        function removeScenario(btn) {
+            btn.closest('.scenario-item').remove();
+        }
+
+        function addField(btn) {
+            const fieldsContainer = btn.previousElementSibling;
+            const fieldDiv = document.createElement('div');
+            fieldDiv.className = 'field-input';
+            fieldDiv.innerHTML = `
+                <label>Field Name</label>
+                <input type="text" class="input scenario-field-name" placeholder="e.g., amount">
+                <label style="margin-top: 5px;">Value</label>
+                <input type="text" class="input scenario-field-value" placeholder="e.g., 100000">
+            `;
+            fieldsContainer.appendChild(fieldDiv);
+        }
+
+        // Import rules
+        document.getElementById('importRulesFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        document.getElementById('rulesJson').value = JSON.stringify(json, null, 2);
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Validate rules
+        document.getElementById('validateRulesBtn').addEventListener('click', () => {
+            const rulesJson = document.getElementById('rulesJson').value;
+            try {
+                JSON.parse(rulesJson);
+                fetch(`${basePath}api/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(JSON.parse(rulesJson))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        alert('Rules are valid!');
+                    } else {
+                        alert('Validation errors: ' + data.errors.join(', '));
+                    }
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        // Run analysis
+        document.getElementById('runAnalysisBtn').addEventListener('click', () => {
+            // Collect scenarios
+            const scenarios = [];
+            document.querySelectorAll('.scenario-item').forEach(item => {
+                const scenario = {};
+                const fields = item.querySelectorAll('.scenario-fields');
+                fields.forEach(fieldContainer => {
+                    const names = fieldContainer.querySelectorAll('.scenario-field-name');
+                    const values = fieldContainer.querySelectorAll('.scenario-field-value');
+                    names.forEach((name, i) => {
+                        if (name.value && values[i] && values[i].value) {
+                            const value = values[i].value;
+                            // Try to parse as number
+                            scenario[name.value] = isNaN(value) ? value : parseFloat(value);
+                        }
+                    });
+                });
+                if (Object.keys(scenario).length > 0) {
+                    scenarios.push(scenario);
+                }
+            });
+
+            if (scenarios.length === 0) {
+                alert('Please define at least one scenario');
+                return;
+            }
+
+            const rulesJson = document.getElementById('rulesJson').value;
+            const ruleVersion = document.getElementById('ruleVersion').value;
+
+            if (!rulesJson.trim() && !ruleVersion) {
+                alert('Please provide rules JSON or select a version');
+                return;
+            }
+
+            try {
+                const rules = rulesJson.trim() ? JSON.parse(rulesJson) : null;
+                
+                const runStatus = document.getElementById('runStatus');
+                runStatus.className = 'hidden';
+
+                const requestData = {
+                    scenarios: scenarios,
+                    options: {
+                        parallel: document.getElementById('parallelExecution').checked,
+                        thread_count: parseInt(document.getElementById('threadCount').value) || 4,
+                        sensitivity_analysis: document.getElementById('sensitivityAnalysis').checked
+                    }
+                };
+
+                if (rules) {
+                    requestData.rules = rules;
+                }
+                if (ruleVersion) {
+                    requestData.rule_version = ruleVersion;
+                }
+
+                fetch(`${basePath}api/simulation/whatif`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        runStatus.className = 'error-message';
+                        runStatus.textContent = `Error: ${data.error}`;
+                        runStatus.classList.remove('hidden');
+                    } else {
+                        runStatus.className = 'success-message';
+                        runStatus.textContent = 'Analysis completed successfully!';
+                        runStatus.classList.remove('hidden');
+                        displayResults(data);
+                    }
+                })
+                .catch(error => {
+                    runStatus.className = 'error-message';
+                    runStatus.textContent = `Error: ${error.message}`;
+                    runStatus.classList.remove('hidden');
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('resultsSection').style.display = 'block';
+            const results = data.results;
+
+            // Statistics
+            if (results.total_scenarios !== undefined) {
+                const statsGrid = document.getElementById('statisticsGrid');
+                statsGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.total_scenarios}</div>
+                        <div class="metric-label">Total Scenarios</div>
+                    </div>
+                    ${results.average_confidence !== undefined ? `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.average_confidence.toFixed(3)}</div>
+                        <div class="metric-label">Avg Confidence</div>
+                    </div>
+                    ` : ''}
+                `;
+                document.getElementById('statisticsSection').classList.remove('hidden');
+            }
+
+            // Decision distribution
+            if (results.decision_distribution) {
+                const distContent = document.getElementById('distributionContent');
+                let html = '<table class="results-table"><thead><tr><th>Decision</th><th>Count</th></tr></thead><tbody>';
+                Object.entries(results.decision_distribution).forEach(([decision, count]) => {
+                    html += `<tr><td>${decision}</td><td>${count}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                distContent.innerHTML = html;
+                document.getElementById('distributionSection').classList.remove('hidden');
+            }
+
+            // Scenario results
+            if (results.scenarios) {
+                const scenarioContent = document.getElementById('scenarioResultsContent');
+                let html = '<table class="results-table"><thead><tr><th>Scenario</th><th>Decision</th><th>Confidence</th></tr></thead><tbody>';
+                results.scenarios.forEach((s, i) => {
+                    html += `<tr>
+                        <td>${JSON.stringify(s.scenario)}</td>
+                        <td>${s.decision}</td>
+                        <td>${s.confidence.toFixed(3)}</td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                scenarioContent.innerHTML = html;
+                document.getElementById('scenarioResultsSection').classList.remove('hidden');
+            }
+
+            // Sensitivity analysis
+            if (results.sensitivity) {
+                const sensContent = document.getElementById('sensitivityContent');
+                let html = '<p>Sensitivity analysis results:</p><pre>' + JSON.stringify(results.sensitivity, null, 2) + '</pre>';
+                sensContent.innerHTML = html;
+                document.getElementById('sensitivitySection').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
+
