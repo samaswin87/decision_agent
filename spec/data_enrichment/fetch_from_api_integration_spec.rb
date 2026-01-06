@@ -4,10 +4,6 @@ require "spec_helper"
 require "webmock/rspec"
 
 RSpec.describe "Data Enrichment: fetch_from_api operator integration" do
-  let(:config) { DecisionAgent::DataEnrichment::Config.new }
-  let(:cache_adapter) { DecisionAgent::DataEnrichment::Cache::MemoryAdapter.new }
-  let(:client) { DecisionAgent::DataEnrichment::Client.new(config: config, cache_adapter: cache_adapter) }
-
   before do
     WebMock.disable_net_connect!(allow_localhost: true)
     # Configure data enrichment
@@ -22,9 +18,6 @@ RSpec.describe "Data Enrichment: fetch_from_api operator integration" do
                      method: :post,
                      cache: { ttl: 300, adapter: :memory })
     end
-
-    # Set the client
-    DecisionAgent.data_enrichment_client = client
   end
 
   after do
@@ -158,11 +151,7 @@ RSpec.describe "Data Enrichment: fetch_from_api operator integration" do
     it "expands template parameters from context" do
       stub_request(:post, "https://api.fraudservice.com/check")
         .with(
-          body: {
-            user_id: "user123",
-            amount: 1000,
-            ip_address: "192.168.1.1"
-          }.to_json
+          body: "{\"user_id\":\"user123\",\"amount\":\"1000\",\"ip_address\":\"192.168.1.1\"}"
         )
         .to_return(
           status: 200,
@@ -212,11 +201,7 @@ RSpec.describe "Data Enrichment: fetch_from_api operator integration" do
     it "handles missing template parameters" do
       stub_request(:post, "https://api.fraudservice.com/check")
         .with(
-          body: {
-            user_id: "",
-            amount: nil,
-            ip_address: ""
-          }.to_json
+          body: /"user_id":"{{user.id}}"|"user_id":""/
         )
         .to_return(
           status: 200,

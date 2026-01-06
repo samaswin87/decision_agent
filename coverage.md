@@ -1,16 +1,16 @@
 # Code Coverage Report
 
-**Last Updated:** 2026-01-03 16:32:38
+**Last Updated:** 2026-01-06 07:29:56
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| **Total Coverage** | **87.7%** |
-| Total Files | 75 |
-| Total Relevant Lines | 6490 |
-| Lines Covered | 5692 |
-| Lines Missed | 798 |
+| **Total Coverage** | **88.0%** |
+| Total Files | 81 |
+| Total Relevant Lines | 6835 |
+| Lines Covered | 6015 |
+| Lines Missed | 820 |
 
 > **Note:** This report excludes files in the `examples/` directory as they are sample code, not production code.
 
@@ -18,7 +18,7 @@
 
 | File | Coverage | Lines Covered | Lines Missed | Total Lines |
 |------|----------|---------------|--------------|-------------|
-| `lib/decision_agent.rb` | ✅ 100.0% | 65 | 0 | 65 |
+| `lib/decision_agent.rb` | ✅ 100.0% | 80 | 0 | 80 |
 | `lib/decision_agent/ab_testing/ab_test.rb` | ✅ 93.98% | 78 | 5 | 83 |
 | `lib/decision_agent/ab_testing/ab_test_assignment.rb` | ✅ 100.0% | 28 | 0 | 28 |
 | `lib/decision_agent/ab_testing/ab_test_manager.rb` | ✅ 92.54% | 124 | 10 | 134 |
@@ -42,13 +42,19 @@
 | `lib/decision_agent/auth/session_manager.rb` | ✅ 100.0% | 34 | 0 | 34 |
 | `lib/decision_agent/auth/user.rb` | ✅ 94.87% | 37 | 2 | 39 |
 | `lib/decision_agent/context.rb` | ✅ 100.0% | 32 | 0 | 32 |
+| `lib/decision_agent/data_enrichment/cache/memory_adapter.rb` | ✅ 100.0% | 33 | 0 | 33 |
+| `lib/decision_agent/data_enrichment/cache_adapter.rb` | ⚠️ 73.33% | 11 | 4 | 15 |
+| `lib/decision_agent/data_enrichment/circuit_breaker.rb` | ✅ 96.88% | 62 | 2 | 64 |
+| `lib/decision_agent/data_enrichment/client.rb` | ✅ 96.3% | 104 | 4 | 108 |
+| `lib/decision_agent/data_enrichment/config.rb` | ✅ 100.0% | 19 | 0 | 19 |
+| `lib/decision_agent/data_enrichment/errors.rb` | ⚠️ 76.92% | 10 | 3 | 13 |
 | `lib/decision_agent/decision.rb` | ✅ 96.67% | 29 | 1 | 30 |
-| `lib/decision_agent/dmn/adapter.rb` | ⚠️ 81.25% | 39 | 9 | 48 |
+| `lib/decision_agent/dmn/adapter.rb` | ⚠️ 79.25% | 42 | 11 | 53 |
 | `lib/decision_agent/dmn/decision_graph.rb` | ⚠️ 72.37% | 110 | 42 | 152 |
 | `lib/decision_agent/dmn/decision_tree.rb` | ✅ 96.39% | 80 | 3 | 83 |
 | `lib/decision_agent/dmn/errors.rb` | ✅ 100.0% | 11 | 0 | 11 |
 | `lib/decision_agent/dmn/exporter.rb` | ⚠️ 80.19% | 85 | 21 | 106 |
-| `lib/decision_agent/dmn/feel/evaluator.rb` | ❌ 57.42% | 209 | 155 | 364 |
+| `lib/decision_agent/dmn/feel/evaluator.rb` | ❌ 58.98% | 220 | 153 | 373 |
 | `lib/decision_agent/dmn/feel/functions.rb` | ✅ 99.55% | 220 | 1 | 221 |
 | `lib/decision_agent/dmn/feel/parser.rb` | ✅ 91.94% | 114 | 10 | 124 |
 | `lib/decision_agent/dmn/feel/simple_parser.rb` | ✅ 97.83% | 135 | 3 | 138 |
@@ -58,14 +64,14 @@
 | `lib/decision_agent/dmn/model.rb` | ✅ 98.37% | 121 | 2 | 123 |
 | `lib/decision_agent/dmn/parser.rb` | ✅ 95.29% | 81 | 4 | 85 |
 | `lib/decision_agent/dmn/validator.rb` | ⚠️ 87.58% | 141 | 20 | 161 |
-| `lib/decision_agent/dsl/condition_evaluator.rb` | ⚠️ 83.84% | 633 | 122 | 755 |
+| `lib/decision_agent/dsl/condition_evaluator.rb` | ⚠️ 84.62% | 671 | 122 | 793 |
 | `lib/decision_agent/dsl/rule_parser.rb` | ✅ 100.0% | 15 | 0 | 15 |
-| `lib/decision_agent/dsl/schema_validator.rb` | ✅ 99.29% | 139 | 1 | 140 |
+| `lib/decision_agent/dsl/schema_validator.rb` | ✅ 97.37% | 148 | 4 | 152 |
 | `lib/decision_agent/errors.rb` | ✅ 96.72% | 59 | 2 | 61 |
 | `lib/decision_agent/evaluation.rb` | ✅ 96.55% | 28 | 1 | 29 |
 | `lib/decision_agent/evaluation_validator.rb` | ✅ 100.0% | 37 | 0 | 37 |
 | `lib/decision_agent/evaluators/base.rb` | ✅ 100.0% | 8 | 0 | 8 |
-| `lib/decision_agent/evaluators/dmn_evaluator.rb` | ✅ 97.33% | 73 | 2 | 75 |
+| `lib/decision_agent/evaluators/dmn_evaluator.rb` | ✅ 91.01% | 81 | 8 | 89 |
 | `lib/decision_agent/evaluators/json_rule_evaluator.rb` | ✅ 97.37% | 37 | 1 | 38 |
 | `lib/decision_agent/evaluators/static_evaluator.rb` | ✅ 100.0% | 13 | 0 | 13 |
 | `lib/decision_agent/monitoring/alert_manager.rb` | ✅ 91.11% | 123 | 12 | 135 |

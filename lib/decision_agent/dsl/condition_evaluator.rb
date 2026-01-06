@@ -26,15 +26,20 @@ module DecisionAgent
         attr_reader :regex_cache, :path_cache, :date_cache, :geospatial_cache, :param_cache
       end
 
-      def self.evaluate(condition, context)
+      def self.evaluate(condition, context, enriched_context_hash: nil)
         return false unless condition.is_a?(Hash)
 
+        # Use enriched context hash if provided, otherwise create mutable copy
+        # This ensures all conditions in the same evaluation share the same enriched hash
+        enriched = enriched_context_hash
+        enriched ||= context.to_h.dup
+
         if condition.key?("all")
-          evaluate_all(condition["all"], context)
+          evaluate_all(condition["all"], context, enriched_context_hash: enriched)
         elsif condition.key?("any")
-          evaluate_any(condition["any"], context)
+          evaluate_any(condition["any"], context, enriched_context_hash: enriched)
         elsif condition.key?("field")
-          evaluate_field_condition(condition, context)
+          evaluate_field_condition(condition, context, enriched_context_hash: enriched)
         else
           false
         end
@@ -42,23 +47,33 @@ module DecisionAgent
 
       # Evaluates 'all' condition - returns true only if ALL sub-conditions are true
       # Empty array returns true (vacuous truth)
-      def self.evaluate_all(conditions, context)
+      def self.evaluate_all(conditions, context, enriched_context_hash: nil)
         return true if conditions.is_a?(Array) && conditions.empty?
         return false unless conditions.is_a?(Array)
 
-        conditions.all? { |cond| evaluate(cond, context) }
+        # Use enriched context hash if provided, otherwise create mutable copy
+        # All conditions share the same enriched hash so data enrichment persists
+        enriched = enriched_context_hash
+        enriched ||= context.to_h.dup
+
+        conditions.all? { |cond| evaluate(cond, context, enriched_context_hash: enriched) }
       end
 
       # Evaluates 'any' condition - returns true if AT LEAST ONE sub-condition is true
       # Empty array returns false (no options to match)
-      def self.evaluate_any(conditions, context)
+      def self.evaluate_any(conditions, context, enriched_context_hash: nil)
         return false unless conditions.is_a?(Array)
 
-        conditions.any? { |cond| evaluate(cond, context) }
+        # Use enriched context hash if provided, otherwise create mutable copy
+        # All conditions share the same enriched hash so data enrichment persists
+        enriched = enriched_context_hash
+        enriched ||= context.to_h.dup
+
+        conditions.any? { |cond| evaluate(cond, context, enriched_context_hash: enriched) }
       end
 
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      def self.evaluate_field_condition(condition, context)
+      def self.evaluate_field_condition(condition, context, enriched_context_hash: nil)
         field = condition["field"]
         op = condition["op"]
         expected_value = condition["value"]
@@ -66,7 +81,9 @@ module DecisionAgent
         # Special handling for "don't care" conditions (from DMN "-" entries)
         return true if field == "__always_match__" && op == "eq" && expected_value == true
 
-        context_hash = context.to_h
+        # Use enriched context hash if provided, otherwise create mutable copy
+        # This ensures all conditions in the same evaluation share the same enriched hash
+        context_hash = enriched_context_hash || context.to_h.dup
         actual_value = get_nested_value(context_hash, field)
 
         case op
@@ -1003,14 +1020,14 @@ module DecisionAgent
             # Fetch data from API
             response_data = client.fetch(endpoint_name, params: params, use_cache: true)
 
-            # Apply mapping if provided
+            # Apply mapping if provided and merge into context_hash
             if mapping.any?
               mapped_data = apply_mapping(response_data, mapping)
-              # Store mapped data in context for use in subsequent conditions
-              # Note: This enriches the context data, but since Context is frozen,
-              # we can't modify it directly. The mapped values are returned and
-              # can be used in the same rule evaluation cycle.
-              # For now, return true if fetch succeeded and mapping applied
+              # Merge mapped data into context_hash for subsequent conditions
+              mapped_data.each do |key, value|
+                context_hash[key] = value
+              end
+              # Return true if fetch succeeded and mapping applied
               mapped_data.any?
             else
               # Return true if fetch succeeded
@@ -1086,12 +1103,14 @@ module DecisionAgent
       end
 
       # Apply mapping to API response data
+      # Mapping format: { source_key: "target_key" }
+      # Example: { score: "credit_score" } means map response[:score] to context["credit_score"]
       def self.apply_mapping(response_data, mapping)
         return {} unless response_data.is_a?(Hash)
         return {} unless mapping.is_a?(Hash)
 
-        mapping.each_with_object({}) do |(target_key, source_path), result|
-          source_value = get_nested_value(response_data, source_path.to_s)
+        mapping.each_with_object({}) do |(source_key, target_key), result|
+          source_value = get_nested_value(response_data, source_key.to_s)
           result[target_key.to_s] = source_value unless source_value.nil?
         end
       end

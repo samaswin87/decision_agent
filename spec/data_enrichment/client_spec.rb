@@ -225,6 +225,9 @@ RSpec.describe DecisionAgent::DataEnrichment::Client do
     end
 
     context "with circuit breaker" do
+      let(:circuit_breaker) { DecisionAgent::DataEnrichment::CircuitBreaker.new(failure_threshold: 3) }
+      let(:client_with_cb) { DecisionAgent::DataEnrichment::Client.new(config: config, circuit_breaker: circuit_breaker) }
+
       before do
         config.add_endpoint(:failing_endpoint, url: "https://api.example.com/data")
       end
@@ -236,13 +239,13 @@ RSpec.describe DecisionAgent::DataEnrichment::Client do
 
         # Trigger failures
         3.times do
-          client.fetch(:failing_endpoint, params: {})
+          client_with_cb.fetch(:failing_endpoint, params: {})
         rescue StandardError
           # Expected
         end
 
         # Circuit should be open now
-        expect { client.fetch(:failing_endpoint, params: {}) }.to raise_error(DecisionAgent::DataEnrichment::Client::RequestError, /Circuit breaker is open/)
+        expect { client_with_cb.fetch(:failing_endpoint, params: {}) }.to raise_error(DecisionAgent::DataEnrichment::Client::RequestError, /Circuit breaker is open/)
       end
 
       it "falls back to cache when circuit is open" do
@@ -251,7 +254,7 @@ RSpec.describe DecisionAgent::DataEnrichment::Client do
           .times(1)
 
         # First successful call to populate cache
-        client.fetch(:failing_endpoint, params: {})
+        client_with_cb.fetch(:failing_endpoint, params: {})
 
         # Open circuit by failing
         stub_request(:get, "https://api.example.com/data")
@@ -259,13 +262,13 @@ RSpec.describe DecisionAgent::DataEnrichment::Client do
           .times(3)
 
         3.times do
-          client.fetch(:failing_endpoint, params: {})
+          client_with_cb.fetch(:failing_endpoint, params: {})
         rescue StandardError
           # Expected
         end
 
         # Should return cached data
-        result = client.fetch(:failing_endpoint, params: {})
+        result = client_with_cb.fetch(:failing_endpoint, params: {})
         expect(result).to eq({ cached: true })
       end
     end

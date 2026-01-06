@@ -62,20 +62,22 @@ module DecisionAgent
 
         # Execute request with circuit breaker
         circuit_breaker = get_circuit_breaker(endpoint_name)
-        response_data = circuit_breaker.call do
-          execute_request(endpoint_name, endpoint_config, params)
+        begin
+          response_data = circuit_breaker.call do
+            execute_request(endpoint_name, endpoint_config, params)
+          end
+        rescue CircuitBreaker::CircuitOpenError => e
+          # Try to return cached data on circuit open
+          cached = @cache_adapter.get(cache_key) if use_cache
+          return cached if cached
+
+          raise RequestError, "Circuit breaker is open for #{endpoint_name}: #{e.message}"
         end
 
         # Cache response
         @cache_adapter.set(cache_key, response_data, endpoint_config[:cache][:ttl]) if use_cache && endpoint_config[:cache][:ttl].positive?
 
         response_data
-      rescue CircuitBreaker::CircuitOpenError => e
-        # Try to return cached data on circuit open
-        cached = @cache_adapter.get(cache_key) if use_cache
-        return cached if cached
-
-        raise RequestError, "Circuit breaker is open for #{endpoint_name}: #{e.message}"
       end
 
       # Clear cache for endpoint
@@ -118,11 +120,13 @@ module DecisionAgent
 
         case method
         when :get
-          request = Net::HTTP::Get.new(uri)
           # Add params to query string for GET requests
           if params.any?
             query_string = URI.encode_www_form(params)
-            request.uri = URI("#{uri}?#{query_string}")
+            uri_with_query = URI("#{uri}?#{query_string}")
+            request = Net::HTTP::Get.new(uri_with_query)
+          else
+            request = Net::HTTP::Get.new(uri)
           end
         when :post
           request = Net::HTTP::Post.new(uri)
