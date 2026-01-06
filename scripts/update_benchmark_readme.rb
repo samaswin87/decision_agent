@@ -21,7 +21,7 @@ latest = JSON.parse(File.read(result_files[0]))
 previous = JSON.parse(File.read(result_files[1]))
 
 # Calculate changes
-def calculate_change(old_val, new_val, is_latency = false)
+def calculate_change(old_val, new_val, is_latency: false)
   return "N/A" if old_val.nil? || new_val.nil? || old_val.zero?
 
   change_pct = ((new_val - old_val) / old_val * 100).round(2)
@@ -56,9 +56,9 @@ markdown = <<~MARKDOWN
   | Metric | Latest (#{latest['timestamp'].split('T').first}) | Previous (#{previous['timestamp'].split('T').first}) | Change |
   |--------|--------------------------------------------------|------------------------------------------------------|--------|
   | Basic Throughput | #{latest['results']['basic_throughput']} decisions/sec | #{previous['results']['basic_throughput']} decisions/sec | #{calculate_change(previous['results']['basic_throughput'], latest['results']['basic_throughput'])} |
-  | Basic Latency | #{latest['results']['basic_latency_ms']} ms | #{previous['results']['basic_latency_ms']} ms | #{calculate_change(previous['results']['basic_latency_ms'], latest['results']['basic_latency_ms'], true)} |
+  | Basic Latency | #{latest['results']['basic_latency_ms']} ms | #{previous['results']['basic_latency_ms']} ms | #{calculate_change(previous['results']['basic_latency_ms'], latest['results']['basic_latency_ms'], is_latency: true)} |
   | Multi-threaded (50 threads) Throughput | #{latest['results']['thread_50_throughput']} decisions/sec | #{previous['results']['thread_50_throughput']} decisions/sec | #{calculate_change(previous['results']['thread_50_throughput'], latest['results']['thread_50_throughput'])} |
-  | Multi-threaded (50 threads) Latency | #{latest['results']['thread_50_latency_ms']} ms | #{previous['results']['thread_50_latency_ms']} ms | #{calculate_change(previous['results']['thread_50_latency_ms'], latest['results']['thread_50_latency_ms'], true)} |
+  | Multi-threaded (50 threads) Latency | #{latest['results']['thread_50_latency_ms']} ms | #{previous['results']['thread_50_latency_ms']} ms | #{calculate_change(previous['results']['thread_50_latency_ms'], latest['results']['thread_50_latency_ms'], is_latency: true)} |
 
   **Environment:**
   - Ruby Version: #{latest['ruby_version']}
