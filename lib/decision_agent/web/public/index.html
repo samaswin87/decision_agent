@@ -53,6 +53,7 @@
                 <!-- Action Buttons -->
                 <div class="actions">
                     <button class="btn btn-success" id="validateBtn">✓ Validate Rules</button>
+                    <button class="btn btn-info" id="testRuleBtn">🧪 Test Rule</button>
                     <button class="btn btn-primary" id="saveVersionBtn">💾 Save Version</button>
                     <button class="btn btn-secondary" id="clearBtn">Clear All</button>
                 </div>
@@ -332,6 +333,52 @@
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" id="closeCompareModalBtn">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Rule Modal -->
+        <div id="testRuleModal" class="modal hidden">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2>🧪 Test Rule</h2>
+                    <button class="close-btn" id="closeTestRuleBtn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="testContext">Test Context (JSON):</label>
+                        <textarea id="testContext" class="input" rows="8" placeholder='{"field1": "value1", "field2": 123}'></textarea>
+                        <small class="form-hint">Enter context data as JSON to test your rules</small>
+                    </div>
+                    <div class="actions" style="margin-top: 1rem;">
+                        <button class="btn btn-primary" id="runTestBtn">Run Test</button>
+                    </div>
+                    <div id="testResults" class="test-results hidden" style="margin-top: 2rem;">
+                        <h3>Test Results</h3>
+                        <div id="testDecision" class="test-result-item">
+                            <strong>Decision:</strong> <span id="testDecisionValue">-</span>
+                        </div>
+                        <div id="testConfidence" class="test-result-item">
+                            <strong>Confidence:</strong> <span id="testConfidenceValue">-</span>
+                        </div>
+                        <div id="testReason" class="test-result-item">
+                            <strong>Reason:</strong> <span id="testReasonValue">-</span>
+                        </div>
+                        <div id="testExplainability" class="test-explainability" style="margin-top: 1.5rem;">
+                            <h4>Explainability</h4>
+                            <div id="testBecause" class="test-because">
+                                <strong>Because (conditions that led to decision):</strong>
+                                <ul id="testBecauseList"></ul>
+                            </div>
+                            <div id="testFailedConditions" class="test-failed" style="margin-top: 1rem;">
+                                <strong>Failed Conditions:</strong>
+                                <ul id="testFailedList"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="closeTestRuleModalBtn">Close</button>
                 </div>
             </div>
         </div>

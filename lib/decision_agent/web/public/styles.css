@@ -796,3 +796,68 @@ textarea.input {
     text-align: center;
     padding: 20px;
 }
+
+/* Test Results Styles */
+.test-results {
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 20px;
+    background: var(--panel-bg);
+    margin-top: 20px;
+}
+
+.test-results h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.test-result-item {
+    margin: 10px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.test-result-item:last-child {
+    border-bottom: none;
+}
+
+.test-explainability {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color);
+}
+
+.test-explainability h4 {
+    margin-top: 0;
+    color: var(--primary-color);
+}
+
+.test-because ul,
+.test-failed ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 10px 0;
+}
+
+.test-because li,
+.test-failed li {
+    padding: 6px 12px;
+    margin: 4px 0;
+    border-radius: 4px;
+    background: var(--hover-bg);
+}
+
+.test-because li {
+    border-left: 3px solid #28a745;
+}
+
+.test-failed li {
+    border-left: 3px solid #dc3545;
+}
+
+.form-hint {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.85em;
+    color: var(--text-secondary);
+}

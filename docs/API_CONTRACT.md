@@ -87,6 +87,9 @@ result.confidence        # Float (0.0–1.0)
 result.evaluations       # Array<Evaluation>
 result.explanations      # Array<String>
 result.audit_payload     # Hash (frozen)
+result.because           # Array<String> - Conditions that led to decision
+result.failed_conditions # Array<String> - Conditions that failed
+result.explainability    # Hash - Machine-readable explainability data
 ```
 
 ### 2.2 Field Specifications
@@ -98,6 +101,9 @@ result.audit_payload     # Hash (frozen)
 | `evaluations` | Array | Non-empty | All evaluations considered |
 | `explanations` | Array<String> | Non-empty | Human-readable explanations |
 | `audit_payload` | Hash | Frozen, complete | Full audit trail |
+| `because` | Array<String> | Non-empty | Conditions that led to decision |
+| `failed_conditions` | Array<String> | May be empty | Conditions that failed during evaluation |
+| `explainability` | Hash | Frozen | Machine-readable explainability data |
 
 ### 2.3 Audit Payload Specification
 
@@ -499,6 +505,21 @@ This contract supports compliance with:
 - Show which evaluators contributed
 - Explain conflict resolution
 - Preserve reasoning chains
+- Provide machine-readable explainability data via `explainability` attribute
+- Track conditions that led to the decision via `because` attribute
+- Track conditions that failed via `failed_conditions` attribute
+- Include condition-level traces with actual/expected values
+- Support both short and verbose explanation modes
+
+**Explainability Data Structure:**
+```ruby
+{
+  decision: "approved",
+  because: ["risk_score < 0.7", "account_age > 180"],
+  failed_conditions: ["credit_hold = true"],
+  rule_traces: [...] # In verbose mode
+}
+```
 
 ---
 

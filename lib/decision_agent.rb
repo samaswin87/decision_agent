@@ -71,6 +71,11 @@ require_relative "decision_agent/data_enrichment/errors"
 
 require_relative "decision_agent/simulation"
 
+require_relative "decision_agent/explainability/condition_trace"
+require_relative "decision_agent/explainability/rule_trace"
+require_relative "decision_agent/explainability/trace_collector"
+require_relative "decision_agent/explainability/explainability_result"
+
 module DecisionAgent
   # Global RBAC configuration
   @rbac_config = Auth::RbacConfig.new

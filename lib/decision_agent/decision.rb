@@ -14,14 +14,83 @@ module DecisionAgent
       freeze
     end
 
+    # Returns array of condition descriptions that led to this decision
+    # @param verbose [Boolean] If true, returns detailed condition information
+    # @return [Array<String>] Array of condition descriptions
+    def because(verbose: false)
+      all_explainability_results.flat_map { |er| er.because(verbose: verbose) }
+    end
+
+    # Returns array of condition descriptions that failed
+    # @param verbose [Boolean] If true, returns detailed condition information
+    # @return [Array<String>] Array of failed condition descriptions
+    def failed_conditions(verbose: false)
+      all_explainability_results.flat_map { |er| er.failed_conditions(verbose: verbose) }
+    end
+
+    # Returns explainability data in machine-readable format
+    # @param verbose [Boolean] If true, returns detailed explainability information
+    # @return [Hash] Explainability data
+    def explainability(verbose: false)
+      {
+        decision: @decision,
+        because: because(verbose: verbose),
+        failed_conditions: failed_conditions(verbose: verbose),
+        rule_traces: verbose ? all_explainability_results.map { |er| er.to_h(verbose: true) } : nil
+      }.compact
+    end
+
     def to_h
       {
         decision: @decision,
         confidence: @confidence,
         explanations: @explanations,
         evaluations: @evaluations.map(&:to_h),
-        audit_payload: @audit_payload
+        audit_payload: @audit_payload,
+        explainability: explainability(verbose: false)
       }
+    end
+
+    private
+
+    def all_explainability_results
+      @evaluations.flat_map do |evaluation|
+        next [] unless evaluation.metadata.is_a?(Hash)
+        next [] unless evaluation.metadata[:explainability]
+
+        # Reconstruct ExplainabilityResult from metadata
+        explainability_data = evaluation.metadata[:explainability]
+        
+        # Handle both hash and symbol keys
+        explainability_data = explainability_data.transform_keys(&:to_sym) if explainability_data.is_a?(Hash)
+        
+        rule_traces = (explainability_data[:rule_traces] || explainability_data["rule_traces"] || []).map do |rt_data|
+          rt_data = rt_data.transform_keys(&:to_sym) if rt_data.is_a?(Hash)
+          
+          condition_traces = (rt_data[:condition_traces] || rt_data["condition_traces"] || []).map do |ct_data|
+            ct_data = ct_data.transform_keys(&:to_sym) if ct_data.is_a?(Hash)
+            Explainability::ConditionTrace.new(
+              field: ct_data[:field] || ct_data["field"],
+              operator: ct_data[:operator] || ct_data["operator"],
+              expected_value: ct_data[:expected_value] || ct_data["expected_value"],
+              actual_value: ct_data[:actual_value] || ct_data["actual_value"],
+              result: ct_data[:result] || ct_data["result"]
+            )
+          end
+          Explainability::RuleTrace.new(
+            rule_id: rt_data[:rule_id] || rt_data["rule_id"],
+            matched: rt_data[:matched] || rt_data["matched"],
+            condition_traces: condition_traces,
+            decision: rt_data[:decision] || rt_data["decision"],
+            weight: rt_data[:weight] || rt_data["weight"],
+            reason: rt_data[:reason] || rt_data["reason"]
+          )
+        end
+        [Explainability::ExplainabilityResult.new(
+          evaluator_name: explainability_data[:evaluator_name] || explainability_data["evaluator_name"] || evaluation.evaluator_name,
+          rule_traces: rule_traces
+        )]
+      end
     end
 
     def ==(other)

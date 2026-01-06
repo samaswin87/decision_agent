@@ -223,14 +223,26 @@ module DecisionAgent
           result = evaluator.evaluate(DecisionAgent::Context.new(context))
 
           if result
-            {
+            # Get explainability data from metadata if available
+            explainability = result.metadata[:explainability] if result.metadata.is_a?(Hash)
+            
+            response = {
               success: true,
               decision: result.decision,
               weight: result.weight,
               reason: result.reason,
               evaluator_name: result.evaluator_name,
               metadata: result.metadata
-            }.to_json
+            }
+            
+            # Add explainability data if available
+            if explainability
+              response[:explainability] = explainability
+              response[:because] = explainability[:because] || []
+              response[:failed_conditions] = explainability[:failed_conditions] || []
+            end
+            
+            response.to_json
           else
             {
               success: true,

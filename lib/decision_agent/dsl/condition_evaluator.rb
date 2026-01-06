@@ -26,7 +26,7 @@ module DecisionAgent
         attr_reader :regex_cache, :path_cache, :date_cache, :geospatial_cache, :param_cache
       end
 
-      def self.evaluate(condition, context, enriched_context_hash: nil)
+      def self.evaluate(condition, context, enriched_context_hash: nil, trace_collector: nil)
         return false unless condition.is_a?(Hash)
 
         # Use enriched context hash if provided, otherwise create mutable copy
@@ -35,11 +35,11 @@ module DecisionAgent
         enriched ||= context.to_h.dup
 
         if condition.key?("all")
-          evaluate_all(condition["all"], context, enriched_context_hash: enriched)
+          evaluate_all(condition["all"], context, enriched_context_hash: enriched, trace_collector: trace_collector)
         elsif condition.key?("any")
-          evaluate_any(condition["any"], context, enriched_context_hash: enriched)
+          evaluate_any(condition["any"], context, enriched_context_hash: enriched, trace_collector: trace_collector)
         elsif condition.key?("field")
-          evaluate_field_condition(condition, context, enriched_context_hash: enriched)
+          evaluate_field_condition(condition, context, enriched_context_hash: enriched, trace_collector: trace_collector)
         else
           false
         end
@@ -47,7 +47,7 @@ module DecisionAgent
 
       # Evaluates 'all' condition - returns true only if ALL sub-conditions are true
       # Empty array returns true (vacuous truth)
-      def self.evaluate_all(conditions, context, enriched_context_hash: nil)
+      def self.evaluate_all(conditions, context, enriched_context_hash: nil, trace_collector: nil)
         return true if conditions.is_a?(Array) && conditions.empty?
         return false unless conditions.is_a?(Array)
 
@@ -56,12 +56,12 @@ module DecisionAgent
         enriched = enriched_context_hash
         enriched ||= context.to_h.dup
 
-        conditions.all? { |cond| evaluate(cond, context, enriched_context_hash: enriched) }
+        conditions.all? { |cond| evaluate(cond, context, enriched_context_hash: enriched, trace_collector: trace_collector) }
       end
 
       # Evaluates 'any' condition - returns true if AT LEAST ONE sub-condition is true
       # Empty array returns false (no options to match)
-      def self.evaluate_any(conditions, context, enriched_context_hash: nil)
+      def self.evaluate_any(conditions, context, enriched_context_hash: nil, trace_collector: nil)
         return false unless conditions.is_a?(Array)
 
         # Use enriched context hash if provided, otherwise create mutable copy
@@ -69,24 +69,35 @@ module DecisionAgent
         enriched = enriched_context_hash
         enriched ||= context.to_h.dup
 
-        conditions.any? { |cond| evaluate(cond, context, enriched_context_hash: enriched) }
+        conditions.any? { |cond| evaluate(cond, context, enriched_context_hash: enriched, trace_collector: trace_collector) }
       end
 
       # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
-      def self.evaluate_field_condition(condition, context, enriched_context_hash: nil)
+      def self.evaluate_field_condition(condition, context, enriched_context_hash: nil, trace_collector: nil)
         field = condition["field"]
         op = condition["op"]
         expected_value = condition["value"]
 
         # Special handling for "don't care" conditions (from DMN "-" entries)
-        return true if field == "__always_match__" && op == "eq" && expected_value == true
+        if field == "__always_match__" && op == "eq" && expected_value == true
+          if trace_collector
+            trace_collector.add_trace(Explainability::ConditionTrace.new(
+              field: field,
+              operator: op,
+              expected_value: expected_value,
+              actual_value: true,
+              result: true
+            ))
+          end
+          return true
+        end
 
         # Use enriched context hash if provided, otherwise create mutable copy
         # This ensures all conditions in the same evaluation share the same enriched hash
         context_hash = enriched_context_hash || context.to_h.dup
         actual_value = get_nested_value(context_hash, field)
 
-        case op
+        result =         result = case op
         when "eq"
           # Equality - uses Ruby's == for comparison
           actual_value == expected_value
@@ -158,36 +169,37 @@ module DecisionAgent
         when "matches"
           # Matches string against regular expression
           # expected_value can be a string (converted to regex) or Regexp object
-          return false unless actual_value.is_a?(String)
-          return false if expected_value.nil?
-
-          begin
-            regex = get_cached_regex(expected_value)
-            !regex.match(actual_value).nil?
-          rescue RegexpError
-            false
-          end
+          result = if !actual_value.is_a?(String) || expected_value.nil?
+                     false
+                   else
+                     begin
+                       regex = get_cached_regex(expected_value)
+                       !regex.match(actual_value).nil?
+                     rescue RegexpError
+                       false
+                     end
+                   end
 
         # NUMERIC OPERATORS
         when "between"
           # Checks if numeric value is between min and max (inclusive)
           # expected_value should be [min, max] or {min: x, max: y}
-          return false unless actual_value.is_a?(Numeric)
-
-          range = parse_range(expected_value)
-          return false unless range
-
-          actual_value.between?(range[:min], range[:max])
+          result = if !actual_value.is_a?(Numeric)
+                     false
+                   else
+                     range = parse_range(expected_value)
+                     range ? actual_value.between?(range[:min], range[:max]) : false
+                   end
 
         when "modulo"
           # Checks if value modulo divisor equals remainder
           # expected_value should be [divisor, remainder] or {divisor: x, remainder: y}
-          return false unless actual_value.is_a?(Numeric)
-
-          params = parse_modulo_params(expected_value)
-          return false unless params
-
-          (actual_value % params[:divisor]) == params[:remainder]
+          result = if !actual_value.is_a?(Numeric)
+                     false
+                   else
+                     params = parse_modulo_params(expected_value)
+                     params ? (actual_value % params[:divisor]) == params[:remainder] : false
+                   end
 
         # MATHEMATICAL FUNCTIONS
         # Trigonometric functions
@@ -1044,6 +1056,19 @@ module DecisionAgent
           # Note: Validation should catch this earlier
           false
         end
+
+        # Add trace if collector is provided
+        if trace_collector
+          trace_collector.add_trace(Explainability::ConditionTrace.new(
+            field: field,
+            operator: op,
+            expected_value: expected_value,
+            actual_value: actual_value,
+            result: result
+          ))
+        end
+
+        result
       end
       # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
 

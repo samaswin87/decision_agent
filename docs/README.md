@@ -10,6 +10,7 @@ Welcome to the DecisionAgent documentation.
 - [Examples](../examples/README.md) - Working examples with explanations
 
 ### Core Features
+- [**Explainability Layer**](EXPLAINABILITY.md) - Machine-readable decision explanations with condition-level tracing
 - [**Data Enrichment**](DATA_ENRICHMENT.md) - REST API data enrichment with caching and circuit breaker
 - [**DMN Guide**](DMN_GUIDE.md) - Complete DMN 1.3 support guide
 - [**DMN API Reference**](DMN_API.md) - DMN API documentation

@@ -39,9 +39,12 @@ module DecisionAgent
       def evaluate(context, feedback: {})
         hit_policy = @decision.decision_table.hit_policy
 
+        # Collect explainability traces
+        explainability_result = collect_explainability(context, hit_policy)
+
         # Short-circuit for FIRST and PRIORITY policies
         if %w[FIRST PRIORITY].include?(hit_policy)
-          first_match = find_first_matching_evaluation(context, feedback: feedback)
+          first_match = find_first_matching_evaluation(context, explainability_result: explainability_result)
           return first_match if first_match
 
           # If no match found, return nil (consistent with apply_first_policy behavior)
@@ -49,10 +52,25 @@ module DecisionAgent
         end
 
         # For UNIQUE, ANY, COLLECT - need all matches
-        matching_evaluations = find_all_matching_evaluations(context, feedback: feedback)
+        matching_evaluations = find_all_matching_evaluations(context, explainability_result: explainability_result)
 
         # Apply hit policy to select the appropriate evaluation
-        apply_hit_policy(matching_evaluations)
+        result = apply_hit_policy(matching_evaluations)
+        
+        # Add explainability to metadata by creating new Evaluation with updated metadata
+        if result && explainability_result
+          metadata = result.metadata.dup
+          metadata[:explainability] = explainability_result.to_h
+          result = Evaluation.new(
+            decision: result.decision,
+            weight: result.weight,
+            reason: result.reason,
+            evaluator_name: result.evaluator_name,
+            metadata: metadata
+          )
+        end
+        
+        result
       end
 
       private
@@ -61,8 +79,51 @@ module DecisionAgent
         @name
       end
 
+      # Collect explainability traces for DMN evaluation
+      def collect_explainability(context, hit_policy)
+        ctx = context.is_a?(Context) ? context : Context.new(context)
+        rules = @rules_json["rules"] || []
+        rule_traces = []
+
+        rules.each do |rule|
+          rule_id = rule["id"] || "rule_#{rules.index(rule)}"
+          if_clause = rule["if"]
+          next unless if_clause
+
+          # Create trace collector for this rule
+          trace_collector = Explainability::TraceCollector.new
+
+          # Evaluate condition with tracing
+          matched = Dsl::ConditionEvaluator.evaluate(
+            if_clause,
+            ctx,
+            trace_collector: trace_collector
+          )
+
+          then_clause = rule["then"] || {}
+          rule_trace = Explainability::RuleTrace.new(
+            rule_id: rule_id,
+            matched: matched,
+            condition_traces: trace_collector.traces,
+            decision: then_clause["decision"],
+            weight: then_clause["weight"],
+            reason: then_clause["reason"]
+          )
+
+          rule_traces << rule_trace
+
+          # Stop after first match for FIRST/PRIORITY policies (short-circuit evaluation)
+          break if matched && %w[FIRST PRIORITY].include?(hit_policy)
+        end
+
+        Explainability::ExplainabilityResult.new(
+          evaluator_name: @name,
+          rule_traces: rule_traces
+        )
+      end
+
       # Find first matching rule (for short-circuiting)
-      def find_first_matching_evaluation(context, feedback: {})
+      def find_first_matching_evaluation(context, explainability_result: nil, feedback: {})
         ctx = context.is_a?(Context) ? context : Context.new(context)
         rules = @rules_json["rules"] || []
 
@@ -70,20 +131,35 @@ module DecisionAgent
           if_clause = rule["if"]
           next unless if_clause
 
-          next unless Dsl::ConditionEvaluator.evaluate(if_clause, ctx)
+          # If explainability is already collected, use the trace data
+          matched = if explainability_result
+                     rule_trace = explainability_result.rule_traces.find { |rt| rt.rule_id == (rule["id"] || "rule_#{rules.index(rule)}") }
+                     rule_trace&.matched
+                   else
+                     Dsl::ConditionEvaluator.evaluate(if_clause, ctx)
+                   end
+
+          next unless matched
 
           then_clause = rule["then"]
+          metadata = {
+            type: "dmn_rule",
+            rule_id: rule["id"],
+            ruleset: @rules_json["ruleset"],
+            hit_policy: @decision.decision_table.hit_policy
+          }
+          
+          # Add explainability data to metadata
+          if explainability_result
+            metadata[:explainability] = explainability_result.to_h
+          end
+          
           return Evaluation.new(
             decision: then_clause["decision"],
             weight: then_clause["weight"] || 1.0,
             reason: then_clause["reason"] || "Rule matched",
             evaluator_name: @name,
-            metadata: {
-              type: "dmn_rule",
-              rule_id: rule["id"],
-              ruleset: @rules_json["ruleset"],
-              hit_policy: @decision.decision_table.hit_policy
-            }
+            metadata: metadata
           )
         end
 
@@ -91,7 +167,7 @@ module DecisionAgent
       end
 
       # Find all matching rules (not just first)
-      def find_all_matching_evaluations(context, feedback: {})
+      def find_all_matching_evaluations(context, explainability_result: nil, feedback: {})
         ctx = context.is_a?(Context) ? context : Context.new(context)
         rules = @rules_json["rules"] || []
         matching = []
@@ -100,20 +176,33 @@ module DecisionAgent
           if_clause = rule["if"]
           next unless if_clause
 
-          next unless Dsl::ConditionEvaluator.evaluate(if_clause, ctx)
+          # If explainability is already collected, use the trace data
+          matched = if explainability_result
+                     rule_trace = explainability_result.rule_traces.find { |rt| rt.rule_id == (rule["id"] || "rule_#{rules.index(rule)}") }
+                     rule_trace&.matched
+                   else
+                     Dsl::ConditionEvaluator.evaluate(if_clause, ctx)
+                   end
+
+          next unless matched
 
           then_clause = rule["then"]
+          metadata = {
+            type: "dmn_rule",
+            rule_id: rule["id"],
+            ruleset: @rules_json["ruleset"],
+            hit_policy: @decision.decision_table.hit_policy
+          }
+          
+          # Add explainability data to metadata (will be added to final result)
+          # For now, we'll add it to the final result after hit policy is applied
+          
           matching << Evaluation.new(
             decision: then_clause["decision"],
             weight: then_clause["weight"] || 1.0,
             reason: then_clause["reason"] || "Rule matched",
             evaluator_name: @name,
-            metadata: {
-              type: "dmn_rule",
-              rule_id: rule["id"],
-              ruleset: @rules_json["ruleset"],
-              hit_policy: @decision.decision_table.hit_policy
-            }
+            metadata: metadata
           )
         end
 

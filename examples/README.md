@@ -1,10 +1,63 @@
 # DecisionAgent Examples
 
-This directory contains practical examples demonstrating how to use DecisionAgent features including versioning, monitoring, and web UI integration.
+This directory contains practical examples demonstrating how to use DecisionAgent features including versioning, monitoring, explainability, and web UI integration.
 
 ## Examples Overview
 
-### 1. Basic Versioning ([01_basic_versioning.rb](01_basic_versioning.rb))
+### 1. Basic Usage ([basic_usage.rb](basic_usage.rb))
+
+**What it covers:**
+- Creating a simple evaluator
+- Making decisions
+- Viewing explanations
+- Audit payload inspection
+
+**Run it:**
+```bash
+ruby examples/basic_usage.rb
+```
+
+**Best for:** First-time users, understanding core concepts
+
+---
+
+### 2. Explainability ([explainability_example.rb](explainability_example.rb))
+
+**What it covers:**
+- Machine-readable decision explanations
+- `result.because` - Conditions that led to the decision
+- `result.failed_conditions` - Conditions that failed
+- `result.explainability` - Complete explainability data
+- Short and verbose explanation modes
+- Using explainability for audit logging
+
+**Run it:**
+```bash
+ruby examples/explainability_example.rb
+```
+
+**Best for:** Understanding how to use explainability for audits, compliance, and debugging
+
+---
+
+### 3. JSON Rules ([json_rules_example.rb](json_rules_example.rb))
+
+**What it covers:**
+- Defining rules in JSON format
+- Multiple rules with different priorities
+- Condition evaluation
+- Explainability integration
+
+**Run it:**
+```bash
+ruby examples/json_rules_example.rb
+```
+
+**Best for:** Learning the JSON rule DSL and explainability features
+
+---
+
+### 4. Basic Versioning ([01_basic_versioning.rb](01_basic_versioning.rb))
 
 **What it covers:**
 - Creating initial versions
@@ -204,10 +257,11 @@ See [DMN Examples README](dmn/README.md) for complete documentation.
 These shorter examples demonstrate specific features:
 
 - **[basic_usage.rb](basic_usage.rb)** - Simple decision making with evaluators
+- **[explainability_example.rb](explainability_example.rb)** - Machine-readable decision explanations with condition-level tracing
 - **[custom_evaluator_example.rb](custom_evaluator_example.rb)** - Building custom evaluator implementations
 - **[feedback_aware_evaluator.rb](feedback_aware_evaluator.rb)** - Integrating user feedback into decisions
 - **[conflict_resolution_example.rb](conflict_resolution_example.rb)** - Using different scoring strategies
-- **[json_rules_example.rb](json_rules_example.rb)** - Working with JSON-based rule definitions
+- **[json_rules_example.rb](json_rules_example.rb)** - Working with JSON-based rule definitions (includes explainability)
 - **[replay_example.rb](replay_example.rb)** - Historical decision replay
 - **[thread_safe_performance.rb](thread_safe_performance.rb)** - Performance benchmarking and thread-safety verification
 - **[race_condition_demo.rb](race_condition_demo.rb)** - Demonstrating thread-safe file operations

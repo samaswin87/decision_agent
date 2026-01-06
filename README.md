@@ -14,8 +14,8 @@ A production-grade, deterministic, explainable, and auditable decision engine fo
 DecisionAgent is designed for applications that require **deterministic, explainable, and auditable** decision-making:
 
 - ✅ **Deterministic** - Same input always produces same output
-- ✅ **Explainable** - Every decision includes human-readable reasoning
-- ✅ **Auditable** - Reproduce any historical decision exactly
+- ✅ **Explainable** - Every decision includes human-readable reasoning and machine-readable condition traces
+- ✅ **Auditable** - Reproduce any historical decision exactly with complete explainability
 - ✅ **Framework-agnostic** - Pure Ruby, works anywhere
 - ✅ **Production-ready** - Comprehensive testing ([Coverage Report](coverage.md)), error handling, and versioning
 
@@ -55,9 +55,12 @@ agent = DecisionAgent::Agent.new(evaluators: [evaluator])
 # Make decision
 result = agent.decide(context: { amount: 1500 })
 
-puts result.decision      # => "approve"
-puts result.confidence    # => 0.9
-puts result.explanations  # => ["High value transaction"]
+puts result.decision           # => "approve"
+puts result.confidence         # => 0.9
+puts result.explanations       # => ["High value transaction"]
+puts result.because            # => ["amount > 1000"]
+puts result.failed_conditions  # => []
+puts result.explainability     # => { decision: "approve", because: [...], failed_conditions: [] }
 ```
 
 See [Code Examples](docs/CODE_EXAMPLES.md) for more comprehensive examples.
@@ -73,6 +76,10 @@ See [Code Examples](docs/CODE_EXAMPLES.md) for more comprehensive examples.
 
 ### Auditability & Compliance
 - **Complete Audit Trails** - Every decision fully logged
+- **Explainability Layer** - Machine-readable condition traces for every decision
+  - `result.because` - Conditions that led to the decision
+  - `result.failed_conditions` - Conditions that failed
+  - `result.explainability` - Complete machine-readable explainability data
 - **Deterministic Replay** - Reproduce historical decisions exactly
 - **RFC 8785 Canonical JSON** - Industry-standard deterministic hashing
 - **Compliance Ready** - HIPAA, SOX, regulatory compliance support
@@ -256,6 +263,7 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 - [Examples Directory](examples/README.md) - Working examples with explanations
 
 ### Core Features
+- [Explainability Layer](docs/EXPLAINABILITY.md) - Machine-readable decision explanations with condition-level tracing
 - [Advanced Operators](docs/ADVANCED_OPERATORS.md) - String, numeric, date/time, collection, and geospatial operators
 - [Data Enrichment](docs/DATA_ENRICHMENT.md) - REST API data enrichment with caching and circuit breaker
 - [DMN Guide](docs/DMN_GUIDE.md) - Complete DMN 1.3 support guide

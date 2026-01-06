@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Explainability Layer** 🔍
+  - **Machine-readable decision explanations** - Every decision now includes complete trace of why it was made
+    - `Decision#because` - Returns array of conditions that led to the decision
+    - `Decision#failed_conditions` - Returns array of conditions that failed
+    - `Decision#explainability` - Returns complete machine-readable explainability data
+    - Short and verbose explanation modes
+  - **Condition-level tracing** - Track every condition evaluation with actual/expected values
+    - Automatic condition description generation
+    - Support for all operators (eq, neq, gt, lt, gte, lte, in, contains, present, blank, etc.)
+    - Condition evaluation tree with pass/fail status
+  - **Rule-level tracing** - Track which rules were evaluated and which matched
+    - Rule trace includes all condition traces
+    - Tracks matched and evaluated rules
+    - Includes decision, weight, and reason from rules
+  - **Evaluator support**
+    - Full explainability support in `JsonRuleEvaluator`
+    - Full explainability support in `DmnEvaluator`
+    - Explainability data included in evaluation metadata
+  - **Audit and compliance ready** - Machine-readable format suitable for regulatory audits
+    - Complete condition trace for every decision
+    - Failed conditions tracking
+    - Reproducible explainability data
+  - See [Explainability Documentation](EXPLAINABILITY.md) for details
+
+### Added
+
 - **Simulation and What-If Analysis** 🧪
   - **Historical Replay / Backtesting** - ReplayEngine for replaying historical decisions
     - Support for CSV and JSON file import
