@@ -33,10 +33,10 @@ module DecisionAgent
           next_version_number = last_version ? last_version.version_number + 1 : 1
 
           # Deactivate previous active versions
-          # Use update! instead of update_all to trigger validations
-          rule_version_class.where(rule_id: rule_id, status: "active").find_each do |v|
-            v.update!(status: "archived")
-          end
+          # Use update_all for better concurrency (avoids SQLite locking issues)
+          # Status "archived" is valid, so no need to trigger validations
+          rule_version_class.where(rule_id: rule_id, status: "active")
+                            .update_all(status: "archived")
 
           # Create new version
           version = rule_version_class.create!(
@@ -87,12 +87,11 @@ module DecisionAgent
 
           # Deactivate all other versions for this rule within the same transaction
           # The lock ensures only one thread can perform this operation at a time
-          # Use update! instead of update_all to trigger validations
+          # Use update_all for better concurrency (avoids SQLite locking issues)
+          # Status "archived" is valid, so no need to trigger validations
           rule_version_class.where(rule_id: version.rule_id, status: "active")
                             .where.not(id: version_id)
-                            .find_each do |v|
-                              v.update!(status: "archived")
-          end
+                            .update_all(status: "archived")
 
           # Activate this version
           version.update!(status: "active")
