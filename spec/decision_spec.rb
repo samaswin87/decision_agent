@@ -277,6 +277,27 @@ RSpec.describe DecisionAgent::Decision do
       expect(hash[:evaluations].first[:decision]).to eq("approve")
       expect(hash[:evaluations].first[:weight]).to eq(0.8)
     end
+
+    it "includes explainability fields as primary structure" do
+      decision = described_class.new(
+        decision: "approve",
+        confidence: 0.8,
+        explanations: ["explanation"],
+        evaluations: [evaluation],
+        audit_payload: audit_payload
+      )
+
+      hash = decision.to_h
+
+      # Verify explainability fields are present as top-level keys
+      expect(hash[:decision]).to eq("approve")
+      expect(hash[:because]).to be_an(Array)
+      expect(hash[:failed_conditions]).to be_an(Array)
+      expect(hash[:explainability]).to be_a(Hash)
+      expect(hash[:explainability][:decision]).to eq("approve")
+      expect(hash[:explainability][:because]).to be_an(Array)
+      expect(hash[:explainability][:failed_conditions]).to be_an(Array)
+    end
   end
 
   describe "#==" do

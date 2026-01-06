@@ -41,13 +41,22 @@ module DecisionAgent
     end
 
     def to_h
+      # Structure decision result as explainability by default
+      # This makes explainability the primary format for decision results
+      explainability_data = explainability(verbose: false)
+      
       {
-        decision: @decision,
+        # Explainability fields (primary structure)
+        decision: explainability_data[:decision],
+        because: explainability_data[:because],
+        failed_conditions: explainability_data[:failed_conditions],
+        # Additional metadata for completeness
         confidence: @confidence,
         explanations: @explanations,
         evaluations: @evaluations.map(&:to_h),
         audit_payload: @audit_payload,
-        explainability: explainability(verbose: false)
+        # Full explainability data (includes rule_traces in verbose mode)
+        explainability: explainability_data
       }
     end
 
