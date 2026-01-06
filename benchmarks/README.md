@@ -26,6 +26,9 @@ rake benchmark:regression
 
 # Update baseline for current Ruby version
 rake benchmark:baseline
+
+# Update README with latest benchmark results
+rake benchmark:update_readme
 ```
 
 ## Benchmark Descriptions

@@ -234,7 +234,7 @@ puts "DMN Evaluator initialization (includes XML parsing + conversion):"
 puts "  #{INIT_ITERATIONS} iterations: #{(dmn_init_time * 1000).round(2)}ms"
 puts "  Average: #{dmn_init_avg}ms per evaluator"
 puts
-puts "Overhead: #{overhead > 0 ? '+' : ''}#{overhead}% (#{((dmn_init_avg - json_init_avg)).round(4)}ms per evaluator)"
+puts "Overhead: #{'+' if overhead.positive?}#{overhead}% (#{(dmn_init_avg - json_init_avg).round(4)}ms per evaluator)"
 puts
 
 # ============================================================================
@@ -291,7 +291,7 @@ puts "  #{EVAL_ITERATIONS} iterations: #{(dmn_eval_time * 1000).round(2)}ms"
 puts "  Average: #{dmn_eval_avg}ms per evaluation"
 puts "  Throughput: #{dmn_throughput} evaluations/sec"
 puts
-puts "Evaluation overhead: #{eval_overhead > 0 ? '+' : ''}#{eval_overhead}%"
+puts "Evaluation overhead: #{'+' if eval_overhead.positive?}#{eval_overhead}%"
 puts
 
 # ============================================================================
@@ -304,15 +304,14 @@ puts
 puts "INITIALIZATION:"
 puts "  • JSON evaluator: #{json_init_avg}ms (one-time cost)"
 puts "  • DMN evaluator:  #{dmn_init_avg}ms (includes XML parsing + JSON conversion)"
-puts "  • Overhead: #{overhead > 0 ? '+' : ''}#{overhead}%"
+puts "  • Overhead: #{'+' if overhead.positive?}#{overhead}%"
 puts
 puts "EVALUATION:"
 puts "  • JSON evaluator: #{json_eval_avg}ms per evaluation"
 puts "  • DMN evaluator:  #{dmn_eval_avg}ms per evaluation"
-puts "  • Overhead: #{eval_overhead > 0 ? '+' : ''}#{eval_overhead}%"
+puts "  • Overhead: #{'+' if eval_overhead.positive?}#{eval_overhead}%"
 puts
 puts "THROUGHPUT:"
 puts "  • JSON evaluator: #{json_throughput} evaluations/sec"
 puts "  • DMN evaluator:  #{dmn_throughput} evaluations/sec"
 puts "=" * 80
-

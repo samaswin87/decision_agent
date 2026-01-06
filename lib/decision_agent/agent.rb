@@ -145,18 +145,21 @@ module DecisionAgent
       # This is expensive, but we cache the result to avoid recomputation
       canonical = canonical_json(hashable)
 
-      # Use canonical JSON as cache key (thread-safe lookup)
-      cached_hash = self.class.hash_cache_mutex.synchronize do
-        self.class.hash_cache[canonical]
-      end
-
+      # Fast path: check cache without lock first (unsafe read, but acceptable for cache)
+      # This allows concurrent reads without mutex overhead
+      cache = self.class.hash_cache
+      cached_hash = cache[canonical]
       return cached_hash if cached_hash
 
       # Cache miss - compute SHA256 hash (also expensive)
       computed_hash = Digest::SHA256.hexdigest(canonical)
 
       # Store in cache (thread-safe, with size limit)
+      # Only lock when we need to write
       self.class.hash_cache_mutex.synchronize do
+        # Double-check after acquiring lock (another thread may have added it)
+        return self.class.hash_cache[canonical] if self.class.hash_cache[canonical]
+
         # Clear cache if it gets too large (simple FIFO eviction)
         if self.class.hash_cache.size >= self.class.hash_cache_max_size
           # Remove oldest 10% of entries (simple approximation)

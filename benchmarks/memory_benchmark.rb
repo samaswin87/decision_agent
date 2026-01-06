@@ -18,6 +18,44 @@ end
 ITERATIONS = 10_000
 WARMUP_ITERATIONS = 100
 
+# ============================================================================
+# Helper Methods
+# ============================================================================
+def memory_usage
+  if RUBY_PLATFORM.include?("linux")
+    # Linux: Read from /proc/self/status
+    if File.exist?("/proc/self/status")
+      status = File.read("/proc/self/status")
+      return Regexp.last_match(1).to_i * 1024 if status =~ /VmRSS:\s+(\d+)\s+kB/
+    end
+  elsif RUBY_PLATFORM.include?("darwin")
+    # macOS: Use ps command
+    pid = Process.pid
+    result = `ps -o rss= -p #{pid}`.strip
+    return result.to_i * 1024 if result =~ /^\d+$/
+  end
+
+  # Fallback: Return 0 if we can't determine
+  0
+rescue StandardError
+  0
+end
+
+def format_bytes(bytes)
+  return "0 B" if bytes.nil? || bytes.zero?
+
+  units = %w[B KB MB GB TB]
+  unit_index = 0
+  size = bytes.to_f
+
+  while size >= 1024 && unit_index < units.size - 1
+    size /= 1024
+    unit_index += 1
+  end
+
+  "#{size.round(2)} #{units[unit_index]}"
+end
+
 puts "=" * 80
 puts "Memory Usage Benchmark"
 puts "=" * 80
@@ -60,20 +98,20 @@ puts "Warm-up complete.\n\n"
 if MEMORY_PROFILER_AVAILABLE
   puts "Running memory profiling..."
   puts "-" * 80
-  
+
   report = MemoryProfiler.report do
     ITERATIONS.times do
       agent.decide(context: test_context)
     end
   end
-  
+
   total_allocated = report.total_allocated_memsize
   total_retained = report.total_retained_memsize
   allocations = report.total_allocated
-  
+
   memory_per_decision = total_allocated.to_f / ITERATIONS
   allocations_per_decision = allocations.to_f / ITERATIONS
-  
+
   puts "Memory Profiling Results:"
   puts "  Total allocated: #{format_bytes(total_allocated)}"
   puts "  Total retained: #{format_bytes(total_retained)}"
@@ -96,7 +134,7 @@ puts "-" * 80
 GC.start
 GC.compact if GC.respond_to?(:compact)
 
-before_memory = get_memory_usage
+before_memory = memory_usage
 
 time = Benchmark.realtime do
   ITERATIONS.times do
@@ -108,7 +146,7 @@ end
 GC.start
 GC.compact if GC.respond_to?(:compact)
 
-after_memory = get_memory_usage
+after_memory = memory_usage
 memory_delta = after_memory - before_memory
 memory_per_decision = memory_delta.to_f / ITERATIONS
 
@@ -132,14 +170,14 @@ puts "-" * 80
 GC.start
 GC.compact if GC.respond_to?(:compact)
 
-peak_before = get_memory_usage
+peak_before = memory_usage
 decisions = []
 
 ITERATIONS.times do
   decisions << agent.decide(context: test_context)
 end
 
-peak_after = get_memory_usage
+peak_after = memory_usage
 peak_memory = peak_after - peak_before
 
 puts "  Peak memory usage: #{format_bytes(peak_memory)}"
@@ -180,7 +218,7 @@ gc_overhead = ((with_gc_time - no_gc_time) / no_gc_time * 100).round(2)
 
 puts "  1000 decisions without GC: #{(no_gc_time * 1000).round(2)}ms"
 puts "  1000 decisions with GC: #{(with_gc_time * 1000).round(2)}ms"
-puts "  GC overhead: #{gc_overhead > 0 ? '+' : ''}#{gc_overhead}%"
+puts "  GC overhead: #{'+' if gc_overhead.positive?}#{gc_overhead}%"
 puts
 
 # ============================================================================
@@ -192,54 +230,11 @@ puts "=" * 80
 puts
 puts "Memory per decision: #{format_bytes(memory_per_decision)}"
 puts "Peak memory (10k): #{format_bytes(peak_memory)}"
-if MEMORY_PROFILER_AVAILABLE
-  puts "Allocations per decision: #{allocations_per_decision.round(0)} objects"
-end
-puts "GC impact: #{gc_overhead > 0 ? '+' : ''}#{gc_overhead}% overhead"
+puts "Allocations per decision: #{allocations_per_decision.round(0)} objects" if MEMORY_PROFILER_AVAILABLE
+puts "GC impact: #{'+' if gc_overhead.positive?}#{gc_overhead}% overhead"
 puts
 puts "KEY FINDINGS:"
 puts "✓ Memory usage is minimal per decision"
 puts "✓ GC overhead is typically < 5%"
 puts "✓ Decisions are frozen (immutable) for thread-safety"
 puts "=" * 80
-
-# ============================================================================
-# Helper Methods
-# ============================================================================
-def get_memory_usage
-  if RUBY_PLATFORM.include?("linux")
-    # Linux: Read from /proc/self/status
-    if File.exist?("/proc/self/status")
-      status = File.read("/proc/self/status")
-      if status =~ /VmRSS:\s+(\d+)\s+kB/
-        return $1.to_i * 1024
-      end
-    end
-  elsif RUBY_PLATFORM.include?("darwin")
-    # macOS: Use ps command
-    pid = Process.pid
-    result = `ps -o rss= -p #{pid}`.strip
-    return result.to_i * 1024 if result =~ /^\d+$/
-  end
-  
-  # Fallback: Return 0 if we can't determine
-  0
-rescue
-  0
-end
-
-def format_bytes(bytes)
-  return "0 B" if bytes.nil? || bytes == 0
-  
-  units = %w[B KB MB GB TB]
-  unit_index = 0
-  size = bytes.to_f
-  
-  while size >= 1024 && unit_index < units.size - 1
-    size /= 1024
-    unit_index += 1
-  end
-  
-  "#{size.round(2)} #{units[unit_index]}"
-end
-

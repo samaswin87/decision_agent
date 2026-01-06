@@ -311,6 +311,26 @@ rake benchmark:regression # Compare against baseline
 # See [Benchmarks Guide](benchmarks/README.md) for complete documentation
 ```
 
+### Latest Benchmark Results
+
+**Last Updated:** 2026-01-06T04:03:29Z
+
+#### Performance Comparison
+
+| Metric | Latest (2026-01-06) | Previous (2026-01-06) | Change |
+|--------|--------------------------------------------------|------------------------------------------------------|--------|
+| Basic Throughput | 8966.04 decisions/sec | 9751.42 decisions/sec | ↓ 8.05% (degraded) |
+| Basic Latency | 0.1115 ms | 0.1025 ms | ↑ 8.78% (degraded) |
+| Multi-threaded (50 threads) Throughput | 8560.69 decisions/sec | 8849.86 decisions/sec | ↓ 3.27% (degraded) |
+| Multi-threaded (50 threads) Latency | 0.1168 ms | 0.113 ms | ↑ 3.36% (degraded) |
+
+**Environment:**
+- Ruby Version: 3.3.5
+- Hardware: x86_64
+- OS: Darwin
+- Git Commit: `aba46af5`
+
+> 💡 **Note:** Run `rake benchmark:regression` to generate new benchmark results. This section is automatically updated with the last 2 benchmark runs.
 ## Contributing
 
 1. Fork the repository

@@ -103,7 +103,7 @@ def run_benchmark(name, agent, context, iterations)
     latency_ms: latency,
     time_ms: time * 1000
   }
-rescue => e
+rescue StandardError => e
   {
     name: name,
     throughput: 0,
@@ -134,7 +134,7 @@ results << run_benchmark("Large rule set (100 rules)", large_agent, large_contex
 puts "=" * 80
 puts "RESULTS"
 puts "=" * 80
-puts format("%-40s %15s %15s", "Test", "Throughput (dec/sec)", "Latency (ms)")
+puts "Test                                     Throughput (dec/sec)    Latency (ms)"
 puts "-" * 80
 
 results.each do |result|
@@ -157,4 +157,3 @@ puts "  • Iterations per test: #{ITERATIONS}"
 puts "  • Warm-up iterations: #{WARMUP_ITERATIONS}"
 puts "  • Validation: Disabled (maximum performance)"
 puts "=" * 80
-

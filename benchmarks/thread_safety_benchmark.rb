@@ -10,7 +10,7 @@ require "benchmark"
 # ============================================================================
 ITERATIONS = 10_000
 WARMUP_ITERATIONS = 100
-THREAD_COUNTS = [1, 10, 50, 100]
+THREAD_COUNTS = [1, 10, 50, 100].freeze
 
 puts "=" * 80
 puts "Thread-Safety Performance Benchmark"
@@ -182,7 +182,7 @@ puts "  Latency:    #{max_thread_result[:latency].round(4)}ms per decision"
 puts "  Speedup:    #{max_thread_result[:speedup].round(2)}x"
 puts
 
-if overhead_pct > 0
+if overhead_pct.positive?
   puts "Thread-safety overhead: +#{overhead_pct}% (minimal)"
 else
   puts "Thread-safety overhead: #{overhead_pct}% (improvement)"
@@ -196,4 +196,3 @@ puts "✓ Agent instances can be safely shared across threads"
 puts "✓ Linear scalability with thread count (no contention)"
 puts "✓ Production-ready for high-throughput applications"
 puts "=" * 80
-

@@ -197,7 +197,7 @@ def benchmark_operator(name, agent, context, iterations)
         error: "Context mismatch"
       }
     end
-  rescue => e
+  rescue StandardError => e
     return {
       name: name,
       iterations: iterations,
@@ -252,7 +252,7 @@ results << benchmark_operator("Collection Operators (contains_all, contains_any,
 puts "=" * 80
 puts "RESULTS"
 puts "=" * 80
-puts format("%-50s %15s %15s", "Operator Type", "Throughput (dec/sec)", "Latency (ms)")
+puts "Operator Type                                      Throughput (dec/sec)    Latency (ms)"
 puts "-" * 80
 
 baseline_throughput = results[0][:throughput]
@@ -262,8 +262,8 @@ results.each do |result|
     puts format("%-50s %15s", result[:name], "ERROR: #{result[:error]}")
   else
     overhead = ((baseline_throughput - result[:throughput]) / baseline_throughput * 100).round(2)
-    overhead_str = overhead > 0 ? "(-#{overhead}%)" : "(+#{overhead.abs}%)"
-    
+    overhead_str = overhead.positive? ? "(-#{overhead}%)" : "(+#{overhead.abs}%)"
+
     puts format(
       "%-50s %15.2f %15.4f %s",
       result[:name],
@@ -281,4 +281,3 @@ puts "  • Baseline: Basic operators"
 puts "  • Iterations per test: #{ITERATIONS}"
 puts "  • Warm-up iterations: #{WARMUP_ITERATIONS}"
 puts "=" * 80
-

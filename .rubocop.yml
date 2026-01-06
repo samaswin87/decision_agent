@@ -28,6 +28,7 @@ Metrics/MethodLength:
     - 'spec/**/*'
     - 'examples/**/*'
     - 'bin/**/*'
+    - 'benchmarks/**/*'
     - 'lib/decision_agent/versioning/file_storage_adapter.rb'
     - 'scripts/generate_coverage_report.rb'
 
@@ -148,3 +149,8 @@ Lint/DuplicateBranch:
 
 Metrics/ParameterLists:
   Max: 6
+
+# Disable FormatStringToken for benchmark files (simple format strings are fine)
+Style/FormatStringToken:
+  Exclude:
+    - 'benchmarks/**/*'
