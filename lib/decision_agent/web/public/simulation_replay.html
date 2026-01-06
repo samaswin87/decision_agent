@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Replay / Backtesting</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .simulation-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .step-section {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .file-upload-area.dragover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .results-table th {
+            background: var(--hover-bg);
+            font-weight: 600;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric-card {
+            background: var(--hover-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+
+        .header-links {
+            margin-top: 20px;
+        }
+
+        .header-links a {
+            margin-right: 15px;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="simulation-container">
+        <header>
+            <h1>🔄 Historical Replay / Backtesting</h1>
+            <p class="subtitle">Replay historical decisions with different rule versions</p>
+            <div class="header-links">
+                <a href="/simulation">← Back to Simulation Dashboard</a>
+            </div>
+        </header>
+
+        <!-- Step 1: Upload Historical Data -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h2>Upload Historical Data</h2>
+            </div>
+            <p>Upload a CSV or JSON file with historical decision contexts. Each row should contain the context fields used in your rules.</p>
+            
+            <div class="file-upload-area" id="uploadArea">
+                <p>📁 Drag and drop your CSV/JSON file here, or click to browse</p>
+                <input type="file" id="fileInput" accept=".csv,.json" style="display: none;">
+            </div>
+
+            <div id="uploadStatus" class="hidden"></div>
+        </div>
+
+        <!-- Step 2: Configure Rules -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h2>Configure Rules</h2>
+            </div>
+            <p>Paste your rules JSON or select a version to use</p>
+            
+            <div class="form-group">
+                <label for="rulesJson">Rules JSON:</label>
+                <textarea id="rulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="ruleVersion">Or select version:</label>
+                <select id="ruleVersion" class="input">
+                    <option value="">-- Select Version --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="compareVersion">Compare with version (optional):</label>
+                <select id="compareVersion" class="input">
+                    <option value="">-- None --</option>
+                </select>
+            </div>
+
+            <div class="actions">
+                <label for="importRulesFile" class="btn btn-secondary">📁 Import Rules JSON
+                    <input type="file" id="importRulesFile" accept=".json" style="display: none;">
+                </label>
+                <button class="btn btn-secondary" id="validateRulesBtn">✓ Validate Rules</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Run Replay -->
+        <div class="step-section">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h2>Run Historical Replay</h2>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="parallelExecution" checked> Parallel execution
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="threadCount">Thread count:</label>
+                <input type="number" id="threadCount" value="4" min="1" max="16" class="input" style="width: 100px;">
+            </div>
+
+            <button class="btn btn-primary" id="runReplayBtn" disabled>▶ Run Replay</button>
+
+            <div id="runStatus" class="hidden"></div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="step-section" id="resultsSection" style="display: none;">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <h2>Replay Results</h2>
+            </div>
+
+            <div id="replayInfo">
+                <p><strong>Replay ID:</strong> <span id="replayId"></span></p>
+            </div>
+
+            <!-- Statistics -->
+            <div id="statisticsSection" class="hidden">
+                <h3>Statistics</h3>
+                <div class="metrics-grid" id="statisticsGrid"></div>
+            </div>
+
+            <!-- Decision Distribution -->
+            <div id="distributionSection" class="hidden">
+                <h3>Decision Distribution</h3>
+                <div id="distributionContent"></div>
+            </div>
+
+            <!-- Comparison Results (if comparing) -->
+            <div id="comparisonSection" class="hidden">
+                <h3>Comparison Results</h3>
+                <div class="metrics-grid" id="comparisonGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Helper function to get the base path for API calls
+        function getBasePath() {
+            const baseTag = document.querySelector('base');
+            if (baseTag && baseTag.href) {
+                try {
+                    const baseUrl = new URL(baseTag.href, window.location.href);
+                    let path = baseUrl.pathname;
+                    if (path && !path.endsWith('/')) {
+                        path += '/';
+                    }
+                    return path;
+                } catch (e) {
+                    if (baseTag.href.startsWith('/')) {
+                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
+                        if (match && match[2]) {
+                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
+                        }
+                    } else if (baseTag.href.startsWith('./')) {
+                        const pathname = window.location.pathname;
+                        return pathname.substring(0, pathname.lastIndexOf('/') + 1);
+                    }
+                }
+            }
+            const pathname = window.location.pathname;
+            if (pathname.includes('/decision_agent')) {
+                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
+                if (match) {
+                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
+                }
+            }
+            const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
+            return dirPath || '/';
+        }
+
+        const basePath = getBasePath();
+        let historicalData = null;
+
+        // Load versions
+        function loadVersions() {
+            fetch(`${basePath}api/versions`)
+                .then(response => response.json())
+                .then(data => {
+                    const ruleVersionSelect = document.getElementById('ruleVersion');
+                    const compareVersionSelect = document.getElementById('compareVersion');
+                    
+                    ruleVersionSelect.innerHTML = '<option value="">-- Select Version --</option>';
+                    compareVersionSelect.innerHTML = '<option value="">-- None --</option>';
+                    
+                    if (data.versions) {
+                        data.versions.forEach(v => {
+                            const option1 = document.createElement('option');
+                            option1.value = v.id;
+                            option1.textContent = `${v.rule_id} v${v.version_number} (${v.status})`;
+                            ruleVersionSelect.appendChild(option1);
+                            
+                            const option2 = document.createElement('option');
+                            option2.value = v.id;
+                            option2.textContent = `${v.rule_id} v${v.version_number} (${v.status})`;
+                            compareVersionSelect.appendChild(option2);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error loading versions:', error));
+        }
+
+        loadVersions();
+
+        // File upload
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const uploadStatus = document.getElementById('uploadStatus');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    if (file.name.endsWith('.json')) {
+                        historicalData = JSON.parse(e.target.result);
+                    } else if (file.name.endsWith('.csv')) {
+                        // Simple CSV parsing
+                        const lines = e.target.result.split('\n');
+                        const headers = lines[0].split(',');
+                        historicalData = lines.slice(1).filter(l => l.trim()).map(line => {
+                            const values = line.split(',');
+                            const obj = {};
+                            headers.forEach((h, i) => {
+                                obj[h.trim()] = values[i]?.trim() || '';
+                            });
+                            return obj;
+                        });
+                    }
+                    
+                    uploadStatus.className = 'success-message';
+                    uploadStatus.textContent = `Successfully loaded ${historicalData.length} historical records`;
+                    uploadStatus.classList.remove('hidden');
+                    document.getElementById('runReplayBtn').disabled = false;
+                } catch (error) {
+                    uploadStatus.className = 'error-message';
+                    uploadStatus.textContent = `Error: ${error.message}`;
+                    uploadStatus.classList.remove('hidden');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Import rules JSON
+        document.getElementById('importRulesFile').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        document.getElementById('rulesJson').value = JSON.stringify(json, null, 2);
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // Validate rules
+        document.getElementById('validateRulesBtn').addEventListener('click', () => {
+            const rulesJson = document.getElementById('rulesJson').value;
+            try {
+                JSON.parse(rulesJson);
+                fetch(`${basePath}api/validate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(JSON.parse(rulesJson))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        alert('Rules are valid!');
+                    } else {
+                        alert('Validation errors: ' + data.errors.join(', '));
+                    }
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        // Run replay
+        document.getElementById('runReplayBtn').addEventListener('click', () => {
+            if (!historicalData) {
+                alert('Please upload historical data first');
+                return;
+            }
+
+            const rulesJson = document.getElementById('rulesJson').value;
+            const ruleVersion = document.getElementById('ruleVersion').value;
+            const compareVersion = document.getElementById('compareVersion').value;
+
+            if (!rulesJson.trim() && !ruleVersion) {
+                alert('Please provide rules JSON or select a version');
+                return;
+            }
+
+            try {
+                const rules = rulesJson.trim() ? JSON.parse(rulesJson) : null;
+                
+                const runStatus = document.getElementById('runStatus');
+                runStatus.className = 'hidden';
+
+                const requestData = {
+                    historical_data: historicalData,
+                    options: {
+                        parallel: document.getElementById('parallelExecution').checked,
+                        thread_count: parseInt(document.getElementById('threadCount').value) || 4
+                    }
+                };
+
+                if (rules) {
+                    requestData.rules = rules;
+                }
+                if (ruleVersion) {
+                    requestData.rule_version = ruleVersion;
+                }
+                if (compareVersion) {
+                    requestData.compare_with = compareVersion;
+                }
+
+                fetch(`${basePath}api/simulation/replay`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        runStatus.className = 'error-message';
+                        runStatus.textContent = `Error: ${data.error}`;
+                        runStatus.classList.remove('hidden');
+                    } else {
+                        runStatus.className = 'success-message';
+                        runStatus.textContent = 'Replay completed successfully!';
+                        runStatus.classList.remove('hidden');
+                        displayResults(data);
+                    }
+                })
+                .catch(error => {
+                    runStatus.className = 'error-message';
+                    runStatus.textContent = `Error: ${error.message}`;
+                    runStatus.classList.remove('hidden');
+                });
+            } catch (error) {
+                alert('Invalid JSON: ' + error.message);
+            }
+        });
+
+        function displayResults(data) {
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('replayId').textContent = data.replay_id;
+
+            const results = data.results;
+            
+            // Statistics
+            if (results.total_decisions !== undefined) {
+                const statsGrid = document.getElementById('statisticsGrid');
+                statsGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.total_decisions}</div>
+                        <div class="metric-label">Total Decisions</div>
+                    </div>
+                    ${results.changed_decisions !== undefined ? `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.changed_decisions}</div>
+                        <div class="metric-label">Changed Decisions</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${(results.change_rate * 100).toFixed(2)}%</div>
+                        <div class="metric-label">Change Rate</div>
+                    </div>
+                    ` : ''}
+                    ${results.average_confidence_delta !== undefined ? `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.average_confidence_delta.toFixed(3)}</div>
+                        <div class="metric-label">Avg Confidence Delta</div>
+                    </div>
+                    ` : ''}
+                `;
+                document.getElementById('statisticsSection').classList.remove('hidden');
+            }
+
+            // Decision distribution
+            if (results.decision_distribution) {
+                const distContent = document.getElementById('distributionContent');
+                let html = '<table class="results-table"><thead><tr><th>Decision</th><th>Count</th></tr></thead><tbody>';
+                Object.entries(results.decision_distribution).forEach(([decision, count]) => {
+                    html += `<tr><td>${decision}</td><td>${count}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                distContent.innerHTML = html;
+                document.getElementById('distributionSection').classList.remove('hidden');
+            }
+
+            // Comparison results
+            if (results.changed_decisions !== undefined) {
+                const compGrid = document.getElementById('comparisonGrid');
+                compGrid.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value">${results.changed_decisions}</div>
+                        <div class="metric-label">Changed Decisions</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${(results.change_rate * 100).toFixed(2)}%</div>
+                        <div class="metric-label">Change Rate</div>
+                    </div>
+                `;
+                document.getElementById('comparisonSection').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
+

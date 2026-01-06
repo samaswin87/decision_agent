@@ -28,6 +28,15 @@ require_relative "../auth/access_audit_logger"
 require_relative "middleware/auth_middleware"
 require_relative "middleware/permission_middleware"
 
+# Simulation components
+require_relative "../simulation/replay_engine"
+require_relative "../simulation/what_if_analyzer"
+require_relative "../simulation/impact_analyzer"
+require_relative "../simulation/shadow_test_engine"
+require_relative "../simulation/scenario_engine"
+require_relative "../simulation/scenario_library"
+require_relative "../versioning/version_manager"
+
 module DecisionAgent
   module Web
     # rubocop:disable Metrics/ClassLength
@@ -41,6 +50,10 @@ module DecisionAgent
       @batch_test_storage = {}
       @batch_test_storage_mutex = Mutex.new
 
+      # In-memory storage for simulation runs
+      @simulation_storage = {}
+      @simulation_storage_mutex = Mutex.new
+
       # Auth components
       @authenticator = nil
       @permission_checker = nil
@@ -48,7 +61,7 @@ module DecisionAgent
       @auth_mutex = Mutex.new
 
       class << self
-        attr_reader :batch_test_storage, :batch_test_storage_mutex
+        attr_reader :batch_test_storage, :batch_test_storage_mutex, :simulation_storage, :simulation_storage_mutex
         attr_writer :authenticator
       end
 
@@ -1149,6 +1162,516 @@ module DecisionAgent
       rescue StandardError
         status 404
         "Batch testing page not found"
+      end
+
+      # Simulation API Endpoints
+
+      # POST /api/simulation/replay - Historical replay/backtesting
+      post "/api/simulation/replay" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          historical_data = data["historical_data"]
+          rule_version = data["rule_version"]
+          compare_with = data["compare_with"]
+          options = data["options"] || {}
+
+          unless historical_data
+            status 400
+            return { error: "historical_data is required" }.to_json
+          end
+
+          # Get rules for agent creation
+          rules_json = data["rules"]
+          unless rules_json
+            status 400
+            return { error: "rules JSON is required" }.to_json
+          end
+
+          # Create agent
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules_json)
+          agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create replay engine
+          replay_engine = DecisionAgent::Simulation::ReplayEngine.new(
+            agent: agent,
+            version_manager: version_manager
+          )
+
+          # Convert historical data if it's a file path (for future file upload support)
+          contexts = if historical_data.is_a?(Array)
+                       historical_data
+                     else
+                       # Assume it's a file path - load it
+                       raise ArgumentError, "File not found: #{historical_data}" unless File.exist?(historical_data)
+
+                       if historical_data.end_with?(".json")
+                         JSON.parse(File.read(historical_data))
+                       elsif historical_data.end_with?(".csv")
+                         # Simple CSV parsing
+                         require "csv"
+                         csv_data = CSV.read(historical_data, headers: true)
+                         csv_data.map(&:to_h)
+                       else
+                         raise ArgumentError, "Unsupported file format"
+                       end
+
+                     end
+
+          # Execute replay
+          results = if compare_with
+                      replay_engine.replay(
+                        historical_data: contexts,
+                        rule_version: rule_version,
+                        compare_with: compare_with
+                      )
+                    else
+                      replay_engine.replay(
+                        historical_data: contexts,
+                        rule_version: rule_version,
+                        options: options
+                      )
+                    end
+
+          # Store results
+          replay_id = SecureRandom.uuid
+          self.class.simulation_storage_mutex.synchronize do
+            self.class.simulation_storage[replay_id] = {
+              id: replay_id,
+              type: "replay",
+              status: "completed",
+              created_at: Time.now.utc.iso8601,
+              results: results
+            }
+          end
+
+          {
+            replay_id: replay_id,
+            results: results
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Replay failed: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/simulation/whatif - What-if analysis
+      post "/api/simulation/whatif" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          scenarios = data["scenarios"]
+          rule_version = data["rule_version"]
+          options = data["options"] || {}
+
+          unless scenarios.is_a?(Array)
+            status 400
+            return { error: "scenarios array is required" }.to_json
+          end
+
+          # Get rules for agent creation
+          rules_json = data["rules"]
+          unless rules_json
+            status 400
+            return { error: "rules JSON is required" }.to_json
+          end
+
+          # Create agent
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules_json)
+          agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create what-if analyzer
+          analyzer = DecisionAgent::Simulation::WhatIfAnalyzer.new(
+            agent: agent,
+            version_manager: version_manager
+          )
+
+          # Execute analysis
+          results = analyzer.analyze(
+            scenarios: scenarios,
+            rule_version: rule_version,
+            options: options
+          )
+
+          # Store results
+          analysis_id = SecureRandom.uuid
+          self.class.simulation_storage_mutex.synchronize do
+            self.class.simulation_storage[analysis_id] = {
+              id: analysis_id,
+              type: "whatif",
+              status: "completed",
+              created_at: Time.now.utc.iso8601,
+              results: results
+            }
+          end
+
+          {
+            analysis_id: analysis_id,
+            results: results
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "What-if analysis failed: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/simulation/whatif/sensitivity - Sensitivity analysis
+      post "/api/simulation/whatif/sensitivity" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          base_scenario = data["base_scenario"]
+          variations = data["variations"]
+          rule_version = data["rule_version"]
+
+          unless base_scenario && variations
+            status 400
+            return { error: "base_scenario and variations are required" }.to_json
+          end
+
+          # Get rules for agent creation
+          rules_json = data["rules"]
+          unless rules_json
+            status 400
+            return { error: "rules JSON is required" }.to_json
+          end
+
+          # Create agent
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules_json)
+          agent = DecisionAgent::Agent.new(evaluators: [evaluator])
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create what-if analyzer
+          analyzer = DecisionAgent::Simulation::WhatIfAnalyzer.new(
+            agent: agent,
+            version_manager: version_manager
+          )
+
+          # Execute sensitivity analysis
+          results = analyzer.sensitivity_analysis(
+            base_scenario: base_scenario,
+            variations: variations,
+            rule_version: rule_version
+          )
+
+          {
+            results: results
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Sensitivity analysis failed: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/simulation/impact - Impact analysis
+      post "/api/simulation/impact" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          baseline_version = data["baseline_version"]
+          proposed_version = data["proposed_version"]
+          test_data = data["test_data"]
+          options = data["options"] || {}
+
+          unless baseline_version && proposed_version && test_data
+            status 400
+            return { error: "baseline_version, proposed_version, and test_data are required" }.to_json
+          end
+
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create impact analyzer
+          analyzer = DecisionAgent::Simulation::ImpactAnalyzer.new(
+            version_manager: version_manager
+          )
+
+          # Execute impact analysis
+          results = analyzer.analyze(
+            baseline_version: baseline_version,
+            proposed_version: proposed_version,
+            test_data: test_data,
+            options: options
+          )
+
+          # Store results
+          impact_id = SecureRandom.uuid
+          self.class.simulation_storage_mutex.synchronize do
+            self.class.simulation_storage[impact_id] = {
+              id: impact_id,
+              type: "impact",
+              status: "completed",
+              created_at: Time.now.utc.iso8601,
+              results: results
+            }
+          end
+
+          {
+            impact_id: impact_id,
+            results: results
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Impact analysis failed: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/simulation/shadow - Shadow testing
+      post "/api/simulation/shadow" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          context = data["context"]
+          shadow_version = data["shadow_version"]
+          production_rules = data["production_rules"]
+          shadow_rules = data["shadow_rules"]
+          options = data["options"] || {}
+
+          unless context
+            status 400
+            return { error: "context is required" }.to_json
+          end
+
+          unless (production_rules && shadow_rules) || shadow_version
+            status 400
+            return { error: "Either (production_rules and shadow_rules) or shadow_version is required" }.to_json
+          end
+
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create production agent
+          if production_rules
+            prod_evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: production_rules)
+            production_agent = DecisionAgent::Agent.new(evaluators: [prod_evaluator])
+          else
+            # Use active version
+            active_version = version_manager.get_active_version
+            if active_version
+              prod_evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: active_version[:content])
+              production_agent = DecisionAgent::Agent.new(evaluators: [prod_evaluator])
+            else
+              status 400
+              return { error: "No active version found and production_rules not provided" }.to_json
+            end
+          end
+
+          # Create shadow test engine
+          shadow_engine = DecisionAgent::Simulation::ShadowTestEngine.new(
+            production_agent: production_agent,
+            version_manager: version_manager
+          )
+
+          # Execute shadow test
+          if shadow_rules
+            # Create a temporary version for shadow rules
+            temp_version = {
+              content: shadow_rules,
+              rule_id: "shadow_temp",
+              version_number: 1
+            }
+            result = shadow_engine.test(
+              context: context,
+              shadow_version: temp_version,
+              options: options
+            )
+          else
+            result = shadow_engine.test(
+              context: context,
+              shadow_version: shadow_version,
+              options: options
+            )
+          end
+
+          {
+            result: result
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Shadow test failed: #{e.message}" }.to_json
+        end
+      end
+
+      # POST /api/simulation/shadow/batch - Batch shadow testing
+      post "/api/simulation/shadow/batch" do
+        content_type :json
+
+        begin
+          request_body = request.body.read
+          data = request_body.empty? ? {} : JSON.parse(request_body)
+
+          contexts = data["contexts"]
+          shadow_version = data["shadow_version"]
+          production_rules = data["production_rules"]
+          shadow_rules = data["shadow_rules"]
+          options = data["options"] || {}
+
+          unless contexts.is_a?(Array)
+            status 400
+            return { error: "contexts array is required" }.to_json
+          end
+
+          unless (production_rules && shadow_rules) || shadow_version
+            status 400
+            return { error: "Either (production_rules and shadow_rules) or shadow_version is required" }.to_json
+          end
+
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+
+          # Create production agent
+          if production_rules
+            prod_evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: production_rules)
+            production_agent = DecisionAgent::Agent.new(evaluators: [prod_evaluator])
+          else
+            # Use active version
+            active_version = version_manager.get_active_version
+            if active_version
+              prod_evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: active_version[:content])
+              production_agent = DecisionAgent::Agent.new(evaluators: [prod_evaluator])
+            else
+              status 400
+              return { error: "No active version found and production_rules not provided" }.to_json
+            end
+          end
+
+          # Create shadow test engine
+          shadow_engine = DecisionAgent::Simulation::ShadowTestEngine.new(
+            production_agent: production_agent,
+            version_manager: version_manager
+          )
+
+          # Execute batch shadow test
+          if shadow_rules
+            # Create a temporary version for shadow rules
+            temp_version = {
+              content: shadow_rules,
+              rule_id: "shadow_temp",
+              version_number: 1
+            }
+            results = shadow_engine.batch_test(
+              contexts: contexts,
+              shadow_version: temp_version,
+              options: options
+            )
+          else
+            results = shadow_engine.batch_test(
+              contexts: contexts,
+              shadow_version: shadow_version,
+              options: options
+            )
+          end
+
+          {
+            results: results
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: "Batch shadow test failed: #{e.message}" }.to_json
+        end
+      end
+
+      # GET /api/simulation/:id - Get simulation results
+      get "/api/simulation/:id" do
+        content_type :json
+
+        begin
+          sim_id = params[:id]
+
+          sim_data = nil
+          self.class.simulation_storage_mutex.synchronize do
+            sim_data = self.class.simulation_storage[sim_id]
+          end
+
+          unless sim_data
+            status 404
+            return { error: "Simulation not found" }.to_json
+          end
+
+          sim_data.to_json
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # GET /api/versions - List all versions (for simulation dropdowns)
+      get "/api/versions" do
+        content_type :json
+
+        begin
+          version_manager = DecisionAgent::Versioning::VersionManager.new
+          versions = version_manager.list_versions
+
+          {
+            versions: versions.map do |v|
+              {
+                id: v[:id] || v["id"],
+                rule_id: v[:rule_id] || v["rule_id"],
+                version_number: v[:version_number] || v["version_number"],
+                status: v[:status] || v["status"],
+                created_at: v[:created_at] || v["created_at"]
+              }
+            end
+          }.to_json
+        rescue StandardError => e
+          status 500
+          { error: e.message }.to_json
+        end
+      end
+
+      # GET /simulation - Simulation dashboard UI page
+      get "/simulation" do
+        send_file File.join(settings.public_folder, "simulation.html")
+      rescue StandardError
+        status 404
+        "Simulation page not found"
+      end
+
+      # GET /simulation/replay - Historical replay UI page
+      get "/simulation/replay" do
+        send_file File.join(settings.public_folder, "simulation_replay.html")
+      rescue StandardError
+        status 404
+        "Historical replay page not found"
+      end
+
+      # GET /simulation/whatif - What-if analysis UI page
+      get "/simulation/whatif" do
+        send_file File.join(settings.public_folder, "simulation_whatif.html")
+      rescue StandardError
+        status 404
+        "What-if analysis page not found"
+      end
+
+      # GET /simulation/impact - Impact analysis UI page
+      get "/simulation/impact" do
+        send_file File.join(settings.public_folder, "simulation_impact.html")
+      rescue StandardError
+        status 404
+        "Impact analysis page not found"
+      end
+
+      # GET /simulation/shadow - Shadow testing UI page
+      get "/simulation/shadow" do
+        send_file File.join(settings.public_folder, "simulation_shadow.html")
+      rescue StandardError
+        status 404
+        "Shadow testing page not found"
       end
 
       # GET /auth/login - Login page

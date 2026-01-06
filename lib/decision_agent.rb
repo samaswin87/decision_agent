@@ -69,6 +69,8 @@ require_relative "decision_agent/data_enrichment/cache/memory_adapter"
 require_relative "decision_agent/data_enrichment/circuit_breaker"
 require_relative "decision_agent/data_enrichment/errors"
 
+require_relative "decision_agent/simulation"
+
 module DecisionAgent
   # Global RBAC configuration
   @rbac_config = Auth::RbacConfig.new

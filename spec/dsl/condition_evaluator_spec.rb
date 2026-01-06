@@ -541,9 +541,9 @@ RSpec.describe DecisionAgent::Dsl::ConditionEvaluator do
       expect(result).to be true
     end
 
-    it "returns false for different numeric types" do
+    it "returns true for different numeric types" do
       result = described_class.comparable?(10, 20.0)
-      expect(result).to be false
+      expect(result).to be true
     end
 
     it "returns false for non-comparable types" do

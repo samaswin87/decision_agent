@@ -11,6 +11,9 @@ The DecisionAgent Web UI provides a visual rule builder that allows non-technica
 - **Real-time Validation**: Validate rules against the DecisionAgent schema
 - **JSON Export/Import**: Download or copy rules as JSON
 - **Example Templates**: Pre-built rule sets to get started quickly
+- **Simulation Dashboard**: Test rule changes with historical replay, what-if analysis, impact analysis, and shadow testing
+- **DMN Editor**: Visual DMN model editor for creating decision models
+- **Batch Testing**: Upload CSV/Excel files and test rules against multiple scenarios
 
 ## Quick Start
 
@@ -177,6 +180,62 @@ You can edit these examples to understand the structure and create your own rule
 2. Click "Validate Rules" to ensure they're correct
 3. Click "Copy" (📋) to copy JSON to clipboard, or
 4. Click "Download" (⬇) to save as a file
+
+## Simulation Features
+
+The Web UI includes comprehensive simulation and what-if analysis capabilities accessible from the main navigation or directly at `/simulation`:
+
+### Simulation Dashboard
+
+Navigate to `/simulation` to access the simulation dashboard, which provides access to:
+
+- **Historical Replay / Backtesting** - Replay historical decisions with different rule versions
+- **What-If Analysis** - Simulate scenarios and analyze decision changes
+- **Impact Analysis** - Quantify the impact of rule changes before deployment
+- **Shadow Testing** - Compare new rules against production without affecting outcomes
+
+### Historical Replay
+
+Access at `/simulation/replay`:
+
+- Upload historical data (CSV or JSON format) with drag-and-drop support
+- Database query support (requires ActiveRecord) - Load historical data directly from databases using SQL queries or table-based queries
+- Select rule versions to test from dropdown menus
+- Compare baseline vs. proposed versions
+- View decision distribution changes and confidence shifts
+- Configure parallel execution for large datasets
+
+### What-If Analysis
+
+Access at `/simulation/whatif`:
+
+- Build scenarios interactively with field/value inputs
+- Add multiple scenarios and fields dynamically
+- Test multiple scenarios in parallel
+- Perform sensitivity analysis to identify most impactful fields
+- View decision distributions and confidence metrics
+
+### Impact Analysis
+
+Access at `/simulation/impact`:
+
+- Compare two rule versions side-by-side
+- Upload test data (CSV/JSON) or paste JSON contexts
+- Get risk scores (0.0-1.0) and risk level categorization (low, medium, high, critical)
+- View decision distribution changes (before/after)
+- Analyze confidence impact metrics
+
+### Shadow Testing
+
+Access at `/simulation/shadow`:
+
+- Configure production and shadow rules (or use active version)
+- Test single contexts or batch contexts
+- Compare production vs. shadow decisions
+- Track match rates and confidence deltas
+- Zero impact on production traffic
+
+For detailed information about simulation features, see the [Simulation Guide](SIMULATION.md).
 
 ## Validation
 
