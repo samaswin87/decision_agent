@@ -18,13 +18,30 @@ Gem::Specification.new do |spec|
   spec.metadata["github_repo"] = "https://github.com/samaswin/decision_agent"
   spec.metadata["rubygems_mfa_required"] = "true"
 
-  spec.files = Dir.glob("{lib,spec,bin}/**/*") + %w[README.md LICENSE.txt]
+  # Only include essential runtime files in the gem
+  # Exclude: docs, examples, scripts, benchmarks, coverage, tmp, versions, grafana, pkg, spec, etc.
+  spec.files = if File.directory?(".git")
+    # Use git to get tracked files, then filter
+    `git ls-files`.split("\n").select do |f|
+      f.start_with?("lib/") ||
+      f.start_with?("bin/") ||
+      f == "README.md" ||
+      f == "LICENSE.txt"
+    end
+  else
+    # Fallback: explicit globs when not in git repo
+    (Dir.glob("lib/**/*") + Dir.glob("bin/**/*") + %w[README.md LICENSE.txt]).select do |f|
+      File.file?(f)
+    end
+  end
+  
   spec.bindir = "bin"
   spec.executables = ["decision_agent"]
   spec.require_paths = ["lib"]
 
   # Runtime dependencies
   spec.add_dependency "bcrypt", "~> 3.1"
+  spec.add_dependency "csv", "~> 3.3" # Explicit dependency for Ruby 3.4+ compatibility
   spec.add_dependency "json-canonicalization", "~> 1.0"
   spec.add_dependency "nokogiri", "~> 1.15" # For DMN XML parsing
   spec.add_dependency "parslet", "~> 2.0" # For FEEL expression parsing

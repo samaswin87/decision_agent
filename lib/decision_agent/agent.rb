@@ -141,24 +141,28 @@ module DecisionAgent
     def compute_deterministic_hash(payload)
       hashable = payload.slice(:context, :evaluations, :decision, :confidence, :scoring_strategy)
 
-      # Compute canonical JSON (required for deterministic hashing)
-      # This is expensive, but we cache the result to avoid recomputation
-      canonical = canonical_json(hashable)
+      # Use fast hash (MD5) as cache key to avoid expensive canonicalization on cache hits
+      # This is much faster than canonical JSON and sufficient for cache key purposes
+      fast_key = fast_hash_key(hashable)
 
       # Fast path: check cache without lock first (unsafe read, but acceptable for cache)
       # This allows concurrent reads without mutex overhead
       cache = self.class.hash_cache
-      cached_hash = cache[canonical]
+      cached_hash = cache[fast_key]
       return cached_hash if cached_hash
 
-      # Cache miss - compute SHA256 hash (also expensive)
+      # Cache miss - compute canonical JSON (required for deterministic hashing)
+      # This is expensive, but only happens on cache misses
+      canonical = canonical_json(hashable)
+
+      # Compute SHA256 hash (also expensive, but only on cache misses)
       computed_hash = Digest::SHA256.hexdigest(canonical)
 
       # Store in cache (thread-safe, with size limit)
       # Only lock when we need to write
       self.class.hash_cache_mutex.synchronize do
         # Double-check after acquiring lock (another thread may have added it)
-        return self.class.hash_cache[canonical] if self.class.hash_cache[canonical]
+        return self.class.hash_cache[fast_key] if self.class.hash_cache[fast_key]
 
         # Clear cache if it gets too large (simple FIFO eviction)
         if self.class.hash_cache.size >= self.class.hash_cache_max_size
@@ -166,10 +170,34 @@ module DecisionAgent
           keys_to_remove = self.class.hash_cache.keys.first(self.class.hash_cache_max_size / 10)
           keys_to_remove.each { |key| self.class.hash_cache.delete(key) }
         end
-        self.class.hash_cache[canonical] = computed_hash
+        self.class.hash_cache[fast_key] = computed_hash
       end
 
       computed_hash
+    end
+
+    # Fast hash key generation using MD5 (much faster than canonical JSON + SHA256)
+    # Used as cache key to avoid expensive canonicalization on cache hits
+    # MD5 is sufficient for cache keys (collision resistance not critical, speed is)
+    def fast_hash_key(hashable)
+      # Create a deterministic string representation for hashing
+      # Use sorted JSON to ensure determinism (though not RFC 8785 canonical)
+      json_str = sort_hash_keys(hashable).to_json
+      Digest::MD5.hexdigest(json_str)
+    end
+
+    # Recursively sort hash keys for deterministic hashing
+    # This is faster than canonical JSON but still deterministic
+    def sort_hash_keys(obj)
+      case obj
+      when Hash
+        sorted = obj.sort.to_h
+        sorted.transform_values { |v| sort_hash_keys(v) }
+      when Array
+        obj.map { |v| sort_hash_keys(v) }
+      else
+        obj
+      end
     end
 
     # Uses RFC 8785 (JSON Canonicalization Scheme) for deterministic JSON serialization

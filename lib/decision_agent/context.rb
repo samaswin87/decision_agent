@@ -4,6 +4,7 @@ module DecisionAgent
 
     def initialize(data)
       # Create a deep copy before freezing to avoid mutating the original
+      # This is necessary for thread-safety even if it adds some overhead
       data_hash = data.is_a?(Hash) ? data : {}
       @data = deep_freeze(deep_dup(data_hash))
     end
