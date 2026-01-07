@@ -2225,10 +2225,14 @@ module DecisionAgent
         return true if permissions_disabled?
 
         checker = self.class.permission_checker
-        unless checker.can?(@current_user, permission, resource)
+        granted = checker.can?(@current_user, permission, resource)
+
+        unless granted
+          # Log the permission denial, but don't let logging failures prevent the denial
           begin
+            user_id = checker.user_id(@current_user)
             self.class.access_audit_logger.log_permission_check(
-              user_id: checker.user_id(@current_user),
+              user_id: user_id,
               permission: permission,
               resource_type: resource&.class&.name,
               resource_id: resource&.id,
@@ -2244,9 +2248,11 @@ module DecisionAgent
           halt 403, { error: "Permission denied: #{permission}" }.to_json
         end
 
+        # Log successful permission check, but don't let logging failures prevent access
         begin
+          user_id = checker.user_id(@current_user)
           self.class.access_audit_logger.log_permission_check(
-            user_id: checker.user_id(@current_user),
+            user_id: user_id,
             permission: permission,
             resource_type: resource&.class&.name,
             resource_id: resource&.id,

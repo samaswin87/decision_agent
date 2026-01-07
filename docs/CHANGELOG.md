@@ -141,6 +141,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Web UI Authentication and Permissions** 🔐
+  - Fixed `require_permission!` method to properly deny access (403) when permission checks fail, even if audit logging raises exceptions
+  - Permission check result is now determined before any logging operations to ensure correct access control behavior
+  - Fixes test failures in `spec/web_ui_rack_spec.rb` where permission denials were not properly enforced when audit logger failed
+  - Ensures consistent behavior across Ruby 3.0, 3.2, and later versions
+
 - **Simulation Engine Spec Fixes** 🐛
   - **ReplayEngine**
     - Fixed `NoEvaluationsError` handling when evaluators don't match context - now gracefully returns error results instead of raising exceptions

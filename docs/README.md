@@ -19,14 +19,18 @@ Welcome to the DecisionAgent documentation.
 - [**DMN Best Practices**](DMN_BEST_PRACTICES.md) - DMN modeling best practices
 - [**Versioning System**](VERSIONING.md) - Rule version control, rollback, and history
 - [**Simulation and What-If Analysis**](SIMULATION.md) - Historical replay, what-if analysis, impact analysis, and shadow testing
+- [**A/B Testing**](AB_TESTING.md) - Compare rule versions with statistical analysis
+- [**Batch Testing**](BATCH_TESTING.md) - Test rules against large datasets with CSV/Excel import
+- [**RBAC Configuration**](RBAC_CONFIGURATION.md) - Role-based access control setup and integration
+- [**RBAC Quick Reference**](RBAC_QUICK_REFERENCE.md) - Quick reference for RBAC configuration
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
 - [**Web UI Rails Integration**](WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
-- [**Batch Testing**](BATCH_TESTING.md) - Test rules against large datasets with CSV/Excel import
 
 ### Monitoring & Analytics
 - [**Monitoring & Analytics**](MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
 - [**Monitoring Architecture**](MONITORING_ARCHITECTURE.md) - System architecture and design
+- [**Persistent Monitoring**](PERSISTENT_MONITORING.md) - Database storage for long-term analytics
 
 ### Performance & Thread-Safety
 - [**Performance & Thread-Safety Summary**](PERFORMANCE_AND_THREAD_SAFETY.md) - Executive summary, benchmarks, and production readiness
@@ -56,14 +60,18 @@ docs/
 │   ├── DMN_BEST_PRACTICES.md      - DMN modeling best practices
 │   ├── VERSIONING.md               - Rule version control and management
 │   ├── SIMULATION.md               - Simulation, what-if analysis, and shadow testing
+│   ├── AB_TESTING.md               - A/B testing with statistical analysis
+│   ├── BATCH_TESTING.md            - Batch testing guide with CSV/Excel import
+│   ├── RBAC_CONFIGURATION.md       - Role-based access control setup
+│   ├── RBAC_QUICK_REFERENCE.md     - Quick RBAC reference
 │   ├── WEB_UI.md                   - Web interface user guide
 │   ├── WEB_UI_SETUP.md             - Web interface setup
-│   ├── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
-│   └── BATCH_TESTING.md            - Batch testing guide with CSV/Excel import
+│   └── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
 │
 ├── Monitoring & Analytics
 │   ├── MONITORING_AND_ANALYTICS.md - Real-time monitoring, metrics, and alerting
-│   └── MONITORING_ARCHITECTURE.md  - System architecture and design
+│   ├── MONITORING_ARCHITECTURE.md  - System architecture and design
+│   └── PERSISTENT_MONITORING.md    - Database storage for long-term analytics
 │
 ├── Performance & Thread-Safety
 │   ├── PERFORMANCE_AND_THREAD_SAFETY.md  - Executive summary and benchmarks

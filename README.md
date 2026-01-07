@@ -84,19 +84,40 @@ See [Code Examples](docs/CODE_EXAMPLES.md) for more comprehensive examples.
 - **RFC 8785 Canonical JSON** - Industry-standard deterministic hashing
 - **Compliance Ready** - HIPAA, SOX, regulatory compliance support
 
+### Testing & Simulation
+- **Simulation & What-If Analysis** - Test rule changes before deployment
+  - **Historical Replay / Backtesting** - Replay past decisions with new rules (CSV, JSON, database import)
+  - **What-If Analysis** - Simulate scenarios and sensitivity analysis with decision boundary visualization
+  - **Impact Analysis** - Quantify rule change effects (decision distribution, confidence shifts, performance impact)
+  - **Shadow Testing** - Compare new rules against production without affecting outcomes
+  - **Monte Carlo Simulation** - Model probabilistic inputs and understand decision outcome probabilities
+- **Batch Testing** - Test rules against large datasets with CSV/Excel import, coverage analysis, and resume capability
+- **A/B Testing** - Champion/Challenger testing with statistical significance analysis
+
+### Security & Access Control
+- **Role-Based Access Control (RBAC)** - Enterprise-grade authentication and authorization
+  - Built-in user/role system with bcrypt password hashing
+  - Configurable adapters for Devise, CanCanCan, Pundit, or custom auth systems
+  - 5 default roles (Admin, Editor, Viewer, Auditor, Approver) with 7 permissions
+  - Password reset functionality with secure token management
+  - Comprehensive access audit logging for compliance
+  - Web UI integration with login and user management pages
+
 ### Developer Experience
 - **Pluggable Architecture** - Custom evaluators, scoring, audit adapters
 - **Framework Agnostic** - Works with Rails, Sinatra, or standalone
 - **JSON Rule DSL** - Non-technical users can write rules
 - **DMN 1.3 Support** - Industry-standard Decision Model and Notation with full FEEL expression language
 - **Visual Rule Builder** - Web UI for rule management and DMN modeler
+- **CLI Tools** - Command-line interface for DMN import/export and web server
 
 ### Production Features
 - **Real-time Monitoring** - Live dashboard with WebSocket updates
+- **Persistent Monitoring** - Database storage for long-term analytics (PostgreSQL, MySQL, SQLite)
 - **Prometheus Export** - Industry-standard metrics format
 - **Intelligent Alerting** - Anomaly detection with customizable rules
 - **Grafana Integration** - Pre-built dashboards and alert rules
-- **Version Control** - Full rule version control and rollback
+- **Version Control** - Full rule version control, rollback, and history
 - **Thread-Safe** - Safe for multi-threaded servers and background jobs
 - **High Performance** - 10,000+ decisions/second, ~0.1ms latency
 
@@ -234,11 +255,155 @@ Open [http://localhost:4568](http://localhost:4568) for the monitoring dashboard
 
 **Features:**
 - Real-time dashboard with WebSocket updates
+- **Persistent Storage** - Database storage for long-term analytics (PostgreSQL, MySQL, SQLite)
 - Prometheus metrics export
 - Intelligent alerting with anomaly detection
 - Grafana integration with pre-built dashboards
 
-See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complete documentation.
+See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) and [Persistent Monitoring Guide](docs/PERSISTENT_MONITORING.md) for complete documentation.
+
+## Simulation & What-If Analysis
+
+DecisionAgent provides comprehensive simulation capabilities to test rule changes before deployment:
+
+```ruby
+require 'decision_agent/simulation/replay_engine'
+
+# Replay historical decisions with new rules
+replay_engine = DecisionAgent::Simulation::ReplayEngine.new(
+  agent: agent,
+  version_manager: version_manager
+)
+
+results = replay_engine.replay(historical_data: "decisions.csv")
+
+# What-if analysis
+whatif = DecisionAgent::Simulation::WhatIfAnalyzer.new(agent: agent)
+analysis = whatif.analyze(
+  base_context: { credit_score: 700, amount: 50000 },
+  scenarios: [
+    { credit_score: 750 },
+    { credit_score: 650 }
+  ]
+)
+
+# Impact analysis
+impact = DecisionAgent::Simulation::ImpactAnalyzer.new
+comparison = impact.compare(
+  baseline: baseline_evaluator,
+  proposed: proposed_evaluator,
+  contexts: test_contexts
+)
+```
+
+**Features:**
+- **Historical Replay** - Replay past decisions with CSV/JSON/database import
+- **What-If Analysis** - Scenario simulation with decision boundary visualization
+- **Impact Analysis** - Quantify rule change effects (decisions, confidence, performance)
+- **Shadow Testing** - Test new rules in production without affecting outcomes
+- **Monte Carlo Simulation** - Probabilistic decision modeling
+- **Web UI** - Complete simulation dashboard at `/simulation`
+
+See [Simulation Guide](docs/SIMULATION.md) for complete documentation and [Simulation Example](examples/simulation_example.rb) for working examples.
+
+## Role-Based Access Control (RBAC)
+
+Enterprise-grade authentication and authorization system:
+
+```ruby
+require 'decision_agent'
+
+# Configure RBAC (works with any auth system)
+DecisionAgent.configure_rbac(:devise_cancan, ability_class: Ability)
+
+# Or use built-in RBAC
+authenticator = DecisionAgent::Auth::Authenticator.new
+admin = authenticator.create_user(
+  email: "admin@example.com",
+  password: "secure_password",
+  roles: [:admin]
+)
+
+session = authenticator.login("admin@example.com", "secure_password")
+
+# Permission checks
+checker = DecisionAgent.permission_checker
+checker.can?(admin, :write)  # => true
+checker.can?(admin, :approve)  # => true
+```
+
+**Features:**
+- **Built-in User System** - User management with bcrypt password hashing
+- **5 Default Roles** - Admin, Editor, Viewer, Auditor, Approver
+- **Configurable Adapters** - Devise, CanCanCan, Pundit, or custom
+- **Password Reset** - Secure token-based password reset
+- **Access Audit Logging** - Comprehensive audit trail for compliance
+- **Web UI Integration** - Login page and user management interface
+
+See [RBAC Configuration Guide](docs/RBAC_CONFIGURATION.md) for complete documentation and [RBAC Examples](examples/rbac_configuration_examples.rb) for integration examples.
+
+## Batch Testing
+
+Test rules against large datasets with comprehensive analysis:
+
+```ruby
+require 'decision_agent/testing/batch_test_runner'
+
+runner = DecisionAgent::Testing::BatchTestRunner.new(agent: agent)
+
+# Import from CSV or Excel
+importer = DecisionAgent::Testing::BatchTestImporter.new
+scenarios = importer.import_csv("test_data.csv", {
+  context_fields: ["credit_score", "amount"],
+  expected_fields: ["expected_decision"]
+})
+
+# Run batch test
+results = runner.run(scenarios: scenarios)
+
+puts "Total: #{results[:total]}"
+puts "Passed: #{results[:passed]}"
+puts "Failed: #{results[:failed]}"
+puts "Coverage: #{results[:coverage]}"
+```
+
+**Features:**
+- **CSV/Excel Import** - Import test scenarios from files
+- **Database Import** - Load test data from databases
+- **Coverage Analysis** - Identify untested rule combinations
+- **Resume Capability** - Continue interrupted tests from checkpoint
+- **Progress Tracking** - Real-time progress updates for large imports
+- **Web UI** - Complete batch testing interface with file upload
+
+See [Batch Testing Guide](docs/BATCH_TESTING.md) for complete documentation.
+
+## A/B Testing
+
+Compare rule versions with statistical analysis:
+
+```ruby
+require 'decision_agent/testing/ab_test_manager'
+
+ab_manager = DecisionAgent::Testing::AbTestManager.new(version_manager: version_manager)
+
+test = ab_manager.create_test(
+  name: "loan_approval_v2",
+  champion_version: champion_version_id,
+  challenger_version: challenger_version_id,
+  traffic_split: 0.5
+)
+
+results = ab_manager.run_test(test_id: test.id, contexts: test_contexts)
+ab_manager.analyze_results(test_id: test.id)
+```
+
+**Features:**
+- **Champion/Challenger Testing** - Compare baseline vs proposed rules
+- **Statistical Significance** - P-value calculation and confidence intervals
+- **Traffic Splitting** - Configurable split ratios
+- **Decision Distribution Comparison** - Visualize differences in outcomes
+
+See [A/B Testing Guide](docs/AB_TESTING.md) for complete documentation.
 
 ## When to Use DecisionAgent
 
@@ -272,12 +437,17 @@ See [Monitoring & Analytics Guide](docs/MONITORING_AND_ANALYTICS.md) for complet
 - [DMN Migration Guide](docs/DMN_MIGRATION_GUIDE.md) - Migrating from JSON to DMN
 - [DMN Best Practices](docs/DMN_BEST_PRACTICES.md) - DMN modeling best practices
 - [Versioning System](docs/VERSIONING.md) - Version control for rules
+- [Simulation & What-If Analysis](docs/SIMULATION.md) - Historical replay, what-if analysis, impact analysis, and shadow testing
 - [A/B Testing](docs/AB_TESTING.md) - Compare rule versions with statistical analysis
+- [Batch Testing](docs/BATCH_TESTING.md) - Test rules against large datasets with CSV/Excel import
+- [RBAC Configuration](docs/RBAC_CONFIGURATION.md) - Role-based access control setup and integration
+- [RBAC Quick Reference](docs/RBAC_QUICK_REFERENCE.md) - Quick reference for RBAC configuration
 - [Web UI](docs/WEB_UI.md) - Visual rule builder
 - [Web UI Setup](docs/WEB_UI_SETUP.md) - Setup guide
 - [Web UI Rails Integration](docs/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
 - [Monitoring & Analytics](docs/MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
 - [Monitoring Architecture](docs/MONITORING_ARCHITECTURE.md) - System architecture and design
+- [Persistent Monitoring](docs/PERSISTENT_MONITORING.md) - Database storage for long-term analytics
 
 ### Performance & Thread-Safety
 - [Performance & Thread-Safety Summary](docs/PERFORMANCE_AND_THREAD_SAFETY.md) - Benchmarks and production readiness
