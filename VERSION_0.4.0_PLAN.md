@@ -1,7 +1,7 @@
 # Version 0.4.0 Development Plan
 
 **Target Release Date:** Q2 2026  
-**Current Version:** 0.3.0  
+**Current Version:** 1.0.1  
 **Status:** Planning Phase
 
 ---

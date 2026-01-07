@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## [1.0.1] - 2026-01-XX
+
+### Changed
+- Version bump to 1.0.1
+
+### Added
+
 - **Explainability Layer** 🔍
   - **Machine-readable decision explanations** - Every decision now includes complete trace of why it was made
     - `Decision#because` - Returns array of conditions that led to the decision
