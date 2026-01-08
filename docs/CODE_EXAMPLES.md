@@ -83,6 +83,97 @@ rules = {
 { field: "user_id", op: "modulo", value: 10 }  # For A/B testing, sharding
 ```
 
+### Mathematical Operators
+
+#### Trigonometric Functions
+
+```ruby
+# Sine function - signal processing
+{ field: "signal_phase", op: "sin", value: 0.0 }
+
+# Cosine function - phase alignment
+{ field: "waveform_phase", op: "cos", value: 1.0 }
+
+# Inverse trigonometric - angle calculations
+{ field: "sine_value", op: "asin", value: 1.5707963267948966 }  # π/2
+{ field: "slope", op: "atan", value: 0.7853981633974483 }  # π/4
+{ field: "point_x", op: "atan2", value: { y: 1, result: 0.7853981633974483 } }
+```
+
+#### Power and Root Functions
+
+```ruby
+# Square root - distance calculations
+{ field: "squared_distance", op: "sqrt", value: 5.0 }
+
+# Cube root - volume calculations
+{ field: "cubed_volume", op: "cbrt", value: 3.0 }
+
+# Power - exponential relationships
+{ field: "base_number", op: "power", value: { exponent: 2, result: 16 } }
+
+# Exponential function - growth models
+{ field: "growth_rate", op: "exp", value: 2.718281828459045 }  # e^1
+```
+
+#### Logarithmic Functions
+
+```ruby
+# Natural logarithm (base e)
+{ field: "ratio", op: "log", value: 0.0 }  # log(1) = 0
+
+# Base 10 logarithm - order of magnitude
+{ field: "magnitude", op: "log10", value: 3.0 }  # 1000 = 10^3
+
+# Base 2 logarithm - binary calculations
+{ field: "data_size", op: "log2", value: 10.0 }  # 1024 = 2^10
+```
+
+#### Rounding Functions
+
+```ruby
+# Round to nearest integer
+{ field: "calculated_price", op: "round", value: 100 }
+
+# Floor (round down)
+{ field: "discounted_price", op: "floor", value: 50 }
+
+# Ceiling (round up)
+{ field: "required_capacity", op: "ceil", value: 5 }
+
+# Truncate (remove decimal part)
+{ field: "measurement", op: "truncate", value: 5 }
+
+# Absolute value
+{ field: "price_deviation", op: "abs", value: 10 }
+```
+
+#### Advanced Mathematical Functions
+
+```ruby
+# Factorial - combinatorics
+{ field: "items_count", op: "factorial", value: 24 }  # 4! = 24
+
+# Greatest Common Divisor
+{ field: "number_a", op: "gcd", value: { other: 24, result: 12 } }
+
+# Least Common Multiple
+{ field: "cycle_a", op: "lcm", value: { other: 12, result: 36 } }
+```
+
+#### Hyperbolic Functions
+
+```ruby
+# Hyperbolic sine
+{ field: "hyperbolic_parameter", op: "sinh", value: 0.0 }
+
+# Hyperbolic cosine
+{ field: "hyperbolic_parameter", op: "cosh", value: 1.0 }
+
+# Hyperbolic tangent - machine learning activation
+{ field: "activation_value", op: "tanh", value: 0.0 }
+```
+
 ### Date/Time Operators
 
 ```ruby

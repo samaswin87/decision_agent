@@ -544,6 +544,221 @@ RSpec.describe "Advanced DSL Operators" do
           expect(evaluation).to be_nil
         end
       end
+
+      describe "inverse trigonometric functions" do
+        describe "asin operator" do
+          it "matches when asin(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "asin", value: Math::PI / 2 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 1.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+
+          it "does not match when value is outside domain [-1, 1]" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "asin", value: 0.0 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 2.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).to be_nil
+          end
+        end
+
+        describe "acos operator" do
+          it "matches when acos(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "acos", value: 0.0 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 1.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+
+        describe "atan operator" do
+          it "matches when atan(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "atan", value: Math::PI / 4 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 1.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+
+        describe "atan2 operator" do
+          it "matches when atan2(field_value, y) equals result (array format)" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "x", op: "atan2", value: [1, Math::PI / 4] },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ x: 1.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+
+          it "matches when atan2(field_value, y) equals result (hash format)" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "x", op: "atan2", value: { y: 1, result: Math::PI / 4 } },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ x: 1.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+      end
+
+      describe "hyperbolic functions" do
+        describe "sinh operator" do
+          it "matches when sinh(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "sinh", value: 0.0 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 0.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+
+        describe "cosh operator" do
+          it "matches when cosh(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "cosh", value: 1.0 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 0.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+
+        describe "tanh operator" do
+          it "matches when tanh(field_value) equals expected_value" do
+            rules = {
+              version: "1.0",
+              ruleset: "test",
+              rules: [
+                {
+                  id: "rule_1",
+                  if: { field: "value", op: "tanh", value: 0.0 },
+                  then: { decision: "match" }
+                }
+              ]
+            }
+
+            evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+            context = DecisionAgent::Context.new({ value: 0.0 })
+
+            evaluation = evaluator.evaluate(context)
+
+            expect(evaluation).not_to be_nil
+            expect(evaluation.decision).to eq("match")
+          end
+        end
+      end
     end
 
     describe "exponential and logarithmic functions" do
@@ -569,6 +784,53 @@ RSpec.describe "Advanced DSL Operators" do
           expect(evaluation).not_to be_nil
           expect(evaluation.decision).to eq("square_root")
         end
+      end
+
+      describe "cbrt operator" do
+        it "matches when cbrt(field_value) equals expected_value" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "cbrt", value: 2.0 },
+                then: { decision: "cube_root" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 8 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("cube_root")
+        end
+
+        it "handles negative numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "cbrt", value: -2.0 },
+                then: { decision: "negative_cube_root" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: -8 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("negative_cube_root")
+        end
+      end
 
         it "does not match when sqrt value is different" do
           rules = {
@@ -784,6 +1046,96 @@ RSpec.describe "Advanced DSL Operators" do
 
           evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
           context = DecisionAgent::Context.new({ number: -1 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).to be_nil
+        end
+      end
+
+      describe "log10 operator" do
+        it "matches when log10(field_value) equals expected_value" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "log10", value: 2.0 },
+                then: { decision: "log10_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 100 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("log10_match")
+        end
+
+        it "does not match for non-positive numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "log10", value: 0.0 },
+                then: { decision: "match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: -1 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).to be_nil
+        end
+      end
+
+      describe "log2 operator" do
+        it "matches when log2(field_value) equals expected_value" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "log2", value: 3.0 },
+                then: { decision: "log2_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 8 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("log2_match")
+        end
+
+        it "does not match for non-positive numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "log2", value: 0.0 },
+                then: { decision: "match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 0 })
 
           evaluation = evaluator.evaluate(context)
 
@@ -1014,6 +1366,210 @@ RSpec.describe "Advanced DSL Operators" do
           evaluation = evaluator.evaluate(context)
 
           expect(evaluation).to be_nil
+        end
+      end
+
+      describe "truncate operator" do
+        it "matches when truncate(field_value) equals expected_value" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "value", op: "truncate", value: 3 },
+                then: { decision: "truncated" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ value: 3.9 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("truncated")
+        end
+
+        it "handles negative numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "value", op: "truncate", value: -3 },
+                then: { decision: "truncated" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ value: -3.9 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("truncated")
+        end
+      end
+
+      describe "factorial operator" do
+        it "matches when factorial(field_value) equals expected_value" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "factorial", value: 120 },
+                then: { decision: "factorial_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 5 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("factorial_match")
+        end
+
+        it "does not match for negative numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "factorial", value: 1 },
+                then: { decision: "match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: -1 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).to be_nil
+        end
+
+        it "does not match for non-integer numbers" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "number", op: "factorial", value: 1 },
+                then: { decision: "match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ number: 5.5 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).to be_nil
+        end
+      end
+
+      describe "gcd operator" do
+        it "matches when gcd(field_value, other) equals result (array format)" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "a", op: "gcd", value: [12, 6] },
+                then: { decision: "gcd_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ a: 18 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("gcd_match")
+        end
+
+        it "matches when gcd(field_value, other) equals result (hash format)" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "a", op: "gcd", value: { other: 12, result: 6 } },
+                then: { decision: "gcd_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ a: 18 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("gcd_match")
+        end
+      end
+
+      describe "lcm operator" do
+        it "matches when lcm(field_value, other) equals result (array format)" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "a", op: "lcm", value: [12, 36] },
+                then: { decision: "lcm_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ a: 9 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("lcm_match")
+        end
+
+        it "matches when lcm(field_value, other) equals result (hash format)" do
+          rules = {
+            version: "1.0",
+            ruleset: "test",
+            rules: [
+              {
+                id: "rule_1",
+                if: { field: "a", op: "lcm", value: { other: 12, result: 36 } },
+                then: { decision: "lcm_match" }
+              }
+            ]
+          }
+
+          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+          context = DecisionAgent::Context.new({ a: 9 })
+
+          evaluation = evaluator.evaluate(context)
+
+          expect(evaluation).not_to be_nil
+          expect(evaluation.decision).to eq("lcm_match")
         end
       end
     end
@@ -1623,7 +2179,6 @@ RSpec.describe "Advanced DSL Operators" do
         end
       end
     end
-  end
 
   # DATE/TIME OPERATORS
   describe "date/time operators" do

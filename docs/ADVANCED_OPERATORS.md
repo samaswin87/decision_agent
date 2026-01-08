@@ -6,6 +6,15 @@ This document describes the advanced operators available in the Decision Agent R
 
 - [String Operators](#string-operators)
 - [Numeric Operators](#numeric-operators)
+- [Mathematical Operators](#mathematical-operators)
+  - [Trigonometric Functions](#trigonometric-functions)
+  - [Inverse Trigonometric Functions](#inverse-trigonometric-functions)
+  - [Hyperbolic Functions](#hyperbolic-functions)
+  - [Power and Root Functions](#power-and-root-functions)
+  - [Logarithmic Functions](#logarithmic-functions)
+  - [Rounding Functions](#rounding-functions)
+  - [Advanced Mathematical Functions](#advanced-mathematical-functions)
+- [Statistical Aggregations](#statistical-aggregations)
 - [Date/Time Operators](#datetime-operators)
 - [Collection Operators](#collection-operators)
 - [Geospatial Operators](#geospatial-operators)
@@ -272,6 +281,1180 @@ Checks if a value modulo a divisor equals a specified remainder.
 - Load balancing
 - Sharding logic
 - Identifying patterns (even/odd numbers)
+
+---
+
+## Mathematical Operators
+
+DecisionAgent provides a comprehensive set of mathematical operators for advanced calculations including trigonometric, logarithmic, power, and rounding functions.
+
+### Trigonometric Functions
+
+#### `sin`
+
+Calculates the sine of a value (in radians).
+
+**Syntax:**
+```json
+{
+  "field": "angle",
+  "op": "sin",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "zero_crossing",
+  "if": {
+    "field": "signal_phase",
+    "op": "sin",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "zero_crossing_detected",
+    "weight": 1.0,
+    "reason": "Sine value is zero (crossing point)"
+  }
+}
+```
+
+**Behavior:**
+- Field value is interpreted as radians
+- Uses epsilon comparison for floating-point precision
+- Returns `false` if field is not numeric
+
+**Mathematical Properties:**
+- `sin(0) = 0.0`
+- `sin(π/2) = 1.0`
+- `sin(π) = 0.0`
+- Range: [-1, 1]
+
+---
+
+#### `cos`
+
+Calculates the cosine of a value (in radians).
+
+**Syntax:**
+```json
+{
+  "field": "angle",
+  "op": "cos",
+  "value": 1.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "phase_alignment",
+  "if": {
+    "field": "waveform_phase",
+    "op": "cos",
+    "value": 1.0
+  },
+  "then": {
+    "decision": "in_phase",
+    "weight": 0.95
+  }
+}
+```
+
+**Mathematical Properties:**
+- `cos(0) = 1.0`
+- `cos(π/2) = 0.0`
+- `cos(π) = -1.0`
+- Range: [-1, 1]
+
+---
+
+#### `tan`
+
+Calculates the tangent of a value (in radians).
+
+**Syntax:**
+```json
+{
+  "field": "angle",
+  "op": "tan",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "horizontal_slope",
+  "if": {
+    "field": "line_angle",
+    "op": "tan",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "horizontal_line",
+    "weight": 1.0
+  }
+}
+```
+
+**Mathematical Properties:**
+- `tan(0) = 0.0`
+- `tan(π/4) = 1.0`
+- Undefined at `π/2 + nπ` (where n is an integer)
+
+---
+
+### Inverse Trigonometric Functions
+
+#### `asin`
+
+Calculates the arcsine (inverse sine) of a value. Returns result in radians.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "asin",
+  "value": 1.5707963267948966
+}
+```
+
+**Example:**
+```json
+{
+  "id": "angle_from_sine",
+  "if": {
+    "field": "sine_value",
+    "op": "asin",
+    "value": 1.5707963267948966
+  },
+  "then": {
+    "decision": "right_angle",
+    "weight": 1.0,
+    "reason": "Angle is π/2 radians (90 degrees)"
+  }
+}
+```
+
+**Behavior:**
+- Input must be in range [-1, 1]
+- Returns `false` if input is outside valid domain
+- Output range: [-π/2, π/2]
+
+**Mathematical Properties:**
+- `asin(1) = π/2 ≈ 1.571`
+- `asin(0) = 0`
+- `asin(-1) = -π/2`
+
+---
+
+#### `acos`
+
+Calculates the arccosine (inverse cosine) of a value. Returns result in radians.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "acos",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "angle_from_cosine",
+  "if": {
+    "field": "cosine_value",
+    "op": "acos",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "right_angle",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Input must be in range [-1, 1]
+- Returns `false` if input is outside valid domain
+- Output range: [0, π]
+
+**Mathematical Properties:**
+- `acos(1) = 0`
+- `acos(0) = π/2 ≈ 1.571`
+- `acos(-1) = π ≈ 3.142`
+
+---
+
+#### `atan`
+
+Calculates the arctangent (inverse tangent) of a value. Returns result in radians.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "atan",
+  "value": 0.7853981633974483
+}
+```
+
+**Example:**
+```json
+{
+  "id": "angle_from_slope",
+  "if": {
+    "field": "slope",
+    "op": "atan",
+    "value": 0.7853981633974483
+  },
+  "then": {
+    "decision": "diagonal_line",
+    "weight": 1.0,
+    "reason": "Angle is π/4 radians (45 degrees)"
+  }
+}
+```
+
+**Mathematical Properties:**
+- `atan(0) = 0`
+- `atan(1) = π/4 ≈ 0.785`
+- `atan(-1) = -π/4`
+- Output range: [-π/2, π/2]
+
+---
+
+#### `atan2`
+
+Calculates the arctangent of y/x. Returns result in radians, handling all quadrants correctly.
+
+**Syntax (Hash Format):**
+```json
+{
+  "field": "x",
+  "op": "atan2",
+  "value": {
+    "y": 1,
+    "result": 0.7853981633974483
+  }
+}
+```
+
+**Syntax (Array Format):**
+```json
+{
+  "field": "x",
+  "op": "atan2",
+  "value": [1, 0.7853981633974483]
+}
+```
+
+**Example:**
+```json
+{
+  "id": "angle_from_coordinates",
+  "if": {
+    "field": "point_x",
+    "op": "atan2",
+    "value": {
+      "y": 1,
+      "result": 0.7853981633974483
+    }
+  },
+  "then": {
+    "decision": "diagonal_quadrant",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Calculates `atan2(field_value, y)`
+- Handles all four quadrants correctly (unlike `atan`)
+- Output range: [-π, π]
+
+**Use Cases:**
+- Converting Cartesian coordinates to polar coordinates
+- Determining angle between points
+- Robot navigation and path planning
+
+---
+
+### Hyperbolic Functions
+
+#### `sinh`
+
+Calculates the hyperbolic sine of a value.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "sinh",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "hyperbolic_zero",
+  "if": {
+    "field": "hyperbolic_parameter",
+    "op": "sinh",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "symmetric_point",
+    "weight": 1.0
+  }
+}
+```
+
+**Mathematical Properties:**
+- `sinh(0) = 0.0`
+- `sinh(1) ≈ 1.175`
+- Odd function: `sinh(-x) = -sinh(x)`
+
+---
+
+#### `cosh`
+
+Calculates the hyperbolic cosine of a value.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "cosh",
+  "value": 1.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "hyperbolic_base",
+  "if": {
+    "field": "hyperbolic_parameter",
+    "op": "cosh",
+    "value": 1.0
+  },
+  "then": {
+    "decision": "base_case",
+    "weight": 1.0
+  }
+}
+```
+
+**Mathematical Properties:**
+- `cosh(0) = 1.0`
+- `cosh(1) ≈ 1.543`
+- Even function: `cosh(-x) = cosh(x)`
+- Always ≥ 1.0
+
+---
+
+#### `tanh`
+
+Calculates the hyperbolic tangent of a value.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "tanh",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "sigmoid_center",
+  "if": {
+    "field": "activation_value",
+    "op": "tanh",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "neutral_activation",
+    "weight": 0.9
+  }
+}
+```
+
+**Mathematical Properties:**
+- `tanh(0) = 0.0`
+- `tanh(1) ≈ 0.762`
+- Range: (-1, 1)
+- Used in machine learning as activation function
+
+---
+
+### Power and Root Functions
+
+#### `sqrt`
+
+Calculates the square root of a value.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "sqrt",
+  "value": 3.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "distance_calculation",
+  "if": {
+    "field": "squared_distance",
+    "op": "sqrt",
+    "value": 5.0
+  },
+  "then": {
+    "decision": "within_range",
+    "weight": 0.9,
+    "reason": "Distance is 5 units"
+  }
+}
+```
+
+**Behavior:**
+- Returns `false` if field is negative
+- Uses epsilon comparison for floating-point precision
+
+**Mathematical Properties:**
+- `sqrt(0) = 0.0`
+- `sqrt(1) = 1.0`
+- `sqrt(4) = 2.0`
+- `sqrt(9) = 3.0`
+
+---
+
+#### `cbrt`
+
+Calculates the cube root of a value.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "cbrt",
+  "value": 2.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "volume_dimension",
+  "if": {
+    "field": "cubed_volume",
+    "op": "cbrt",
+    "value": 3.0
+  },
+  "then": {
+    "decision": "standard_size",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Works with both positive and negative values
+- `cbrt(-8) = -2.0`
+- `cbrt(8) = 2.0`
+
+**Mathematical Properties:**
+- `cbrt(0) = 0.0`
+- `cbrt(1) = 1.0`
+- `cbrt(8) = 2.0`
+- `cbrt(27) = 3.0`
+
+---
+
+#### `power`
+
+Raises a value to a specified exponent.
+
+**Syntax (Hash Format):**
+```json
+{
+  "field": "base",
+  "op": "power",
+  "value": {
+    "exponent": 2,
+    "result": 4
+  }
+}
+```
+
+**Syntax (Array Format):**
+```json
+{
+  "field": "base",
+  "op": "power",
+  "value": [2, 4]
+}
+```
+
+**Example:**
+```json
+{
+  "id": "square_check",
+  "if": {
+    "field": "number",
+    "op": "power",
+    "value": {
+      "exponent": 2,
+      "result": 16
+    }
+  },
+  "then": {
+    "decision": "perfect_square",
+    "weight": 1.0,
+    "reason": "Number squared equals 16"
+  }
+}
+```
+
+**Mathematical Properties:**
+- Checks if `field^exponent == result`
+- Uses epsilon comparison for floating-point precision
+- Works with fractional exponents: `8^(1/3) = 2.0`
+
+**Use Cases:**
+- Checking perfect squares/cubes
+- Validating exponential relationships
+- Scientific calculations
+
+---
+
+#### `exp`
+
+Calculates e raised to the power of a value (exponential function).
+
+**Syntax:**
+```json
+{
+  "field": "exponent",
+  "op": "exp",
+  "value": 2.718281828459045
+}
+```
+
+**Example:**
+```json
+{
+  "id": "e_power_check",
+  "if": {
+    "field": "growth_rate",
+    "op": "exp",
+    "value": 2.718281828459045
+  },
+  "then": {
+    "decision": "natural_growth",
+    "weight": 1.0,
+    "reason": "Value is e^1 (natural exponential)"
+  }
+}
+```
+
+**Mathematical Properties:**
+- `exp(0) = 1.0`
+- `exp(1) = e ≈ 2.718`
+- `exp(2) ≈ 7.389`
+- Always positive: `exp(x) > 0` for all x
+
+**Use Cases:**
+- Exponential growth/decay models
+- Compound interest calculations
+- Probability distributions
+
+---
+
+### Logarithmic Functions
+
+#### `log`
+
+Calculates the natural logarithm (base e) of a value.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "log",
+  "value": 0.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "logarithmic_check",
+  "if": {
+    "field": "ratio",
+    "op": "log",
+    "value": 0.0
+  },
+  "then": {
+    "decision": "unit_ratio",
+    "weight": 1.0,
+    "reason": "log(1) = 0"
+  }
+}
+```
+
+**Behavior:**
+- Returns `false` if field ≤ 0
+- Natural logarithm uses base e
+
+**Mathematical Properties:**
+- `log(1) = 0.0`
+- `log(e) = 1.0`
+- `log(10) ≈ 2.303`
+- Domain: (0, ∞)
+
+---
+
+#### `log10`
+
+Calculates the base-10 logarithm of a value.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "log10",
+  "value": 2.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "order_of_magnitude",
+  "if": {
+    "field": "magnitude",
+    "op": "log10",
+    "value": 3.0
+  },
+  "then": {
+    "decision": "thousands",
+    "weight": 1.0,
+    "reason": "Value is in thousands (10^3)"
+  }
+}
+```
+
+**Mathematical Properties:**
+- `log10(1) = 0.0`
+- `log10(10) = 1.0`
+- `log10(100) = 2.0`
+- `log10(1000) = 3.0`
+
+**Use Cases:**
+- Order of magnitude calculations
+- Decibel (dB) calculations
+- Scientific notation
+
+---
+
+#### `log2`
+
+Calculates the base-2 logarithm of a value.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "log2",
+  "value": 3.0
+}
+```
+
+**Example:**
+```json
+{
+  "id": "binary_power",
+  "if": {
+    "field": "data_size",
+    "op": "log2",
+    "value": 10.0
+  },
+  "then": {
+    "decision": "kilobyte_range",
+    "weight": 1.0,
+    "reason": "Value is 2^10 = 1024 bytes (1KB)"
+  }
+}
+```
+
+**Mathematical Properties:**
+- `log2(1) = 0.0`
+- `log2(2) = 1.0`
+- `log2(4) = 2.0`
+- `log2(8) = 3.0`
+- `log2(16) = 4.0`
+
+**Use Cases:**
+- Binary tree depth calculations
+- Information theory (entropy, bits)
+- Computer science algorithms
+
+---
+
+### Rounding Functions
+
+#### `round`
+
+Rounds a value to the nearest integer.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "round",
+  "value": 3
+}
+```
+
+**Example:**
+```json
+{
+  "id": "rounded_value",
+  "if": {
+    "field": "calculated_score",
+    "op": "round",
+    "value": 85
+  },
+  "then": {
+    "decision": "high_score",
+    "weight": 0.9
+  }
+}
+```
+
+**Behavior:**
+- Rounds to nearest integer
+- `round(3.4) = 3`
+- `round(3.6) = 4`
+- Uses standard rounding rules (round half up)
+
+---
+
+#### `floor`
+
+Rounds a value down to the nearest integer.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "floor",
+  "value": 3
+}
+```
+
+**Example:**
+```json
+{
+  "id": "whole_units",
+  "if": {
+    "field": "fractional_count",
+    "op": "floor",
+    "value": 10
+  },
+  "then": {
+    "decision": "minimum_quantity",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Always rounds down
+- `floor(3.9) = 3`
+- `floor(-3.1) = -4`
+- Returns largest integer ≤ value
+
+**Use Cases:**
+- Pricing calculations
+- Quantity calculations
+- Time-based discounts
+
+---
+
+#### `ceil`
+
+Rounds a value up to the nearest integer.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "ceil",
+  "value": 4
+}
+```
+
+**Example:**
+```json
+{
+  "id": "capacity_check",
+  "if": {
+    "field": "required_capacity",
+    "op": "ceil",
+    "value": 5
+  },
+  "then": {
+    "decision": "sufficient_capacity",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Always rounds up
+- `ceil(3.1) = 4`
+- `ceil(-3.9) = -3`
+- Returns smallest integer ≥ value
+
+**Use Cases:**
+- Resource allocation
+- Container sizing
+- Buffer calculations
+
+---
+
+#### `truncate`
+
+Truncates (removes decimal part) of a value.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "truncate",
+  "value": 3
+}
+```
+
+**Example:**
+```json
+{
+  "id": "integer_part",
+  "if": {
+    "field": "measurement",
+    "op": "truncate",
+    "value": 5
+  },
+  "then": {
+    "decision": "whole_number",
+    "weight": 1.0
+  }
+}
+```
+
+**Behavior:**
+- Removes decimal part without rounding
+- `truncate(3.9) = 3`
+- `truncate(-3.9) = -3`
+- Moves toward zero
+
+**Use Cases:**
+- Integer extraction
+- Precision control
+- Data type conversion
+
+---
+
+#### `abs`
+
+Calculates the absolute value of a number.
+
+**Syntax:**
+```json
+{
+  "field": "value",
+  "op": "abs",
+  "value": 5
+}
+```
+
+**Example:**
+```json
+{
+  "id": "absolute_deviation",
+  "if": {
+    "field": "deviation",
+    "op": "abs",
+    "value": 10
+  },
+  "then": {
+    "decision": "within_tolerance",
+    "weight": 0.9,
+    "reason": "Absolute deviation is within 10"
+  }
+}
+```
+
+**Behavior:**
+- Always returns non-negative value
+- `abs(5) = 5`
+- `abs(-5) = 5`
+- `abs(0) = 0`
+
+**Use Cases:**
+- Error calculations
+- Distance calculations
+- Magnitude comparisons
+
+---
+
+### Advanced Mathematical Functions
+
+#### `factorial`
+
+Calculates the factorial of a non-negative integer.
+
+**Syntax:**
+```json
+{
+  "field": "number",
+  "op": "factorial",
+  "value": 120
+}
+```
+
+**Example:**
+```json
+{
+  "id": "permutation_check",
+  "if": {
+    "field": "items_count",
+    "op": "factorial",
+    "value": 24
+  },
+  "then": {
+    "decision": "four_items",
+    "weight": 1.0,
+    "reason": "4! = 24 permutations possible"
+  }
+}
+```
+
+**Behavior:**
+- Field must be a non-negative integer
+- Returns `false` if field is negative or not an integer
+- `factorial(0) = 1`
+- `factorial(5) = 120`
+
+**Mathematical Properties:**
+- `factorial(0) = 1`
+- `factorial(1) = 1`
+- `factorial(5) = 120`
+- `factorial(6) = 720`
+
+**Use Cases:**
+- Combinatorics
+- Permutation calculations
+- Probability calculations
+
+---
+
+#### `gcd`
+
+Calculates the Greatest Common Divisor (GCD) of two integers.
+
+**Syntax (Hash Format):**
+```json
+{
+  "field": "a",
+  "op": "gcd",
+  "value": {
+    "other": 12,
+    "result": 6
+  }
+}
+```
+
+**Syntax (Array Format):**
+```json
+{
+  "field": "a",
+  "op": "gcd",
+  "value": [12, 6]
+}
+```
+
+**Example:**
+```json
+{
+  "id": "common_divisor",
+  "if": {
+    "field": "number_a",
+    "op": "gcd",
+    "value": {
+      "other": 24,
+      "result": 12
+    }
+  },
+  "then": {
+    "decision": "has_common_factor",
+    "weight": 1.0,
+    "reason": "GCD of 36 and 24 is 12"
+  }
+}
+```
+
+**Behavior:**
+- Both field and `other` must be integers
+- Calculates `gcd(field, other)`
+- Uses Euclidean algorithm
+
+**Mathematical Properties:**
+- `gcd(18, 12) = 6`
+- `gcd(17, 13) = 1` (coprime)
+- `gcd(a, 0) = |a|`
+- `gcd(a, a) = |a|`
+
+**Use Cases:**
+- Fraction simplification
+- Cryptography
+- Algorithm design
+
+---
+
+#### `lcm`
+
+Calculates the Least Common Multiple (LCM) of two integers.
+
+**Syntax (Hash Format):**
+```json
+{
+  "field": "a",
+  "op": "lcm",
+  "value": {
+    "other": 12,
+    "result": 36
+  }
+}
+```
+
+**Syntax (Array Format):**
+```json
+{
+  "field": "a",
+  "op": "lcm",
+  "value": [12, 36]
+}
+```
+
+**Example:**
+```json
+{
+  "id": "synchronization_point",
+  "if": {
+    "field": "cycle_a",
+    "op": "lcm",
+    "value": {
+      "other": 12,
+      "result": 36
+    }
+  },
+  "then": {
+    "decision": "aligned_cycles",
+    "weight": 1.0,
+    "reason": "Cycles align every 36 units"
+  }
+}
+```
+
+**Behavior:**
+- Both field and `other` must be integers
+- Calculates `lcm(field, other)`
+- Relationship: `lcm(a, b) = |a * b| / gcd(a, b)`
+
+**Mathematical Properties:**
+- `lcm(9, 12) = 36`
+- `lcm(4, 6) = 12`
+- `lcm(a, 0) = 0`
+- `lcm(a, a) = |a|`
+
+**Use Cases:**
+- Periodic event synchronization
+- Fraction addition
+- Recurring schedule calculations
+
+---
+
+### Precision and Error Handling
+
+All mathematical operators use **epsilon comparison** for floating-point values to handle precision issues:
+
+- Default epsilon: `1e-10`
+- Prevents false negatives due to floating-point representation
+- Ensures accurate comparisons for trigonometric, logarithmic, and exponential functions
+
+**Example of Epsilon Comparison:**
+```ruby
+# Instead of: Math.sin(0) == 0.0  (might fail due to precision)
+# Uses: epsilon_equal?(Math.sin(0), 0.0)  (handles floating-point precision)
+```
+
+---
+
+### Common Mathematical Patterns
+
+**Pythagorean Theorem Check:**
+```json
+{
+  "all": [
+    { "field": "a_squared", "op": "sqrt", "value": 3.0 },
+    { "field": "b_squared", "op": "sqrt", "value": 4.0 },
+    { "field": "c_squared", "op": "sqrt", "value": 5.0 }
+  ]
+}
+```
+
+**Exponential Growth Model:**
+```json
+{
+  "field": "time",
+  "op": "exp",
+  "value": { "lt": 1000.0 }
+}
+```
+
+**Logarithmic Scale Check:**
+```json
+{
+  "field": "magnitude",
+  "op": "log10",
+  "value": { "gte": 2.0, "lte": 4.0 }
+}
+```
+
+**Angle Validation:**
+```json
+{
+  "all": [
+    { "field": "angle_radians", "op": "sin", "value": { "gte": -1.0, "lte": 1.0 } },
+    { "field": "angle_radians", "op": "cos", "value": { "gte": -1.0, "lte": 1.0 } }
+  ]
+}
+```
 
 ---
 
