@@ -17,10 +17,10 @@ module DecisionAgent
 
             result_date = start_date + (params[:days] * 86_400)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
@@ -37,10 +37,10 @@ module DecisionAgent
 
             result_date = start_date - (params[:days] * 86_400)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
@@ -57,10 +57,10 @@ module DecisionAgent
 
             result_date = start_date + (params[:hours] * 3600)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
@@ -77,10 +77,10 @@ module DecisionAgent
 
             result_date = start_date - (params[:hours] * 3600)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
@@ -97,10 +97,10 @@ module DecisionAgent
 
             result_date = start_date + (params[:minutes] * 60)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
@@ -117,17 +117,15 @@ module DecisionAgent
 
             result_date = start_date - (params[:minutes] * 60)
             target_date = if params[:target] == "now"
-                           Time.now
-                         else
-                           ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
-                         end
+                            Time.now
+                          else
+                            ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:target]))
+                          end
             return false unless target_date
 
             compare_date_result?(result_date, target_date, params)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse date arithmetic parameters

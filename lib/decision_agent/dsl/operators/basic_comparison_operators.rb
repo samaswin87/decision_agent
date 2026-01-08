@@ -15,19 +15,19 @@ module DecisionAgent
 
           when "gt"
             # Greater than - only for comparable types (numbers, strings)
-            self.comparable?(actual_value, expected_value) && actual_value > expected_value
+            comparable?(actual_value, expected_value) && actual_value > expected_value
 
           when "gte"
             # Greater than or equal - only for comparable types
-            self.comparable?(actual_value, expected_value) && actual_value >= expected_value
+            comparable?(actual_value, expected_value) && actual_value >= expected_value
 
           when "lt"
             # Less than - only for comparable types
-            self.comparable?(actual_value, expected_value) && actual_value < expected_value
+            comparable?(actual_value, expected_value) && actual_value < expected_value
 
           when "lte"
             # Less than or equal - only for comparable types
-            self.comparable?(actual_value, expected_value) && actual_value <= expected_value
+            comparable?(actual_value, expected_value) && actual_value <= expected_value
 
           when "in"
             # Array membership - checks if actual_value is in the expected array
@@ -56,10 +56,8 @@ module DecisionAgent
             # - False boolean: false (false is a valid value)
             # - Non-empty values: false
             actual_value.nil? || (actual_value.respond_to?(:empty?) ? actual_value.empty? : false)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Checks if two values can be compared with <, >, <=, >=

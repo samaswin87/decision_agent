@@ -24,10 +24,8 @@ module DecisionAgent
             else
               false
             end
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse range for 'between' operator
@@ -35,8 +33,8 @@ module DecisionAgent
         # Converts arrays to hash for consistency and better performance
         def self.parse_range(value, param_cache: nil, param_cache_mutex: nil)
           # Normalize to hash if array (for large params, hash is more efficient)
-          normalized_value = normalize_params_to_hash(value, [:min, :max])
-          
+          normalized_value = normalize_params_to_hash(value, %i[min max])
+
           # Use provided caches or access ConditionEvaluator class variables
           cache = param_cache
           mutex = param_cache_mutex
@@ -73,8 +71,8 @@ module DecisionAgent
         # Converts arrays to hash for consistency and better performance
         def self.parse_modulo_params(value, param_cache: nil, param_cache_mutex: nil)
           # Normalize to hash if array (for large params, hash is more efficient)
-          normalized_value = normalize_params_to_hash(value, [:divisor, :remainder])
-          
+          normalized_value = normalize_params_to_hash(value, %i[divisor remainder])
+
           # Use provided caches or access ConditionEvaluator class variables
           cache = param_cache
           mutex = param_cache_mutex

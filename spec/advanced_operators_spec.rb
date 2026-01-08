@@ -832,1353 +832,1353 @@ RSpec.describe "Advanced DSL Operators" do
         end
       end
 
-        it "does not match when sqrt value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "sqrt", value: 3.0 },
-                then: { decision: "square_root" }
-              }
-            ]
-          }
+      it "does not match when sqrt value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "sqrt", value: 3.0 },
+              then: { decision: "square_root" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 16 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 16 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).to be_nil
-        end
-
-        it "does not match for negative numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "sqrt", value: 0.0 },
-                then: { decision: "square_root" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: -4 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).to be_nil
       end
 
-      describe "power operator" do
-        it "matches when power(field_value, exponent) equals result (array format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: [2, 4] },
-                then: { decision: "power_match" }
-              }
-            ]
-          }
+      it "does not match for negative numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "sqrt", value: 0.0 },
+              then: { decision: "square_root" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 2 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: -4 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("power_match")
-        end
-
-        it "matches when power(field_value, exponent) equals result (hash format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: { exponent: 3, result: 8 } },
-                then: { decision: "power_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 2 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("power_match")
-        end
-
-        it "does not match when power result is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: [2, 4] },
-                then: { decision: "power_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 3 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "exp operator" do
-        it "matches when exp(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "exponent", op: "exp", value: Math::E },
-                then: { decision: "e_power" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ exponent: 1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("e_power")
-        end
-
-        it "does not match when exp value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "exponent", op: "exp", value: Math::E },
-                then: { decision: "e_power" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ exponent: 2 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "log operator" do
-        it "matches when log(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log", value: 0.0 },
-                then: { decision: "log_one" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("log_one")
-        end
-
-        it "does not match when log value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log", value: 0.0 },
-                then: { decision: "log_one" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 2 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "does not match for non-positive numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log", value: 0.0 },
-                then: { decision: "log_one" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: -1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "log10 operator" do
-        it "matches when log10(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log10", value: 2.0 },
-                then: { decision: "log10_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 100 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("log10_match")
-        end
-
-        it "does not match for non-positive numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log10", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: -1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "log2 operator" do
-        it "matches when log2(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log2", value: 3.0 },
-                then: { decision: "log2_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 8 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("log2_match")
-        end
-
-        it "does not match for non-positive numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "log2", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 0 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).to be_nil
       end
     end
 
-    describe "rounding and absolute value functions" do
-      describe "round operator" do
-        it "matches when round(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "round", value: 3 },
-                then: { decision: "rounded" }
-              }
-            ]
-          }
+    describe "power operator" do
+      it "matches when power(field_value, exponent) equals result (array format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: [2, 4] },
+              then: { decision: "power_match" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 3.4 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 2 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("rounded")
-        end
-
-        it "matches when rounding up" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "round", value: 4 },
-                then: { decision: "rounded" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 3.6 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("rounded")
-        end
-
-        it "does not match when rounded value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "round", value: 3 },
-                then: { decision: "rounded" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 2.3 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("power_match")
       end
 
-      describe "floor operator" do
-        it "matches when floor(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "floor", value: 3 },
-                then: { decision: "floored" }
-              }
-            ]
-          }
+      it "matches when power(field_value, exponent) equals result (hash format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: { exponent: 3, result: 8 } },
+              then: { decision: "power_match" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 3.9 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 2 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("floored")
-        end
-
-        it "does not match when floor value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "floor", value: 3 },
-                then: { decision: "floored" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 2.5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("power_match")
       end
 
-      describe "ceil operator" do
-        it "matches when ceil(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "ceil", value: 4 },
-                then: { decision: "ceiled" }
-              }
-            ]
-          }
+      it "does not match when power result is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: [2, 4] },
+              then: { decision: "power_match" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 3.1 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 3 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("ceiled")
-        end
-
-        it "does not match when ceil value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "ceil", value: 4 },
-                then: { decision: "ceiled" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 2.1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "abs operator" do
-        it "matches when abs(field_value) equals expected_value for positive" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "abs", value: 5 },
-                then: { decision: "absolute" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("absolute")
-        end
-
-        it "matches when abs(field_value) equals expected_value for negative" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "abs", value: 5 },
-                then: { decision: "absolute" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: -5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("absolute")
-        end
-
-        it "does not match when abs value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "abs", value: 5 },
-                then: { decision: "absolute" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: -3 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "truncate operator" do
-        it "matches when truncate(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "truncate", value: 3 },
-                then: { decision: "truncated" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: 3.9 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("truncated")
-        end
-
-        it "handles negative numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "truncate", value: -3 },
-                then: { decision: "truncated" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: -3.9 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("truncated")
-        end
-      end
-
-      describe "factorial operator" do
-        it "matches when factorial(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "factorial", value: 120 },
-                then: { decision: "factorial_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("factorial_match")
-        end
-
-        it "does not match for negative numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "factorial", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: -1 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "does not match for non-integer numbers" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "number", op: "factorial", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ number: 5.5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "gcd operator" do
-        it "matches when gcd(field_value, other) equals result (array format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "a", op: "gcd", value: [12, 6] },
-                then: { decision: "gcd_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ a: 18 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("gcd_match")
-        end
-
-        it "matches when gcd(field_value, other) equals result (hash format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "a", op: "gcd", value: { other: 12, result: 6 } },
-                then: { decision: "gcd_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ a: 18 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("gcd_match")
-        end
-      end
-
-      describe "lcm operator" do
-        it "matches when lcm(field_value, other) equals result (array format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "a", op: "lcm", value: [12, 36] },
-                then: { decision: "lcm_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ a: 9 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("lcm_match")
-        end
-
-        it "matches when lcm(field_value, other) equals result (hash format)" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "a", op: "lcm", value: { other: 12, result: 36 } },
-                then: { decision: "lcm_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ a: 9 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("lcm_match")
-        end
+        expect(evaluation).to be_nil
       end
     end
 
-    describe "aggregation functions" do
-      describe "min operator" do
-        it "matches when min(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "min", value: 1 },
-                then: { decision: "min_found" }
-              }
-            ]
-          }
+    describe "exp operator" do
+      it "matches when exp(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "exponent", op: "exp", value: Math::E },
+              then: { decision: "e_power" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [3, 1, 5, 2] })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ exponent: 1 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("min_found")
-        end
-
-        it "does not match when min value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "min", value: 1 },
-                then: { decision: "min_found" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [3, 5, 2] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "does not match for empty arrays" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "min", value: 1 },
-                then: { decision: "min_found" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("e_power")
       end
 
-      describe "max operator" do
-        it "matches when max(field_value) equals expected_value" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "max", value: 5 },
-                then: { decision: "max_found" }
-              }
-            ]
-          }
+      it "does not match when exp value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "exponent", op: "exp", value: Math::E },
+              then: { decision: "e_power" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [3, 1, 5, 2] })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ exponent: 2 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("max_found")
-        end
-
-        it "does not match when max value is different" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "max", value: 5 },
-                then: { decision: "max_found" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [3, 1, 2] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "does not match for empty arrays" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "max", value: 5 },
-                then: { decision: "max_found" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).to be_nil
       end
     end
 
-    # EDGE CASES FOR MATHEMATICAL OPERATORS
-    describe "edge cases for mathematical operators" do
-      describe "non-numeric values" do
-        it "handles string values gracefully for sin" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "sin", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
+    describe "log operator" do
+      it "matches when log(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log", value: 0.0 },
+              then: { decision: "log_one" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: "not_a_number" })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 1 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).to be_nil
-        end
-
-        it "handles string values gracefully for sqrt" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "sqrt", value: 3.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: "invalid" })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "handles string values gracefully for round" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "round", value: 3 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: "not_numeric" })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "handles non-array values gracefully for min" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "min", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: "not_an_array" })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("log_one")
       end
 
-      describe "missing or nil values" do
-        it "handles missing field gracefully for sin" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "missing", op: "sin", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
+      it "does not match when log value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log", value: 0.0 },
+              then: { decision: "log_one" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({})
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 2 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).to be_nil
-        end
-
-        it "handles nil value gracefully for sqrt" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "sqrt", value: 3.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: nil })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-
-        it "handles nil value gracefully for min" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "value", op: "min", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ value: nil })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
+        expect(evaluation).to be_nil
       end
 
-      describe "floating point precision" do
-        it "handles floating point precision for sin" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "angle", op: "sin", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
+      it "does not match for non-positive numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log", value: 0.0 },
+              then: { decision: "log_one" }
+            }
+          ]
+        }
 
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          # sin(0) should be exactly 0.0
-          context = DecisionAgent::Context.new({ angle: 0.0 })
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: -1 })
 
-          evaluation = evaluator.evaluate(context)
+        evaluation = evaluator.evaluate(context)
 
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "handles floating point precision for cos" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "angle", op: "cos", value: 1.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ angle: 0.0 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-      end
-
-      describe "very large numbers" do
-        it "handles very large numbers for exp" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "exponent", op: "exp", value: Math.exp(10) },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ exponent: 10 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "handles very large numbers for power" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: [3, 27] },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 3 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-      end
-
-      describe "integration with all/any conditions" do
-        it "works with all condition combining multiple mathematical operators" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: {
-                  all: [
-                    { field: "angle", op: "sin", value: 0.0 },
-                    { field: "number", op: "sqrt", value: 3.0 },
-                    { field: "value", op: "abs", value: 5 }
-                  ]
-                },
-                then: { decision: "all_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({
-                                                 angle: 0,
-                                                 number: 9,
-                                                 value: -5
-                                               })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("all_match")
-        end
-
-        it "works with any condition combining multiple mathematical operators" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: {
-                  any: [
-                    { field: "angle", op: "sin", value: 1.0 },
-                    { field: "number", op: "sqrt", value: 4.0 },
-                    { field: "value", op: "abs", value: 10 }
-                  ]
-                },
-                then: { decision: "any_match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({
-                                                 angle: 0, # sin(0) = 0, not 1
-                                                 number: 9,  # sqrt(9) = 3, not 4
-                                                 value: -10  # abs(-10) = 10, matches!
-                                               })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("any_match")
-        end
-      end
-
-      describe "nested field access" do
-        it "works with nested fields for sin" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "math.angle", op: "sin", value: 0.0 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ math: { angle: 0 } })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "works with nested fields for min" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "data.numbers", op: "min", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ data: { numbers: [3, 1, 5, 2] } })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-      end
-
-      describe "power operator edge cases" do
-        it "handles power with zero exponent" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: [0, 1] },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 5 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "handles power with negative exponent" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: [-1, 0.5] },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 2 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "handles invalid power parameters gracefully" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "base", op: "power", value: "invalid" },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ base: 2 })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).to be_nil
-        end
-      end
-
-      describe "min/max with mixed types" do
-        it "handles min with mixed numeric types" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "min", value: 1 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [3.5, 1, 5.0, 2] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
-
-        it "handles max with mixed numeric types" do
-          rules = {
-            version: "1.0",
-            ruleset: "test",
-            rules: [
-              {
-                id: "rule_1",
-                if: { field: "numbers", op: "max", value: 5 },
-                then: { decision: "match" }
-              }
-            ]
-          }
-
-          evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
-          context = DecisionAgent::Context.new({ numbers: [1, 3.5, 5, 2.0] })
-
-          evaluation = evaluator.evaluate(context)
-
-          expect(evaluation).not_to be_nil
-          expect(evaluation.decision).to eq("match")
-        end
+        expect(evaluation).to be_nil
       end
     end
+
+    describe "log10 operator" do
+      it "matches when log10(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log10", value: 2.0 },
+              then: { decision: "log10_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 100 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("log10_match")
+      end
+
+      it "does not match for non-positive numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log10", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: -1 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "log2 operator" do
+      it "matches when log2(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log2", value: 3.0 },
+              then: { decision: "log2_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 8 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("log2_match")
+      end
+
+      it "does not match for non-positive numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "log2", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 0 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+  end
+
+  describe "rounding and absolute value functions" do
+    describe "round operator" do
+      it "matches when round(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "round", value: 3 },
+              then: { decision: "rounded" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 3.4 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("rounded")
+      end
+
+      it "matches when rounding up" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "round", value: 4 },
+              then: { decision: "rounded" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 3.6 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("rounded")
+      end
+
+      it "does not match when rounded value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "round", value: 3 },
+              then: { decision: "rounded" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 2.3 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "floor operator" do
+      it "matches when floor(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "floor", value: 3 },
+              then: { decision: "floored" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 3.9 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("floored")
+      end
+
+      it "does not match when floor value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "floor", value: 3 },
+              then: { decision: "floored" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 2.5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "ceil operator" do
+      it "matches when ceil(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "ceil", value: 4 },
+              then: { decision: "ceiled" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 3.1 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("ceiled")
+      end
+
+      it "does not match when ceil value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "ceil", value: 4 },
+              then: { decision: "ceiled" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 2.1 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "abs operator" do
+      it "matches when abs(field_value) equals expected_value for positive" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "abs", value: 5 },
+              then: { decision: "absolute" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("absolute")
+      end
+
+      it "matches when abs(field_value) equals expected_value for negative" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "abs", value: 5 },
+              then: { decision: "absolute" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: -5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("absolute")
+      end
+
+      it "does not match when abs value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "abs", value: 5 },
+              then: { decision: "absolute" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: -3 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "truncate operator" do
+      it "matches when truncate(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "truncate", value: 3 },
+              then: { decision: "truncated" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: 3.9 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("truncated")
+      end
+
+      it "handles negative numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "truncate", value: -3 },
+              then: { decision: "truncated" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: -3.9 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("truncated")
+      end
+    end
+
+    describe "factorial operator" do
+      it "matches when factorial(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "factorial", value: 120 },
+              then: { decision: "factorial_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("factorial_match")
+      end
+
+      it "does not match for negative numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "factorial", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: -1 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "does not match for non-integer numbers" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "number", op: "factorial", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ number: 5.5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "gcd operator" do
+      it "matches when gcd(field_value, other) equals result (array format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "a", op: "gcd", value: [12, 6] },
+              then: { decision: "gcd_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ a: 18 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("gcd_match")
+      end
+
+      it "matches when gcd(field_value, other) equals result (hash format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "a", op: "gcd", value: { other: 12, result: 6 } },
+              then: { decision: "gcd_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ a: 18 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("gcd_match")
+      end
+    end
+
+    describe "lcm operator" do
+      it "matches when lcm(field_value, other) equals result (array format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "a", op: "lcm", value: [12, 36] },
+              then: { decision: "lcm_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ a: 9 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("lcm_match")
+      end
+
+      it "matches when lcm(field_value, other) equals result (hash format)" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "a", op: "lcm", value: { other: 12, result: 36 } },
+              then: { decision: "lcm_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ a: 9 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("lcm_match")
+      end
+    end
+  end
+
+  describe "aggregation functions" do
+    describe "min operator" do
+      it "matches when min(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "min", value: 1 },
+              then: { decision: "min_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [3, 1, 5, 2] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("min_found")
+      end
+
+      it "does not match when min value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "min", value: 1 },
+              then: { decision: "min_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [3, 5, 2] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "does not match for empty arrays" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "min", value: 1 },
+              then: { decision: "min_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "max operator" do
+      it "matches when max(field_value) equals expected_value" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "max", value: 5 },
+              then: { decision: "max_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [3, 1, 5, 2] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("max_found")
+      end
+
+      it "does not match when max value is different" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "max", value: 5 },
+              then: { decision: "max_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [3, 1, 2] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "does not match for empty arrays" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "max", value: 5 },
+              then: { decision: "max_found" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+  end
+
+  # EDGE CASES FOR MATHEMATICAL OPERATORS
+  describe "edge cases for mathematical operators" do
+    describe "non-numeric values" do
+      it "handles string values gracefully for sin" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "sin", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: "not_a_number" })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "handles string values gracefully for sqrt" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "sqrt", value: 3.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: "invalid" })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "handles string values gracefully for round" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "round", value: 3 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: "not_numeric" })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "handles non-array values gracefully for min" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "min", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: "not_an_array" })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "missing or nil values" do
+      it "handles missing field gracefully for sin" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "missing", op: "sin", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({})
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "handles nil value gracefully for sqrt" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "sqrt", value: 3.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: nil })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+
+      it "handles nil value gracefully for min" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "value", op: "min", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ value: nil })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "floating point precision" do
+      it "handles floating point precision for sin" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "angle", op: "sin", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        # sin(0) should be exactly 0.0
+        context = DecisionAgent::Context.new({ angle: 0.0 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "handles floating point precision for cos" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "angle", op: "cos", value: 1.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ angle: 0.0 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+    end
+
+    describe "very large numbers" do
+      it "handles very large numbers for exp" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "exponent", op: "exp", value: Math.exp(10) },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ exponent: 10 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "handles very large numbers for power" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: [3, 27] },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 3 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+    end
+
+    describe "integration with all/any conditions" do
+      it "works with all condition combining multiple mathematical operators" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: {
+                all: [
+                  { field: "angle", op: "sin", value: 0.0 },
+                  { field: "number", op: "sqrt", value: 3.0 },
+                  { field: "value", op: "abs", value: 5 }
+                ]
+              },
+              then: { decision: "all_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({
+                                               angle: 0,
+                                               number: 9,
+                                               value: -5
+                                             })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("all_match")
+      end
+
+      it "works with any condition combining multiple mathematical operators" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: {
+                any: [
+                  { field: "angle", op: "sin", value: 1.0 },
+                  { field: "number", op: "sqrt", value: 4.0 },
+                  { field: "value", op: "abs", value: 10 }
+                ]
+              },
+              then: { decision: "any_match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({
+                                               angle: 0, # sin(0) = 0, not 1
+                                               number: 9,  # sqrt(9) = 3, not 4
+                                               value: -10  # abs(-10) = 10, matches!
+                                             })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("any_match")
+      end
+    end
+
+    describe "nested field access" do
+      it "works with nested fields for sin" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "math.angle", op: "sin", value: 0.0 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ math: { angle: 0 } })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "works with nested fields for min" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "data.numbers", op: "min", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ data: { numbers: [3, 1, 5, 2] } })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+    end
+
+    describe "power operator edge cases" do
+      it "handles power with zero exponent" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: [0, 1] },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 5 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "handles power with negative exponent" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: [-1, 0.5] },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 2 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "handles invalid power parameters gracefully" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "base", op: "power", value: "invalid" },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ base: 2 })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).to be_nil
+      end
+    end
+
+    describe "min/max with mixed types" do
+      it "handles min with mixed numeric types" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "min", value: 1 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [3.5, 1, 5.0, 2] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+
+      it "handles max with mixed numeric types" do
+        rules = {
+          version: "1.0",
+          ruleset: "test",
+          rules: [
+            {
+              id: "rule_1",
+              if: { field: "numbers", op: "max", value: 5 },
+              then: { decision: "match" }
+            }
+          ]
+        }
+
+        evaluator = DecisionAgent::Evaluators::JsonRuleEvaluator.new(rules_json: rules)
+        context = DecisionAgent::Context.new({ numbers: [1, 3.5, 5, 2.0] })
+
+        evaluation = evaluator.evaluate(context)
+
+        expect(evaluation).not_to be_nil
+        expect(evaluation.decision).to eq("match")
+      end
+    end
+  end
 
   # DATE/TIME OPERATORS
   describe "date/time operators" do

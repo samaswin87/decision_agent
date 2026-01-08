@@ -54,10 +54,8 @@ module DecisionAgent
 
             week = date.strftime("%U").to_i + 1 # %U returns 0-53, we want 1-53
             compare_numeric_result(week, expected_value)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Compare numeric result (for time component extraction)

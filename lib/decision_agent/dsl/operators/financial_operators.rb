@@ -73,20 +73,18 @@ module DecisionAgent
             return false if rate <= 0 || periods <= 0
 
             payment = if rate.zero?
-                       principal / periods
-                     else
-                       principal * (rate * ((1 + rate)**periods)) / (((1 + rate)**periods) - 1)
-                     end
+                        principal / periods
+                      else
+                        principal * (rate * ((1 + rate)**periods)) / (((1 + rate)**periods) - 1)
+                      end
 
             if params[:result]
               (payment.round(2) == params[:result].round(2))
             else
               compare_financial_result(payment, params)
             end
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse compound interest parameters
@@ -114,7 +112,7 @@ module DecisionAgent
         def self.parse_compound_interest_params_impl(value)
           rate = value[:rate] || value["rate"]
           periods = value[:periods] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,
@@ -150,7 +148,7 @@ module DecisionAgent
         def self.parse_present_value_params_impl(value)
           rate = value[:rate] || value["rate"]
           periods = value[:periods] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,
@@ -184,7 +182,7 @@ module DecisionAgent
         def self.parse_future_value_params_impl(value)
           rate = value[:rate] || value["rate"]
           periods = value[:periods] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,
@@ -218,7 +216,7 @@ module DecisionAgent
         def self.parse_payment_params_impl(value)
           rate = value[:rate] || value["rate"]
           periods = value[:periods] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,

@@ -67,10 +67,10 @@ module DecisionAgent
             return false if numeric_array.empty?
 
             median_value = if numeric_array.size.odd?
-                            numeric_array[numeric_array.size / 2]
-                          else
-                            (numeric_array[(numeric_array.size / 2) - 1] + numeric_array[numeric_array.size / 2]) / 2.0
-                          end
+                             numeric_array[numeric_array.size / 2]
+                           else
+                             (numeric_array[(numeric_array.size / 2) - 1] + numeric_array[numeric_array.size / 2]) / 2.0
+                           end
             Base.compare_aggregation_result(median_value, expected_value)
 
           when "stddev", "standard_deviation"
@@ -111,12 +111,12 @@ module DecisionAgent
 
             percentile_index = (params[:percentile] / 100.0) * (numeric_array.size - 1)
             percentile_value = if percentile_index == percentile_index.to_i
-                                numeric_array[percentile_index.to_i]
-                              else
-                                lower = numeric_array[percentile_index.floor]
-                                upper = numeric_array[percentile_index.ceil]
-                                lower + ((upper - lower) * (percentile_index - percentile_index.floor))
-                              end
+                                 numeric_array[percentile_index.to_i]
+                               else
+                                 lower = numeric_array[percentile_index.floor]
+                                 upper = numeric_array[percentile_index.ceil]
+                                 lower + ((upper - lower) * (percentile_index - percentile_index.floor))
+                               end
 
             compare_percentile_result(percentile_value, params)
 
@@ -126,10 +126,8 @@ module DecisionAgent
 
             count_value = actual_value.size
             Base.compare_aggregation_result(count_value, expected_value)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse percentile parameters

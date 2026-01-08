@@ -8,17 +8,17 @@ module DecisionAgent
           when "contains"
             # Checks if string contains substring (case-sensitive)
             string_operator?(actual_value, expected_value) &&
-            actual_value.include?(expected_value)
+              actual_value.include?(expected_value)
 
           when "starts_with"
             # Checks if string starts with prefix (case-sensitive)
             string_operator?(actual_value, expected_value) &&
-            actual_value.start_with?(expected_value)
+              actual_value.start_with?(expected_value)
 
           when "ends_with"
             # Checks if string ends with suffix (case-sensitive)
             string_operator?(actual_value, expected_value) &&
-            actual_value.end_with?(expected_value)
+              actual_value.end_with?(expected_value)
 
           when "matches"
             # Matches string against regular expression
@@ -33,10 +33,8 @@ module DecisionAgent
                 false
               end
             end
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # String operator validation

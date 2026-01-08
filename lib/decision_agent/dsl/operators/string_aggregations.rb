@@ -29,16 +29,14 @@ module DecisionAgent
             return false if actual_value.nil?
 
             length_value = if actual_value.is_a?(String) || actual_value.is_a?(Array)
-                           actual_value.length
-                         else
-                           return false
-                         end
+                             actual_value.length
+                           else
+                             return false
+                           end
 
             compare_length_result(length_value, expected_value)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse join parameters

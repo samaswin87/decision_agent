@@ -3,7 +3,7 @@ module DecisionAgent
     module Operators
       # Handles data enrichment operators: fetch_from_api
       module DataEnrichmentOperators
-        def self.handle(op, actual_value, expected_value, context_hash)
+        def self.handle(op, _actual_value, expected_value, context_hash)
           case op
           when "fetch_from_api"
             # Fetches data from external API and enriches context
@@ -43,10 +43,8 @@ module DecisionAgent
               warn "Data enrichment error: #{e.message}" if ENV["DEBUG"]
               false
             end
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
       end
     end

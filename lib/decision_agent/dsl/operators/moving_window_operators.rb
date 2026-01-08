@@ -76,10 +76,8 @@ module DecisionAgent
             window_array = numeric_array.slice(-window, window)
             moving_min = window_array.min
             compare_moving_window_result(moving_min, params)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse moving window parameters
@@ -107,7 +105,7 @@ module DecisionAgent
 
         def self.parse_moving_window_params_impl(value)
           window = value[:window] || value["window"]
-          return nil unless window.is_a?(Numeric) && window > 0
+          return nil unless window.is_a?(Numeric) && window.positive?
 
           {
             window: window.to_i,

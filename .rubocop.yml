@@ -31,6 +31,8 @@ Metrics/MethodLength:
     - 'benchmarks/**/*'
     - 'lib/decision_agent/versioning/file_storage_adapter.rb'
     - 'scripts/generate_coverage_report.rb'
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 Metrics/BlockLength:
   Max: 99
@@ -48,6 +50,9 @@ Metrics/ClassLength:
 
 Metrics/ModuleLength:
   Max: 150
+  Exclude:
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 Metrics/AbcSize:
   Max: 39
@@ -56,6 +61,8 @@ Metrics/AbcSize:
     - 'examples/**/*'
     - 'bin/**/*'
     - 'lib/decision_agent/versioning/file_storage_adapter.rb'
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 # Layout
 Layout/LineLength:
@@ -103,6 +110,8 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - 'spec/**/*'
     - 'examples/**/*'
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 Metrics/PerceivedComplexity:
   Max: 16
@@ -110,6 +119,8 @@ Metrics/PerceivedComplexity:
     - 'spec/**/*'
     - 'examples/**/*'
     - 'lib/decision_agent/versioning/file_storage_adapter.rb'
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 # Gemspec configuration
 Gemspec/DevelopmentDependencies:
@@ -149,6 +160,9 @@ Lint/DuplicateBranch:
 
 Metrics/ParameterLists:
   Max: 6
+  Exclude:
+    - 'lib/decision_agent/dsl/operators/**/*'
+    - 'lib/decision_agent/dsl/helpers/**/*'
 
 # Disable FormatStringToken for benchmark files (simple format strings are fine)
 Style/FormatStringToken:

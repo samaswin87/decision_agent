@@ -49,10 +49,8 @@ module DecisionAgent
 
             rate = (timestamps.size.to_f / time_span) * 3600.0
             compare_rate_result(rate, expected_value)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Compare rate result

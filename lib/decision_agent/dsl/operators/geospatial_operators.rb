@@ -14,7 +14,8 @@ module DecisionAgent
             return false unless params
 
             # Cache geospatial distance calculations
-            distance = get_cached_distance(point, params[:center], geospatial_cache: geospatial_cache, geospatial_cache_mutex: geospatial_cache_mutex)
+            distance = get_cached_distance(point, params[:center], geospatial_cache: geospatial_cache,
+                                                                   geospatial_cache_mutex: geospatial_cache_mutex)
             distance <= params[:radius]
 
           when "in_polygon"
@@ -27,10 +28,8 @@ module DecisionAgent
             return false if polygon.size < 3 # Need at least 3 vertices
 
             point_in_polygon?(point, polygon)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse coordinates from various formats
@@ -40,12 +39,12 @@ module DecisionAgent
             lat = value[:lat] || value["lat"]
             lon = value[:lon] || value["lon"]
             return nil unless lat && lon
+
             { lat: lat.to_f, lon: lon.to_f }
           when Array
             return nil unless value.size >= 2
+
             { lat: value[0].to_f, lon: value[1].to_f }
-          else
-            nil
           end
         end
 

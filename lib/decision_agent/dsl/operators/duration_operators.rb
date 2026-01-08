@@ -15,7 +15,12 @@ module DecisionAgent
             params = parse_duration_params(expected_value, param_cache: param_cache, param_cache_mutex: param_cache_mutex)
             return false unless params
 
-            end_date = params[:end] == "now" ? Time.now : ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:end]))
+            end_date = if params[:end] == "now"
+                         Time.now
+                       else
+                         ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash,
+                                                                                           params[:end]))
+                       end
             return false unless end_date
 
             duration = (end_date - start_date).abs
@@ -31,7 +36,12 @@ module DecisionAgent
             params = parse_duration_params(expected_value, param_cache: param_cache, param_cache_mutex: param_cache_mutex)
             return false unless params
 
-            end_date = params[:end] == "now" ? Time.now : ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:end]))
+            end_date = if params[:end] == "now"
+                         Time.now
+                       else
+                         ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash,
+                                                                                           params[:end]))
+                       end
             return false unless end_date
 
             duration = ((end_date - start_date).abs / 60.0)
@@ -47,7 +57,12 @@ module DecisionAgent
             params = parse_duration_params(expected_value, param_cache: param_cache, param_cache_mutex: param_cache_mutex)
             return false unless params
 
-            end_date = params[:end] == "now" ? Time.now : ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:end]))
+            end_date = if params[:end] == "now"
+                         Time.now
+                       else
+                         ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash,
+                                                                                           params[:end]))
+                       end
             return false unless end_date
 
             duration = ((end_date - start_date).abs / 3600.0)
@@ -63,15 +78,18 @@ module DecisionAgent
             params = parse_duration_params(expected_value, param_cache: param_cache, param_cache_mutex: param_cache_mutex)
             return false unless params
 
-            end_date = params[:end] == "now" ? Time.now : ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash, params[:end]))
+            end_date = if params[:end] == "now"
+                         Time.now
+                       else
+                         ConditionEvaluator.parse_date(ConditionEvaluator.get_nested_value(context_hash,
+                                                                                           params[:end]))
+                       end
             return false unless end_date
 
             duration = ((end_date - start_date).abs / 86_400.0)
             compare_duration_result(duration, params)
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
 
         # Parse duration parameters

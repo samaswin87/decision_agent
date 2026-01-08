@@ -9,7 +9,7 @@ module DecisionAgent
         def self.normalize_params_to_hash(value, keys)
           if value.is_a?(Array) && value.size == keys.size
             # Convert array to hash for better performance with large params
-            keys.each_with_index.each_with_object({}) do |(key, idx), hash|
+            keys.each_with_index.with_object({}) do |(key, idx), hash|
               hash[key] = value[idx]
             end
           elsif value.is_a?(Hash)
@@ -59,7 +59,7 @@ module DecisionAgent
         end
 
         # Epsilon comparison for floating point numbers
-        def self.epsilon_equal?(a, b, epsilon = 1e-10)
+        def self.epsilon_equal?(a, b, epsilon = 1e-10) # rubocop:disable Naming/MethodParameterName
           (a - b).abs < epsilon
         end
       end

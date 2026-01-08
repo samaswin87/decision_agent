@@ -5,7 +5,8 @@ module DecisionAgent
       module OperatorEvaluationHelpers
         # Evaluates operator using mixins (in order of most common to least common)
         # Returns the result from the first mixin that handles the operator, or false if unknown
-        def self.evaluate_operator(op, actual_value, expected_value, context_hash, regex_cache:, regex_cache_mutex:, param_cache:, param_cache_mutex:, geospatial_cache:, geospatial_cache_mutex:)
+        def self.evaluate_operator(op, actual_value, expected_value, context_hash, regex_cache:, regex_cache_mutex:, param_cache:,
+                                   param_cache_mutex:, geospatial_cache:, geospatial_cache_mutex:)
           # Try basic operators first (most common)
           result = try_basic_operators(
             op, actual_value, expected_value,

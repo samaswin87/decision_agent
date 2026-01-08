@@ -138,7 +138,7 @@ module DecisionAgent
           return nil unless value.is_a?(Hash)
 
           window = value["window"] || value[:window]
-          return nil unless window.is_a?(Numeric) && window > 0
+          return nil unless window.is_a?(Numeric) && window.positive?
 
           {
             window: window.to_i,
@@ -154,8 +154,8 @@ module DecisionAgent
           return nil unless value.is_a?(Hash)
 
           rate = value["rate"] || value[:rate]
-          periods = value["periods"] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          periods = value["periods"] || value[:periods]
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,
@@ -170,8 +170,8 @@ module DecisionAgent
           return nil unless value.is_a?(Hash)
 
           rate = value["rate"] || value[:rate]
-          periods = value["periods"] || value["periods"]
-          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods > 0
+          periods = value["periods"] || value[:periods]
+          return nil unless rate.is_a?(Numeric) && periods.is_a?(Numeric) && periods.positive?
 
           {
             rate: rate.to_f,

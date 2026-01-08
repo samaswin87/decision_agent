@@ -2242,12 +2242,11 @@ module DecisionAgent
             # If logging fails, continue with permission denial
           end
           # Use halt to stop execution and return 403
-          # This fixes Ruby 3.0 compatibility where halt may not reliably stop execution
+          # NOTE: Explicit parentheses in halt() call are required for Ruby 3.0 compatibility.
+          # Without parentheses, halt may not reliably stop execution in Ruby 3.0.
+          # Do not remove parentheses or change to halt without parentheses.
           content_type :json
-          # rubocop:disable Style/MethodCallWithArgsParentheses
-          # Explicit parentheses required for Ruby 3.0 compatibility
           halt(403, { error: "Permission denied: #{permission}" }.to_json)
-          # rubocop:enable Style/MethodCallWithArgsParentheses
         end
 
         # Log successful permission check, but don't let logging failures prevent access

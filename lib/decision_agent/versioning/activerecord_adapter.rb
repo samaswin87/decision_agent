@@ -155,14 +155,14 @@ module DecisionAgent
           rescue StandardError
             false
           end || e.message.include?("database is locked") ||
-                e.message.include?("SQLite3::BusyException") ||
-                e.message.include?("BusyException")
+                    e.message.include?("SQLite3::BusyException") ||
+                    e.message.include?("BusyException")
 
           raise unless is_busy && retries < max_retries
 
           retries += 1
           # Exponential backoff with jitter
-          delay = base_delay * (2 ** retries) + (rand * base_delay)
+          delay = (base_delay * (2**retries)) + (rand * base_delay)
           sleep(delay)
           retry
         end

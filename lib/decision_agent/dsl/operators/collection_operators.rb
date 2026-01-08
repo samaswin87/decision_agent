@@ -49,10 +49,8 @@ module DecisionAgent
             # OPTIMIZE: Use Set for O(1) lookups instead of O(n) include?
             expected_set = expected_value.to_set
             actual_value.all? { |item| expected_set.include?(item) }
-
-          else
-            nil # Not handled by this module
           end
+          # Returns nil if not handled by this module
         end
       end
     end
