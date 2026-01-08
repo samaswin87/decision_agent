@@ -9,6 +9,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Complete Mathematical Expressions** 🔧
+  - **Comprehensive Mathematical Operators** - Full implementation of all mathematical operators
+    - **Trigonometric Functions** - `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`
+    - **Hyperbolic Functions** - `sinh`, `cosh`, `tanh`
+    - **Power and Root Functions** - `sqrt`, `cbrt`, `power`, `exp`
+    - **Logarithmic Functions** - `log` (natural), `log10` (base 10), `log2` (base 2)
+    - **Rounding Functions** - `round`, `floor`, `ceil`, `truncate`, `abs`
+    - **Advanced Mathematical Functions** - `factorial`, `gcd` (Greatest Common Divisor), `lcm` (Least Common Multiple)
+    - All operators use epsilon comparison for floating-point precision
+    - Comprehensive parameter validation and error handling
+  - **Web UI Integration** - All mathematical operators available in Web UI dropdown
+    - Organized by category (Trigonometric, Hyperbolic, Power/Root, Logarithmic, Rounding, Advanced)
+    - Comprehensive placeholders with format examples
+    - Detailed tooltips with usage hints and mathematical properties
+    - `fetch_from_api` operator added to Data Enrichment section
+  - **Comprehensive Documentation** - Complete documentation for all mathematical operators
+    - `docs/ADVANCED_OPERATORS.md` - Full documentation with syntax, examples, mathematical properties, and use cases
+    - `docs/CODE_EXAMPLES.md` - Code examples for all mathematical operators
+    - Each operator includes behavior notes, precision handling, and common patterns
+  - **Practical Examples** - Complete example file demonstrating all operators
+    - `examples/mathematical_operators_example.rb` - 8 comprehensive examples
+      - Trigonometric functions for signal processing
+      - Power and root functions for distance calculations
+      - Logarithmic functions for order of magnitude
+      - Rounding functions for pricing
+      - Advanced functions for combinatorics
+      - Inverse trigonometric functions for angle calculations
+      - Hyperbolic functions for machine learning
+      - Exponential functions for growth models
+    - All examples tested and working
+  - **Schema Validation** - All mathematical operators included in schema validator
+    - All 25+ mathematical operators validated in rule DSL
+    - Proper parameter validation for complex operators (power, atan2, gcd, lcm)
+  - **Test Coverage** - Comprehensive test suite for all mathematical operators
+    - `spec/advanced_operators_spec.rb` - Tests for all operators with edge cases
+    - Tests for floating-point precision, domain validation, and error handling
+    - Integration tests with `all`/`any` conditions
+  - **Files Modified:**
+    - `lib/decision_agent/dsl/operators/mathematical_operators.rb` - Complete implementation
+    - `lib/decision_agent/dsl/schema_validator.rb` - Added all operators to supported list
+    - `lib/decision_agent/web/public/index.html` - Added all operators to dropdown
+    - `lib/decision_agent/web/public/app.js` - Added placeholders and hints for all operators
+  - **Files Created:**
+    - `examples/mathematical_operators_example.rb` - Comprehensive examples
+    - Updated `docs/ADVANCED_OPERATORS.md` - Complete mathematical operators documentation
+    - Updated `examples/README.md` - Added mathematical operators example
+    - Updated `docs/CODE_EXAMPLES.md` - Added mathematical operators examples
+  - **Business Value:**
+    - Enable complex financial calculations in rules (compound interest, present/future value)
+    - Support scientific and engineering use cases (signal processing, distance calculations)
+    - Complete parity with FEEL mathematical functions
+    - Reduce need for custom evaluators
+
 ## [1.0.1] - 2026-01-07
 
 ### Changed

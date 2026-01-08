@@ -7,8 +7,11 @@ module DecisionAgent
         eq neq gt gte lt lte in present blank
         contains starts_with ends_with matches
         between modulo
-        sin cos tan sqrt power exp log
-        round floor ceil abs
+        sin cos tan asin acos atan atan2
+        sinh cosh tanh
+        sqrt cbrt power exp log log10 log2
+        round floor ceil truncate abs
+        factorial gcd lcm
         min max sum average mean median stddev standard_deviation variance percentile count
         before_date after_date within_days day_of_week
         duration_seconds duration_minutes duration_hours duration_days

@@ -2241,11 +2241,12 @@ module DecisionAgent
           rescue StandardError
             # If logging fails, continue with permission denial
           end
-          # Move halt outside ensure block - Ruby 3.1 compatibility
-          # Placing halt here instead of ensure block fixes Ruby 3.1 issue where
-          # halt inside ensure doesn't reliably stop execution
+          # Use halt with explicit status and JSON string body for Ruby 3.0+ compatibility
+          # In Ruby 3.0+, halt needs the response body as a string (not hash) to properly set the response
+          # Format: halt status_code, json_string
           content_type :json
-          halt 403, { error: "Permission denied: #{permission}" }.to_json
+          error_response = { error: "Permission denied: #{permission}" }.to_json
+          halt 403, error_response
         end
 
         # Log successful permission check, but don't let logging failures prevent access
@@ -2270,6 +2271,7 @@ module DecisionAgent
         if disable_flag
           normalized = disable_flag.to_s.strip.downcase
           return true if %w[true 1 yes].include?(normalized)
+          # If explicitly set to false, respect it and don't check environment
           return false if %w[false 0 no].include?(normalized)
         end
 

@@ -228,6 +228,26 @@ ruby examples/08_batch_testing.rb
 
 ---
 
+### Mathematical Operators ([mathematical_operators_example.rb](mathematical_operators_example.rb))
+
+**What it covers:**
+- Trigonometric functions: `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`
+- Hyperbolic functions: `sinh`, `cosh`, `tanh`
+- Power and root functions: `sqrt`, `cbrt`, `power`, `exp`
+- Logarithmic functions: `log`, `log10`, `log2`
+- Rounding functions: `round`, `floor`, `ceil`, `truncate`, `abs`
+- Advanced functions: `factorial`, `gcd`, `lcm`
+- Real-world use cases: signal processing, distance calculations, pricing, combinatorics
+
+**Run it:**
+```bash
+ruby examples/mathematical_operators_example.rb
+```
+
+**Best for:** Understanding mathematical operators for scientific calculations, financial modeling, and engineering applications
+
+---
+
 ### DMN Examples ([dmn/](dmn/))
 
 **What it covers:**
@@ -262,6 +282,7 @@ These shorter examples demonstrate specific features:
 - **[feedback_aware_evaluator.rb](feedback_aware_evaluator.rb)** - Integrating user feedback into decisions
 - **[conflict_resolution_example.rb](conflict_resolution_example.rb)** - Using different scoring strategies
 - **[json_rules_example.rb](json_rules_example.rb)** - Working with JSON-based rule definitions (includes explainability)
+- **[mathematical_operators_example.rb](mathematical_operators_example.rb)** - Comprehensive examples of all mathematical operators (trigonometric, logarithmic, power, rounding, advanced)
 - **[replay_example.rb](replay_example.rb)** - Historical decision replay
 - **[thread_safe_performance.rb](thread_safe_performance.rb)** - Performance benchmarking and thread-safety verification
 - **[race_condition_demo.rb](race_condition_demo.rb)** - Demonstrating thread-safe file operations
