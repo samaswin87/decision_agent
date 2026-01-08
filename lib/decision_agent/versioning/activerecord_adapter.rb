@@ -16,40 +16,43 @@ module DecisionAgent
       end
 
       def create_version(rule_id:, content:, metadata: {})
-        # Use a transaction with pessimistic locking to prevent race conditions
-        version = nil
-
         # Validate status if provided
         status = metadata[:status] || "active"
         validate_status!(status)
 
-        rule_version_class.transaction do
-          # Lock the last version for this rule to prevent concurrent reads
-          # This ensures only one thread can calculate the next version number at a time
-          last_version = rule_version_class.where(rule_id: rule_id)
-                                           .order(version_number: :desc)
-                                           .lock
-                                           .first
-          next_version_number = last_version ? last_version.version_number + 1 : 1
+        # Retry on SQLite busy exceptions (common with concurrent operations)
+        retry_with_backoff(max_retries: 10) do
+          # Use a transaction with pessimistic locking to prevent race conditions
+          version = nil
 
-          # Deactivate previous active versions
-          # Use update_all for better concurrency (avoids SQLite locking issues)
-          # Status "archived" is valid, so no need to trigger validations
-          rule_version_class.where(rule_id: rule_id, status: "active")
-                            .update_all(status: "archived")
+          rule_version_class.transaction do
+            # Lock the last version for this rule to prevent concurrent reads
+            # This ensures only one thread can calculate the next version number at a time
+            last_version = rule_version_class.where(rule_id: rule_id)
+                                             .order(version_number: :desc)
+                                             .lock
+                                             .first
+            next_version_number = last_version ? last_version.version_number + 1 : 1
 
-          # Create new version
-          version = rule_version_class.create!(
-            rule_id: rule_id,
-            version_number: next_version_number,
-            content: content.to_json,
-            created_by: metadata[:created_by] || "system",
-            changelog: metadata[:changelog] || "Version #{next_version_number}",
-            status: status
-          )
+            # Deactivate previous active versions
+            # Use update_all for better concurrency (avoids SQLite locking issues)
+            # Status "archived" is valid, so no need to trigger validations
+            rule_version_class.where(rule_id: rule_id, status: "active")
+                              .update_all(status: "archived")
+
+            # Create new version
+            version = rule_version_class.create!(
+              rule_id: rule_id,
+              version_number: next_version_number,
+              content: content.to_json,
+              created_by: metadata[:created_by] || "system",
+              changelog: metadata[:changelog] || "Version #{next_version_number}",
+              status: status
+            )
+          end
+
+          serialize_version(version)
         end
-
-        serialize_version(version)
       end
 
       def list_versions(rule_id:, limit: nil)
@@ -79,25 +82,28 @@ module DecisionAgent
       end
 
       def activate_version(version_id:)
-        version = nil
+        # Retry on SQLite busy exceptions (common with concurrent operations)
+        retry_with_backoff(max_retries: 10) do
+          version = nil
 
-        rule_version_class.transaction do
-          # Find and lock the version to activate
-          version = rule_version_class.lock.find(version_id)
+          rule_version_class.transaction do
+            # Find and lock the version to activate
+            version = rule_version_class.lock.find(version_id)
 
-          # Deactivate all other versions for this rule within the same transaction
-          # The lock ensures only one thread can perform this operation at a time
-          # Use update_all for better concurrency (avoids SQLite locking issues)
-          # Status "archived" is valid, so no need to trigger validations
-          rule_version_class.where(rule_id: version.rule_id, status: "active")
-                            .where.not(id: version_id)
-                            .update_all(status: "archived")
+            # Deactivate all other versions for this rule within the same transaction
+            # The lock ensures only one thread can perform this operation at a time
+            # Use update_all for better concurrency (avoids SQLite locking issues)
+            # Status "archived" is valid, so no need to trigger validations
+            rule_version_class.where(rule_id: version.rule_id, status: "active")
+                              .where.not(id: version_id)
+                              .update_all(status: "archived")
 
-          # Activate this version
-          version.update!(status: "active")
+            # Activate this version
+            version.update!(status: "active")
+          end
+
+          serialize_version(version)
         end
-
-        serialize_version(version)
       end
 
       def delete_version(version_id:)
@@ -125,6 +131,40 @@ module DecisionAgent
         else
           raise DecisionAgent::ConfigurationError,
                 "RuleVersion model not found. Please run the generator to create it."
+        end
+      end
+
+      # Retry database operations that may encounter SQLite busy exceptions
+      # This is especially important for concurrent operations on different rules
+      def retry_with_backoff(max_retries: 10, base_delay: 0.01)
+        retries = 0
+        begin
+          yield
+        rescue ActiveRecord::StatementInvalid => e
+          # Check if it's a SQLite busy exception
+          # Handle different SQLite adapter implementations
+          is_busy = begin
+            # Check the underlying exception type
+            cause = e.cause
+            if cause
+              cause.class.name.include?("BusyException") ||
+                cause.class.name.include?("SQLite3::BusyException")
+            else
+              false
+            end
+          rescue StandardError
+            false
+          end || e.message.include?("database is locked") ||
+                e.message.include?("SQLite3::BusyException") ||
+                e.message.include?("BusyException")
+
+          raise unless is_busy && retries < max_retries
+
+          retries += 1
+          # Exponential backoff with jitter
+          delay = base_delay * (2 ** retries) + (rand * base_delay)
+          sleep(delay)
+          retry
         end
       end
 
