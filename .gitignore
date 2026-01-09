@@ -44,3 +44,6 @@ benchmarks/results/results_3.3_1767669962.json
 benchmarks/results/results_3.3_1767670824.json
 benchmarks/results
 benchmarks/baselines
+
+# Test logs (preserved for debugging but not committed)
+/test_logs/

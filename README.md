@@ -454,6 +454,9 @@ See [A/B Testing Guide](docs/AB_TESTING.md) for complete documentation.
 - [Thread-Safety Implementation](docs/THREAD_SAFETY.md) - Technical implementation guide
 - [Benchmarks](benchmarks/README.md) - Comprehensive benchmark suite and performance testing
 
+### Development
+- [Development Setup](docs/DEVELOPMENT_SETUP.md) - Development environment setup, testing, and tools
+
 ### Reference
 - [API Contract](docs/API_CONTRACT.md) - Full API reference
 - [Changelog](docs/CHANGELOG.md) - Version history
@@ -513,8 +516,12 @@ rake benchmark:regression # Compare against baseline
 
 1. Fork the repository
 2. Create a feature branch
-3. Add tests (maintain 90%+ coverage)
-4. Submit a pull request
+3. Set up development environment (see [Development Setup](docs/DEVELOPMENT_SETUP.md))
+4. Add tests (maintain 90%+ coverage)
+5. Run tests across all Ruby versions: `./scripts/test_all_ruby_versions.sh`
+6. Submit a pull request
+
+See [Development Setup Guide](docs/DEVELOPMENT_SETUP.md) for detailed setup instructions, testing workflows, and development best practices.
 
 ## Support
 

@@ -42,7 +42,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "bcrypt", "~> 3.1"
   spec.add_dependency "csv", "~> 3.3" # Explicit dependency for Ruby 3.4+ compatibility
   spec.add_dependency "json-canonicalization", "~> 1.0"
-  spec.add_dependency "nokogiri", "~> 1.15" # For DMN XML parsing
+  spec.add_dependency "nokogiri", ">= 1.15", "< 1.19" # For DMN XML parsing (1.19+ requires Ruby >= 3.2)
   spec.add_dependency "parslet", "~> 2.0" # For FEEL expression parsing
   spec.add_dependency "roo", "~> 2.10"
   spec.add_dependency "rubyzip", "< 3.0.0" # Restrict to 2.x to avoid RubyZip 3.0 API changes

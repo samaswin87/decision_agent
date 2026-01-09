@@ -9,9 +9,11 @@ group :development, :test do
   gem "connection_pool", "< 3.0" # Pin to version compatible with Ruby 3.0+
   gem "memory_profiler" # Memory profiling
   gem "minitest", "< 6.0" # Pin to version compatible with Ruby 3.0+
+  gem "public_suffix", "< 7.0" # Pin to version compatible with Ruby 3.1 (7.0+ requires Ruby >= 3.2)
   gem "puma"
   gem "rake", "~> 13.0"
   gem "rspec", "~> 3.12"
+  gem "parallel_tests", "~> 3.0" # Parallel test execution
   gem "ruby-prof" # Detailed profiling (optional)
   gem "securerandom", "< 0.4" # Pin to version compatible with Ruby 3.0+
   gem "simplecov", "~> 0.22", require: false

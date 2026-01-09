@@ -8,6 +8,7 @@ Welcome to the DecisionAgent documentation.
 - [Main README](../README.md) - Installation, quick start, and overview
 - [Code Examples](CODE_EXAMPLES.md) - Comprehensive code snippets and usage patterns
 - [Examples](../examples/README.md) - Working examples with explanations
+- [Development Setup](DEVELOPMENT_SETUP.md) - Development environment setup and testing
 
 ### Core Features
 - [**Explainability Layer**](EXPLAINABILITY.md) - Machine-readable decision explanations with condition-level tracing
@@ -49,6 +50,7 @@ docs/
 │
 ├── Getting Started
 │   ├── CODE_EXAMPLES.md          - Code snippets and usage patterns
+│   ├── DEVELOPMENT_SETUP.md      - Development environment setup
 │   └── See ../README.md and ../examples/README.md
 │
 ├── Core Features

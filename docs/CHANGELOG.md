@@ -62,6 +62,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Complete parity with FEEL mathematical functions
     - Reduce need for custom evaluators
 
+- **Multi-Ruby Version Testing** 🧪
+  - **Automated cross-version testing script** - Test decision_agent across multiple Ruby versions
+    - `scripts/test_all_ruby_versions.sh` - Comprehensive testing script for Ruby 3.0.7, 3.1.6, 3.2.5, 3.3.5
+    - Automatic Ruby version switching using asdf
+    - Runs `bundle install` for each Ruby version
+    - Executes RSpec tests with parallel execution support
+    - Generates detailed summary reports with pass/fail status
+    - Colored output for easy status identification
+    - Saves detailed logs to `/tmp/` for troubleshooting
+    - JSON test results for each Ruby version
+    - Continues testing all versions even if one fails
+  - **Parallel test execution** - Faster test runs using parallel_tests gem
+    - Added `parallel_tests ~> 3.0` to development dependencies
+    - Automatic parallel test database setup for ActiveRecord tests
+    - Utilizes all available CPU cores for faster test execution
+    - Significantly reduces test suite runtime on multi-core systems
+  - **Files Created:**
+    - `scripts/test_all_ruby_versions.sh` - Multi-version testing script
+  - **Files Modified:**
+    - `Gemfile` - Added parallel_tests gem
+  - **Business Value:**
+    - Ensure compatibility across Ruby versions
+    - Faster CI/CD pipeline with parallel test execution
+    - Automated verification of Ruby version compatibility
+    - Easy identification of version-specific issues
+
 ## [1.0.1] - 2026-01-07
 
 ### Changed
