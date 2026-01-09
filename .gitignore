@@ -47,3 +47,4 @@ benchmarks/baselines
 
 # Test logs (preserved for debugging but not committed)
 /test_logs/
+/benchmark_logs/

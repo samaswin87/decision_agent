@@ -50,6 +50,47 @@ jobs:
         name: codecov-umbrella
         fail_ci_if_error: false
 
+  benchmark:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ruby-version: ['3.0', '3.1', '3.2', '3.3']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby ${{ matrix.ruby-version }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby-version }}
+
+    - name: Install bundler
+      run: |
+        if [[ "${{ matrix.ruby-version }}" == "3.0" ]] || [[ "${{ matrix.ruby-version }}" == "3.1" ]]; then
+          gem install bundler:2.4.22
+          bundle update --bundler
+        else
+          gem install bundler:4.0.3
+        fi
+
+    - name: Install dependencies
+      run: bundle install
+
+    - name: Run performance benchmarks
+      run: bundle exec rake benchmark:all
+
+    - name: Run regression test
+      run: bundle exec rake benchmark:regression
+      continue-on-error: true
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: benchmark-results-${{ matrix.ruby-version }}
+        path: benchmarks/results/
+
   examples:
     runs-on: ubuntu-latest
 
