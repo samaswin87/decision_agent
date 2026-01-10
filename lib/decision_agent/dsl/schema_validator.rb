@@ -23,7 +23,6 @@ module DecisionAgent
         join length
         contains_all contains_any intersects subset_of
         within_radius in_polygon
-        fetch_from_api
       ].freeze
 
       CONDITION_TYPES = %w[all any field].freeze
@@ -182,7 +181,6 @@ module DecisionAgent
 
         validate_operator(operator, path)
         validate_field_condition_value(operator, value, path)
-        validate_fetch_from_api_value(value, path) if (operator.to_s == "fetch_from_api") && value
         validate_field_path(field, path) if field
       end
 
@@ -194,8 +192,8 @@ module DecisionAgent
       end
 
       def validate_field_condition_value(operator, value, path)
-        # Validate value (not required for 'present', 'blank', and 'fetch_from_api' has special validation)
-        return if %w[present blank fetch_from_api].include?(operator.to_s)
+        # Validate value (not required for 'present' and 'blank')
+        return if %w[present blank].include?(operator.to_s)
         return unless value.nil?
 
         @errors << "#{path}: Field condition missing 'value' key for operator '#{operator}'"
@@ -297,24 +295,6 @@ module DecisionAgent
         return unless reason && !reason.is_a?(String)
 
         @errors << "#{rule_path}.then.reason: Must be a string, got #{reason.class}"
-      end
-
-      def validate_fetch_from_api_value(value, path)
-        unless value.is_a?(Hash)
-          @errors << "#{path}: 'fetch_from_api' operator requires 'value' to be a hash with 'endpoint', 'params', and optional 'mapping'"
-          return
-        end
-
-        endpoint = value["endpoint"] || value[:endpoint]
-        @errors << "#{path}: 'fetch_from_api' operator requires 'endpoint' in value hash" unless endpoint
-
-        params = value["params"] || value[:params]
-        @errors << "#{path}: 'fetch_from_api' operator 'params' must be a hash if provided" unless params.nil? || params.is_a?(Hash)
-
-        mapping = value["mapping"] || value[:mapping]
-        return if mapping.nil? || mapping.is_a?(Hash)
-
-        @errors << "#{path}: 'fetch_from_api' operator 'mapping' must be a hash if provided"
       end
 
       def format_errors

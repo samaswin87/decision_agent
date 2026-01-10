@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.0] - 2026-01-09
 
 ### Added
 
@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Organized by category (Trigonometric, Hyperbolic, Power/Root, Logarithmic, Rounding, Advanced)
     - Comprehensive placeholders with format examples
     - Detailed tooltips with usage hints and mathematical properties
-    - `fetch_from_api` operator added to Data Enrichment section
   - **Comprehensive Documentation** - Complete documentation for all mathematical operators
     - `docs/ADVANCED_OPERATORS.md` - Full documentation with syntax, examples, mathematical properties, and use cases
     - `docs/CODE_EXAMPLES.md` - Code examples for all mathematical operators
@@ -297,59 +296,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `lib/decision_agent/web/public/simulation_impact.html` - Impact analysis UI
     - `lib/decision_agent/web/public/simulation_shadow.html` - Shadow testing UI
     - API endpoints in `lib/decision_agent/web/server.rb` for all simulation features
-
-- **REST API Data Enrichment** 🔌
-  - **HTTP Client Integration** - Full HTTP client for external API requests
-    - Support for GET, POST, PUT, DELETE methods
-    - SSL/TLS certificate validation
-    - Configurable timeouts and retries
-    - Request/response handling with error classification
-  - **Response Caching** - Configurable caching system
-    - `CacheAdapter` interface for pluggable cache backends
-    - `MemoryAdapter` implementation (in-memory cache)
-    - Configurable TTL per endpoint
-    - Thread-safe cache operations
-    - Cache key generation from request parameters
-  - **Circuit Breaker Pattern** - Resilience and fault tolerance
-    - Configurable failure threshold, timeout, and success threshold
-    - Three states: CLOSED, OPEN, HALF_OPEN
-    - Prevents cascading failures
-    - Graceful degradation with cached data fallback
-  - **DSL Integration** - `fetch_from_api` operator for rule conditions
-    - New operator integrated into ConditionEvaluator
-    - Template parameter expansion (`{{path}}` syntax)
-    - Response mapping support
-    - Field mapping from API responses to context
-  - **Authentication Support** - Multiple authentication methods
-    - API key authentication (custom header)
-    - Basic authentication
-    - Bearer token authentication
-    - Secret management via environment variables
-  - **Configuration API** - `DecisionAgent.configure_data_enrichment`
-    - Endpoint configuration with full options
-    - Default timeout, retry, and cache settings
-    - Per-endpoint customization
-  - **Error Handling** - Comprehensive error handling
-    - Custom error classes (RequestError, TimeoutError, NetworkError, CircuitOpenError)
-    - Graceful degradation with cached data fallback
-    - Error classification (network, timeout, 4xx, 5xx)
-  - **Documentation** - Complete guide in `docs/DATA_ENRICHMENT.md`
-    - Quick start guide
-    - Configuration examples
-    - Usage patterns and best practices
-    - API reference
-    - Troubleshooting guide
-  - **Test Suite** - Comprehensive test coverage
-    - Configuration tests (`spec/data_enrichment/config_spec.rb`)
-    - Cache adapter tests (`spec/data_enrichment/cache/memory_adapter_spec.rb`)
-    - Circuit breaker tests (`spec/data_enrichment/circuit_breaker_spec.rb`)
-    - Client integration tests (`spec/data_enrichment/client_spec.rb`)
-    - `fetch_from_api` operator integration tests (`spec/data_enrichment/fetch_from_api_integration_spec.rb`)
-  - **Example File** - Complete working example
-    - `examples/data_enrichment_example.rb` - Demonstrates configuration, usage, caching, and error handling
-  - **Schema Validation** - `fetch_from_api` operator validation
-    - Added to `SUPPORTED_OPERATORS` list
-    - Special validation for `fetch_from_api` value structure (endpoint, params, mapping)
 
 - **Comprehensive Benchmark Testing Suite** ⚡
   - **Benchmark Scripts** - Complete performance testing framework

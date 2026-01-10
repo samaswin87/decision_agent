@@ -442,14 +442,6 @@ RSpec.describe "DSL Operator Mixins" do
     end
   end
 
-  describe "DataEnrichmentOperators" do
-    it "handles fetch_from_api operator" do
-      # This test would require mocking the data enrichment client
-      # Skipping for now as it requires external dependencies
-      skip "Requires data enrichment client setup"
-    end
-  end
-
   describe "Operator mixin integration" do
     it "correctly delegates to appropriate mixin" do
       # Test that operators are correctly routed to their mixins

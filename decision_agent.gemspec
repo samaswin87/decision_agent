@@ -44,9 +44,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency "json-canonicalization", "~> 1.0"
   spec.add_dependency "nokogiri", ">= 1.15", "< 1.19" # For DMN XML parsing (1.19+ requires Ruby >= 3.2)
   spec.add_dependency "parslet", "~> 2.0" # For FEEL expression parsing
+  spec.add_dependency "rack", "~> 2.0"
   spec.add_dependency "roo", "~> 2.10"
   spec.add_dependency "rubyzip", "< 3.0.0" # Restrict to 2.x to avoid RubyZip 3.0 API changes
-  spec.add_dependency "sinatra", "~> 3.0"
+  # Note: Puma is optional for running the web server, but recommended for production
+  # Users can also use any other Rack-compatible server (WEBrick, Thin, etc.)
 
   # Optional dependencies for Rails integration
   # spec.add_dependency "activerecord", "~> 7.0"  # Uncomment when using with Rails

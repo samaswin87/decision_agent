@@ -17,7 +17,6 @@ require_relative "operators/financial_operators"
 require_relative "operators/string_aggregations"
 require_relative "operators/collection_operators"
 require_relative "operators/geospatial_operators"
-require_relative "operators/data_enrichment_operators"
 
 # Helper modules
 require_relative "helpers/cache_helpers"
@@ -198,16 +197,6 @@ module DecisionAgent
       def self.expand_template_value(value, context_hash)
         Helpers::TemplateHelpers.expand_template_value(
           value, context_hash,
-          get_nested_value: method(:get_nested_value)
-        )
-      end
-
-      # Apply mapping to API response data
-      # Mapping format: { source_key: "target_key" }
-      # Example: { score: "credit_score" } means map response[:score] to context["credit_score"]
-      def self.apply_mapping(response_data, mapping)
-        Helpers::TemplateHelpers.apply_mapping(
-          response_data, mapping,
           get_nested_value: method(:get_nested_value)
         )
       end
