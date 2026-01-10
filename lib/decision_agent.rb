@@ -62,12 +62,6 @@ require_relative "decision_agent/auth/rbac_config"
 require_relative "decision_agent/auth/permission_checker"
 require_relative "decision_agent/auth/access_audit_logger"
 
-require_relative "decision_agent/data_enrichment/config"
-require_relative "decision_agent/data_enrichment/client"
-require_relative "decision_agent/data_enrichment/cache_adapter"
-require_relative "decision_agent/data_enrichment/cache/memory_adapter"
-require_relative "decision_agent/data_enrichment/circuit_breaker"
-require_relative "decision_agent/data_enrichment/errors"
 
 require_relative "decision_agent/simulation"
 
@@ -79,15 +73,11 @@ require_relative "decision_agent/explainability/explainability_result"
 module DecisionAgent
   # Global RBAC configuration
   @rbac_config = Auth::RbacConfig.new
-  # Global data enrichment configuration
-  @data_enrichment_config = DataEnrichment::Config.new
-  @data_enrichment_client = nil
   @permission_checker = nil
   @permission_checker_mutex = Mutex.new
-  @data_enrichment_client_mutex = Mutex.new
 
   class << self
-    attr_reader :rbac_config, :data_enrichment_config
+    attr_reader :rbac_config
 
     # Configure RBAC adapter
     # @param adapter_type [Symbol] :default, :devise_cancan, :pundit, or :custom
@@ -122,36 +112,5 @@ module DecisionAgent
 
     # Set a custom permission checker
     attr_writer :permission_checker
-
-    # Configure data enrichment endpoints
-    # @yield [DataEnrichment::Config] Configuration block
-    # @example
-    #   DecisionAgent.configure_data_enrichment do |config|
-    #     config.add_endpoint(:credit_bureau,
-    #       url: "https://api.creditbureau.com/v1/score",
-    #       method: :post,
-    #       auth: { type: :api_key, header: "X-API-Key" },
-    #       cache: { ttl: 3600, adapter: :memory }
-    #     )
-    #   end
-    def configure_data_enrichment
-      yield @data_enrichment_config if block_given?
-      # Initialize client at configuration time (thread-safe write-once pattern)
-      @data_enrichment_client = DataEnrichment::Client.new(config: @data_enrichment_config)
-      @data_enrichment_config
-    end
-
-    # Get the data enrichment client
-    # Thread-safe: uses double-checked locking for lazy initialization fallback
-    def data_enrichment_client
-      return @data_enrichment_client if @data_enrichment_client
-
-      @data_enrichment_client_mutex.synchronize do
-        @data_enrichment_client ||= DataEnrichment::Client.new(config: @data_enrichment_config)
-      end
-    end
-
-    # Set a custom data enrichment client
-    attr_writer :data_enrichment_client
   end
 end
