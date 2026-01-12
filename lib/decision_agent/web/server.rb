@@ -692,7 +692,7 @@ module DecisionAgent
         router.get "/api/auth/roles" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :read)
-          return if ctx.halted?
+          next if ctx.halted?
 
           roles = Auth::Role.all.map do |role|
             {
@@ -709,7 +709,7 @@ module DecisionAgent
         router.post "/api/auth/users" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :manage_users)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             request_body = RackRequestHelpers.read_body(ctx.env)
@@ -726,11 +726,17 @@ module DecisionAgent
             end
 
             # Validate roles
+            invalid_role = nil
             roles.each do |role|
-              next if Auth::Role.exists?(role)
+              unless Auth::Role.exists?(role)
+                invalid_role = role
+                break
+              end
+            end
 
+            if invalid_role
               ctx.status(400)
-              ctx.json({ error: "Invalid role: #{role}" })
+              ctx.json({ error: "Invalid role: #{invalid_role}" })
               next
             end
 
@@ -764,7 +770,7 @@ module DecisionAgent
         router.get "/api/auth/users" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :manage_users)
-          return if ctx.halted?
+          next if ctx.halted?
 
           users = Server.authenticator.user_store.all.map(&:to_h)
           ctx.json(users)
@@ -774,7 +780,7 @@ module DecisionAgent
         router.post "/api/auth/users/:id/roles" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :manage_users)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             user_id = ctx.params[:id] || ctx.params["id"]
@@ -827,7 +833,7 @@ module DecisionAgent
         router.delete "/api/auth/users/:id/roles/:role" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :manage_users)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             user_id = ctx.params[:id] || ctx.params["id"]
@@ -862,7 +868,7 @@ module DecisionAgent
         router.get "/api/auth/audit" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :audit)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             filters = {}
@@ -997,7 +1003,7 @@ module DecisionAgent
         router.post "/api/versions" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :write)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             request_body = RackRequestHelpers.read_body(ctx.env)
@@ -1027,7 +1033,7 @@ module DecisionAgent
         router.get "/api/rules/:rule_id/versions" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :read)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             rule_id = ctx.params[:rule_id] || ctx.params["rule_id"]
@@ -1046,7 +1052,7 @@ module DecisionAgent
         router.get "/api/rules/:rule_id/history" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :read)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             rule_id = ctx.params[:rule_id] || ctx.params["rule_id"]
@@ -1063,7 +1069,7 @@ module DecisionAgent
         router.get "/api/versions/:version_id" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :read)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             version_id = ctx.params[:version_id] || ctx.params["version_id"]
@@ -1085,7 +1091,7 @@ module DecisionAgent
         router.post "/api/versions/:version_id/activate" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :deploy)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             version_id = ctx.params[:version_id] || ctx.params["version_id"]
@@ -1109,7 +1115,7 @@ module DecisionAgent
         router.get "/api/versions/:version_id_1/compare/:version_id_2" do |ctx|
           ctx.content_type "application/json"
           Server.require_permission!(ctx, :read)
-          return if ctx.halted?
+          next if ctx.halted?
 
           begin
             version_id_1 = ctx.params[:version_id_1] || ctx.params["version_id_1"]
@@ -1138,7 +1144,7 @@ module DecisionAgent
 
           begin
             Server.require_permission!(ctx, :delete)
-            return if ctx.halted?
+            next if ctx.halted?
 
             version_id = ctx.params[:version_id] || ctx.params["version_id"]
 
@@ -1432,8 +1438,9 @@ module DecisionAgent
         # GET /testing/batch - Batch testing UI page
         router.get "/testing/batch" do |ctx|
           batch_file = File.join(Server.public_folder, "batch_testing.html")
-          ctx.send_file(batch_file) if File.exist?(batch_file)
-          unless ctx.halted?
+          if File.exist?(batch_file)
+            ctx.send_file(batch_file)
+          else
             ctx.status(404)
             ctx.body("Batch testing page not found")
           end

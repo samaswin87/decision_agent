@@ -143,10 +143,6 @@ module DecisionAgent
           end
         end
 
-        def halted?
-          @halted
-        end
-
         private
 
         def query_params
