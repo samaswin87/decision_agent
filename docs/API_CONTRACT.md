@@ -6,7 +6,7 @@ This document formally defines the API contracts for the DecisionAgent library. 
 
 Contract Version: 1.1
 Library Version: 0.4.0
-Last Updated: 2026-01-15
+Last Updated: 2026-01-14
 
 ---
 
@@ -625,7 +625,7 @@ replayed.audit_payload[:deterministic_hash] ==
 
 ## Appendix B: Contract Changes
 
-### Version 1.1.0 (2026-01-09)
+### Version 1.1.0 (2026-01-14)
 - Removed Data Enrichment API contract (architectural decision - applications should handle data fetching)
 
 ### Version 1.0.0 (2025-01-17)
