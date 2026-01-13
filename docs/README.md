@@ -25,7 +25,7 @@ Welcome to the DecisionAgent documentation.
 - [**RBAC Quick Reference**](RBAC_QUICK_REFERENCE.md) - Quick reference for RBAC configuration
 - [**Web UI**](WEB_UI.md) - Visual rule builder interface
 - [**Web UI Setup**](WEB_UI_SETUP.md) - Setup and configuration guide
-- [**Web UI Rails Integration**](WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+- [**Web UI Integration**](WEB_UI_INTEGRATION.md) - Mount in Rails, Sinatra, Hanami, and other Rack frameworks
 
 ### Monitoring & Analytics
 - [**Monitoring & Analytics**](MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
@@ -66,7 +66,7 @@ docs/
 │   ├── RBAC_QUICK_REFERENCE.md     - Quick RBAC reference
 │   ├── WEB_UI.md                   - Web interface user guide
 │   ├── WEB_UI_SETUP.md             - Web interface setup
-│   └── WEB_UI_RAILS_INTEGRATION.md - Mount in Rails/Rack apps
+│   └── WEB_UI_INTEGRATION.md - Mount in Rails, Sinatra, Hanami, and other Rack frameworks
 │
 ├── Monitoring & Analytics
 │   ├── MONITORING_AND_ANALYTICS.md - Real-time monitoring, metrics, and alerting

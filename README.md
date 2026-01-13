@@ -148,7 +148,7 @@ map '/decision_agent' do
 end
 ```
 
-See [Web UI Integration Guide](docs/WEB_UI_RAILS_INTEGRATION.md) for detailed setup.
+See [Web UI Integration Guide](docs/WEB_UI_INTEGRATION.md) for detailed setup with Rails, Sinatra, Hanami, and other frameworks.
 
 ## DMN (Decision Model and Notation) Support
 
@@ -391,7 +391,7 @@ See [A/B Testing Guide](docs/AB_TESTING.md) for complete documentation.
 - [RBAC Quick Reference](docs/RBAC_QUICK_REFERENCE.md) - Quick reference for RBAC configuration
 - [Web UI](docs/WEB_UI.md) - Visual rule builder
 - [Web UI Setup](docs/WEB_UI_SETUP.md) - Setup guide
-- [Web UI Rails Integration](docs/WEB_UI_RAILS_INTEGRATION.md) - Mount in Rails/Rack apps
+- [Web UI Integration](docs/WEB_UI_INTEGRATION.md) - Mount in Rails, Sinatra, Hanami, and other Rack frameworks
 - [Monitoring & Analytics](docs/MONITORING_AND_ANALYTICS.md) - Real-time monitoring, metrics, and alerting
 - [Monitoring Architecture](docs/MONITORING_ARCHITECTURE.md) - System architecture and design
 - [Persistent Monitoring](docs/PERSISTENT_MONITORING.md) - Database storage for long-term analytics

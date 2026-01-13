@@ -759,6 +759,6 @@ end
 ---
 
 **Next Steps:**
-- [Web UI Integration](WEB_UI_RAILS_INTEGRATION.md)
+- [Web UI Integration](WEB_UI_INTEGRATION.md)
 - [API Contract](API_CONTRACT.md)
 - [Performance Guide](PERFORMANCE_AND_THREAD_SAFETY.md)
