@@ -286,7 +286,6 @@
         }
 
         const basePath = getBasePath();
-        let contextCount = 1;
 
         // Load versions
         function loadVersions() {
@@ -311,16 +310,18 @@
 
         // Add context
         document.getElementById('addContextBtn').addEventListener('click', () => {
-            contextCount++;
+            const existingContexts = document.querySelectorAll('.context-item');
+            const nextNumber = existingContexts.length + 1;
+            
             const container = document.getElementById('contextsContainer');
             const context = document.createElement('div');
             context.className = 'context-item';
             context.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <strong>Context ${contextCount}</strong>
+                    <strong class="context-label">Context ${nextNumber}</strong>
                     <button class="btn btn-secondary" onclick="removeContext(this)" style="padding: 5px 10px;">Remove</button>
                 </div>
-                <div class="context-fields" id="contextFields${contextCount}">
+                <div class="context-fields">
                     <div class="field-input">
                         <label>Field Name</label>
                         <input type="text" class="input context-field-name" placeholder="e.g., credit_score">
@@ -337,6 +338,17 @@
 
         function removeContext(btn) {
             btn.closest('.context-item').remove();
+            updateContextLabels();
+        }
+
+        function updateContextLabels() {
+            const contexts = document.querySelectorAll('.context-item');
+            contexts.forEach((context, index) => {
+                const label = context.querySelector('.context-label');
+                if (label) {
+                    label.textContent = `Context ${index + 1}`;
+                }
+            });
         }
 
         function addField(btn) {

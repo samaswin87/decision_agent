@@ -40,6 +40,13 @@ module DecisionAgent
         @adapter.list_versions(rule_id: rule_id, limit: limit)
       end
 
+      # Get all versions across all rules
+      # @param limit [Integer, nil] Optional limit
+      # @return [Array<Hash>] Array of versions
+      def list_all_versions(limit: nil)
+        @adapter.list_all_versions(limit: limit)
+      end
+
       # Get a specific version
       # @param version_id [String, Integer] The version identifier
       # @return [Hash, nil] The version or nil

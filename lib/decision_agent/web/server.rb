@@ -310,7 +310,7 @@ module DecisionAgent
       end
 
       def self.dmn_editor
-        @dmn_editor ||= DmnEditor.new
+        @dmn_editor ||= DecisionAgent::Web::DmnEditor.new
       end
 
       # Define all routes (will be populated below)
@@ -1907,7 +1907,7 @@ module DecisionAgent
 
           begin
             version_mgr = Server.version_manager
-            versions = version_mgr.list_versions
+            versions = version_mgr.list_all_versions
 
             ctx.json({
                        versions: versions.map do |v|

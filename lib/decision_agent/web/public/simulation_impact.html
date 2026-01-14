@@ -95,13 +95,27 @@
         }
 
         .header-links {
-            margin-top: 20px;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header-links a {
-            margin-right: 15px;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             text-decoration: none;
-            color: var(--primary-color);
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .header-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
         }
 
         .file-upload-area {

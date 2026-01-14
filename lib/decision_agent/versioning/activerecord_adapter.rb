@@ -63,6 +63,13 @@ module DecisionAgent
         query.map { |v| serialize_version(v) }
       end
 
+      def list_all_versions(limit: nil)
+        query = rule_version_class.order(created_at: :desc)
+        query = query.limit(limit) if limit
+
+        query.map { |v| serialize_version(v) }
+      end
+
       def get_version(version_id:)
         version = rule_version_class.find_by(id: version_id)
         version ? serialize_version(version) : nil
