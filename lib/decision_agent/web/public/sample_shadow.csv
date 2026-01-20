@@ -1,0 +1,11 @@
+id,timestamp,user_id,amount,transaction_type,account_age_days,risk_score,country,production_decision
+shadow_001,2024-01-20T10:00:00Z,user_123,1200,purchase,400,0.18,US,approve
+shadow_002,2024-01-20T10:15:00Z,user_456,4500,withdrawal,800,0.28,GB,approve
+shadow_003,2024-01-20T10:30:00Z,user_789,18000,transfer,120,0.65,BR,manual_review
+shadow_004,2024-01-20T10:45:00Z,user_321,55000,withdrawal,50,0.88,NG,reject
+shadow_005,2024-01-20T11:00:00Z,user_654,2800,purchase,1200,0.12,CA,approve
+shadow_006,2024-01-20T11:15:00Z,user_987,9500,transfer,200,0.58,FR,manual_review
+shadow_007,2024-01-20T11:30:00Z,user_111,600,purchase,2000,0.08,US,approve
+shadow_008,2024-01-20T11:45:00Z,user_222,80000,withdrawal,25,0.98,RU,reject
+shadow_009,2024-01-20T12:00:00Z,user_333,3500,purchase,600,0.22,DE,approve
+shadow_010,2024-01-20T12:15:00Z,user_444,11000,transfer,300,0.48,GB,approve

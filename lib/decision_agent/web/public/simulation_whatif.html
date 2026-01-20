@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What-If Analysis</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         .simulation-container {
             max-width: 1400px;
@@ -102,13 +102,27 @@
         }
 
         .header-links {
-            margin-top: 20px;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .header-links a {
-            margin-right: 15px;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             text-decoration: none;
-            color: var(--primary-color);
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .header-links a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
         }
 
         .results-table {
@@ -144,7 +158,12 @@
         <div class="step-section">
             <h2>Configure Rules</h2>
             <p>Paste your rules JSON or select a version to use</p>
-            
+            <p style="margin-top: 10px;">
+                <strong>Need a template?</strong> Download sample files:
+                <a href="/sample_whatif.csv" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample Scenarios CSV</a> |
+                <a href="/sample_rules.json" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample Rules</a>
+            </p>
+
             <div class="form-group">
                 <label for="rulesJson">Rules JSON:</label>
                 <textarea id="rulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
@@ -248,34 +267,8 @@
     </div>
 
     <script>
-        function getBasePath() {
-            const baseTag = document.querySelector('base');
-            if (baseTag && baseTag.href) {
-                try {
-                    const baseUrl = new URL(baseTag.href, window.location.href);
-                    let path = baseUrl.pathname;
-                    if (path && !path.endsWith('/')) path += '/';
-                    return path;
-                } catch (e) {
-                    if (baseTag.href.startsWith('/')) {
-                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
-                        if (match && match[2]) {
-                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
-                        }
-                    }
-                }
-            }
-            const pathname = window.location.pathname;
-            if (pathname.includes('/decision_agent')) {
-                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
-                if (match) {
-                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
-                }
-            }
-            return pathname.substring(0, pathname.lastIndexOf('/') + 1) || '/';
-        }
-
-        const basePath = getBasePath();
+        // API calls use root path since all endpoints are at /api/...
+        const basePath = '/';
         let scenarioCount = 1;
 
         // Load versions

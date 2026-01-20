@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DecisionAgent Rule Builder</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
     <div class="container">
@@ -23,7 +23,10 @@
             <div class="panel builder-panel">
                 <div class="panel-header">
                     <h2>Rule Configuration</h2>
-                    <button class="btn btn-secondary" id="loadExampleBtn">Load Example</button>
+                    <div>
+                        <button class="btn btn-secondary" id="loadExampleBtn">Load Example</button>
+                        <a href="/sample_rules.json" download class="btn btn-secondary" style="margin-left: 10px; text-decoration: none;">📥 Sample JSON</a>
+                    </div>
                 </div>
 
                 <!-- Ruleset Metadata -->
@@ -402,6 +405,6 @@
         <p>DecisionAgent Rule Builder | <a href="https://github.com/samaswin/decision_agent" target="_blank">Documentation</a></p>
     </footer>
 
-    <script src="app.js"></script>
+    <script src="/app.js"></script>
 </body>
 </html>

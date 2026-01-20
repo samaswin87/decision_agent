@@ -86,6 +86,13 @@ module DecisionAgent
         end
       end
 
+      def list_all_versions(limit: nil)
+        @version_index_lock.synchronize do
+          versions = all_versions_unsafe
+          limit ? versions.take(limit) : versions
+        end
+      end
+
       def get_version(version_id:)
         # Use index to find rule_id quickly - O(1) instead of O(n)
         begin

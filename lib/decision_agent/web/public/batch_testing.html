@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DecisionAgent Batch Testing</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         .batch-testing-container {
             max-width: 1400px;
@@ -180,7 +180,11 @@
                 <h2>Upload Test Scenarios</h2>
             </div>
             <p>Upload a CSV or Excel file with your test scenarios. Required columns: <code>id</code>, context fields. Optional: <code>expected_decision</code>, <code>expected_confidence</code></p>
-            
+            <p style="margin-top: 10px;">
+                <strong>Not sure about the format?</strong> Download a sample file:
+                <a href="/sample_batch.csv" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample CSV</a>
+            </p>
+
             <div class="file-upload-area" id="uploadArea">
                 <p>📁 Drag and drop your CSV/Excel file here, or click to browse</p>
                 <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none;">

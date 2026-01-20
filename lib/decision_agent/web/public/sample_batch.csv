@@ -1,0 +1,11 @@
+id,user_id,amount,transaction_type,account_age_days,risk_score,country,expected_decision,expected_confidence
+test_001,user_123,1500,purchase,365,0.2,US,approve,0.95
+test_002,user_456,5000,withdrawal,730,0.3,US,approve,0.85
+test_003,user_789,15000,transfer,90,0.7,BR,manual_review,0.75
+test_004,user_321,50000,withdrawal,45,0.85,NG,reject,0.90
+test_005,user_654,2500,purchase,1095,0.15,CA,approve,0.95
+test_006,user_987,8000,transfer,180,0.55,GB,manual_review,0.80
+test_007,user_111,500,purchase,1825,0.1,US,approve,0.98
+test_008,user_222,75000,withdrawal,30,0.95,RU,reject,0.95
+test_009,user_333,3000,purchase,548,0.25,DE,approve,0.90
+test_010,user_444,12000,transfer,274,0.45,FR,approve,0.85

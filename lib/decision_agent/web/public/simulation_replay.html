@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historical Replay / Backtesting</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         .simulation-container {
             max-width: 1400px;
@@ -150,7 +150,12 @@
                 <h2>Upload Historical Data</h2>
             </div>
             <p>Upload a CSV or JSON file with historical decision contexts. Each row should contain the context fields used in your rules.</p>
-            
+            <p style="margin-top: 10px;">
+                <strong>Need a template?</strong> Download sample files:
+                <a href="/sample_replay.csv" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample CSV</a> |
+                <a href="/sample_rules.json" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample Rules</a>
+            </p>
+
             <div class="file-upload-area" id="uploadArea">
                 <p>📁 Drag and drop your CSV/JSON file here, or click to browse</p>
                 <input type="file" id="fileInput" accept=".csv,.json" style="display: none;">
@@ -248,41 +253,8 @@
     </div>
 
     <script>
-        // Helper function to get the base path for API calls
-        function getBasePath() {
-            const baseTag = document.querySelector('base');
-            if (baseTag && baseTag.href) {
-                try {
-                    const baseUrl = new URL(baseTag.href, window.location.href);
-                    let path = baseUrl.pathname;
-                    if (path && !path.endsWith('/')) {
-                        path += '/';
-                    }
-                    return path;
-                } catch (e) {
-                    if (baseTag.href.startsWith('/')) {
-                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
-                        if (match && match[2]) {
-                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
-                        }
-                    } else if (baseTag.href.startsWith('./')) {
-                        const pathname = window.location.pathname;
-                        return pathname.substring(0, pathname.lastIndexOf('/') + 1);
-                    }
-                }
-            }
-            const pathname = window.location.pathname;
-            if (pathname.includes('/decision_agent')) {
-                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
-                if (match) {
-                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
-                }
-            }
-            const dirPath = pathname.substring(0, pathname.lastIndexOf('/') + 1);
-            return dirPath || '/';
-        }
-
-        const basePath = getBasePath();
+        // API calls use root path since all endpoints are at /api/...
+        const basePath = '/';
         let historicalData = null;
 
         // Load versions

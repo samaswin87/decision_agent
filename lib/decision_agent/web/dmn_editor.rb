@@ -249,8 +249,9 @@ module DecisionAgent
         model = retrieve_model(model_id)
         return nil unless model
 
-        exporter = Dmn::Exporter.new
-        exporter.export(model)
+        # Convert model to DMN XML directly using the model's to_xml method
+        # or generate XML from the model's structure
+        generate_dmn_xml(model)
       end
 
       # Import DMN model from XML
@@ -336,6 +337,96 @@ module DecisionAgent
 
       def generate_id
         "dmn_#{Time.now.to_i}_#{rand(10_000)}"
+      end
+
+      def generate_dmn_xml(model)
+        require "nokogiri"
+
+        builder = Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
+          xml.definitions(
+            "xmlns" => "https://www.omg.org/spec/DMN/20191111/MODEL/",
+            "xmlns:dmndi" => "https://www.omg.org/spec/DMN/20191111/DMNDI/",
+            "xmlns:dc" => "http://www.omg.org/spec/DMN/20180521/DC/",
+            "id" => "definitions_#{model.id}",
+            "name" => model.name,
+            "namespace" => model.namespace || "http://decision_agent.local"
+          ) do
+            model.decisions.each do |decision|
+              xml.decision(id: decision.id, name: decision.name) do
+                if decision.decision_table
+                  build_decision_table_xml(xml, decision.decision_table)
+                elsif decision.decision_tree
+                  xml.comment "Decision Tree (not fully supported in DMN XML export yet)"
+                elsif decision.instance_variable_get(:@literal_expression)
+                  xml.literalExpression do
+                    xml.text decision.instance_variable_get(:@literal_expression)
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        builder.to_xml
+      end
+
+      def build_decision_table_xml(xml, table)
+        xml.decisionTable(
+          id: table.id,
+          hitPolicy: table.hit_policy || "FIRST",
+          outputLabel: "output"
+        ) do
+          # Inputs
+          table.inputs.each do |input|
+            xml.input(id: input.id, label: input.label) do
+              xml.inputExpression(typeRef: input.type_ref || "string") do
+                text_node = Nokogiri::XML::Node.new("text", xml.doc)
+                text_node.content = input.expression || input.label
+                xml.parent.add_child(text_node)
+              end
+            end
+          end
+
+          # Outputs
+          table.outputs.each do |output|
+            xml.output(
+              id: output.id,
+              label: output.label,
+              name: output.name || output.label,
+              typeRef: output.type_ref || "string"
+            )
+          end
+
+          # Rules
+          table.rules.each do |rule|
+            xml.rule(id: rule.id) do
+              # Input entries
+              rule.input_entries.each_with_index do |entry, idx|
+                xml.inputEntry(id: "#{rule.id}_input_#{idx + 1}") do
+                  text_node = Nokogiri::XML::Node.new("text", xml.doc)
+                  text_node.content = entry.to_s
+                  xml.parent.add_child(text_node)
+                end
+              end
+
+              # Output entries
+              rule.output_entries.each_with_index do |entry, idx|
+                xml.outputEntry(id: "#{rule.id}_output_#{idx + 1}") do
+                  text_node = Nokogiri::XML::Node.new("text", xml.doc)
+                  text_node.content = entry.to_s
+                  xml.parent.add_child(text_node)
+                end
+              end
+
+              # Description
+              if rule.description && !rule.description.empty?
+                xml.description do
+                  xml.text rule.description
+                end
+              end
+            end
+          end
+        end
       end
 
       def store_model(model_id, model)

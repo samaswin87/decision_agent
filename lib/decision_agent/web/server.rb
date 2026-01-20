@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "rack"
 require "rack/static"
 require "rack/file"
@@ -19,6 +21,7 @@ require_relative "../agent"
 # DMN components
 require_relative "../dmn/importer"
 require_relative "../dmn/exporter"
+require_relative "dmn_editor"
 
 # Auth components
 require_relative "../auth/user"
@@ -150,7 +153,7 @@ module DecisionAgent
 
         # Route the request
         route_match = self.class.router.match(env)
-        return [404, { "Content-Type" => "text/plain" }, ["Not Found"]] unless route_match
+        return [404, { "Content-Type" => "application/json" }, [{ error: "Not Found", path: path }.to_json]] unless route_match
 
         # Create request context with route params
         ctx = RequestContext.new(env, route_match[:params] || {})
@@ -176,7 +179,7 @@ module DecisionAgent
         # Serve static files from public folder
         static_paths = ["/styles.css", "/app.js", "/index.html", "/batch_testing.html", "/simulation.html", "/login.html", "/users.html",
                         "/dmn-editor.html"]
-        static_extensions = [".css", ".js", ".html", ".svg", ".png", ".jpg", ".gif", ".json", ".xml"]
+        static_extensions = [".css", ".js", ".html", ".svg", ".png", ".jpg", ".gif", ".json", ".xml", ".csv", ".xlsx"]
 
         return nil unless static_paths.include?(path) || static_extensions.any? { |ext| path.end_with?(ext) }
 
@@ -196,7 +199,9 @@ module DecisionAgent
           ".png" => "image/png",
           ".jpg" => "image/jpeg",
           ".jpeg" => "image/jpeg",
-          ".gif" => "image/gif"
+          ".gif" => "image/gif",
+          ".csv" => "text/csv",
+          ".xlsx" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }
 
         content_type = mime_types[ext] || "application/octet-stream"
@@ -229,12 +234,12 @@ module DecisionAgent
       end
 
       def self.require_permission!(ctx, permission, resource = nil)
-        # Always require authentication first
+        # Skip all permission checks if disabled via environment variable
+        return true if permissions_disabled?
+
+        # Require authentication only if permissions are enabled
         require_authentication!(ctx)
         return if ctx.halted?
-
-        # Skip permission checks if disabled via environment variable
-        return true if permissions_disabled?
 
         checker = Server.permission_checker
         granted = checker.can?(ctx.current_user, permission, resource)
@@ -310,7 +315,7 @@ module DecisionAgent
       end
 
       def self.dmn_editor
-        @dmn_editor ||= DmnEditor.new
+        @dmn_editor ||= DecisionAgent::Web::DmnEditor.new
       end
 
       # Define all routes (will be populated below)
@@ -1907,7 +1912,7 @@ module DecisionAgent
 
           begin
             version_mgr = Server.version_manager
-            versions = version_mgr.list_versions
+            versions = version_mgr.list_all_versions
 
             ctx.json({
                        versions: versions.map do |v|

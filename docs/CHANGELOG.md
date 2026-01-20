@@ -7,7 +7,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.0] - 2026-01-14
 
+### Fixed
+
+- **Web UI Resource Loading Issues** 🎨
+  - **CSS and JavaScript 404 Errors** - Fixed all static resource loading failures across the Web UI
+    - **Root Cause:** HTML files used relative paths (e.g., `href="styles.css"`) causing 404s on nested routes like `/dmn/editor`
+    - **Solution:** Converted all CSS/JS references to absolute paths (e.g., `href="/styles.css"`) in 12 HTML files
+    - Fixed DMN Editor CSS/JS loading: `/dmn-editor.css` and `/dmn-editor.js`
+    - Fixed main app CSS/JS loading: `/styles.css` and `/app.js`
+    - All pages now load resources correctly regardless of route depth
+  - **DmnEditor Constant Error** - Fixed `uninitialized constant DecisionAgent::Web::DmnEditor`
+    - Added missing `require_relative "dmn_editor"` in server.rb
+    - DMN Editor functionality now fully operational
+  - **Files Modified:**
+    - `lib/decision_agent/web/server.rb` - Added dmn_editor require, added CSV/XLSX MIME types
+    - `lib/decision_agent/web/public/dmn-editor.html` - Fixed CSS/JS paths to absolute
+    - `lib/decision_agent/web/public/index.html` - Fixed CSS/JS paths to absolute
+    - `lib/decision_agent/web/public/batch_testing.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/simulation.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/simulation_replay.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/simulation_whatif.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/simulation_impact.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/simulation_shadow.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/login.html` - Fixed CSS path to absolute
+    - `lib/decision_agent/web/public/users.html` - Fixed CSS path to absolute
+  - **Business Value:**
+    - DMN Editor now fully functional for visual decision modeling
+    - Consistent user experience across all Web UI pages
+    - No more broken layouts or missing interactivity
+    - Professional appearance with proper styling on all pages
+
+- **DMN Editor Null Reference Errors** 🐛
+  - **"Cannot read properties of null (reading 'id')" Error** - Fixed JavaScript errors when using DMN Editor features
+    - **Root Cause:** Functions attempted to access `state.currentModel.id` or `state.currentDecision.id` without checking if these objects exist
+    - **Impact:** Users clicking "Add Input Column", "Add Output Column", or "Add Rule" before creating a model would encounter errors
+    - **Solution:** Added comprehensive null checks to all DMN Editor functions
+  - **Functions Fixed:**
+    - `addColumn()` - Added validation before accessing model/decision IDs
+    - `addRule()` - Added validation before accessing model/decision IDs
+    - `updateRuleEntry()` - Added validation before accessing decision table
+    - `deleteRule()` - Added validation before accessing model/decision IDs
+    - `updateHitPolicy()` - Added validation before accessing model/decision IDs
+    - `loadDecision()` - Added validation before accessing model decisions
+    - `visualizeTree()` - Added validation before accessing model/decision IDs
+    - `downloadXml()` - Added validation before accessing model name
+    - Button handlers for "Add Input" and "Add Output" - Added validation before opening modals
+  - **User Experience Improvements:**
+    - Clear error messages: "Please select or create a model and decision first"
+    - Prevents confusing JavaScript errors in browser console
+    - Guides users to create models and decisions before using advanced features
+  - **Files Modified:**
+    - `lib/decision_agent/web/public/dmn-editor.js` - Added null checks to 9+ functions
+  - **Business Value:**
+    - Prevents user confusion with helpful error messages
+    - Eliminates JavaScript errors that could crash the UI
+    - Improves overall application stability and user experience
+    - Reduces support requests related to DMN Editor errors
+
+- **Web UI Authentication Bypass** 🔐
+  - **Permission check ordering** - Fixed `require_permission!` to check `permissions_disabled?` before requiring authentication
+    - Previously required authentication even when `DISABLE_WEBUI_PERMISSIONS=true` was set
+    - Now properly bypasses authentication when permissions are disabled via environment variable
+    - Enables testing version saving and other protected endpoints without authentication
+    - Only affects development/testing environments when explicitly enabled
+    - Production deployments remain secure with authentication enforced by default
+  - **Files Modified:**
+    - `lib/decision_agent/web/server.rb` - Reordered permission check logic (line 231-237)
+  - **Business Value:**
+    - Easier local development and testing of Web UI features
+    - No need to set up authentication system for basic testing
+    - Maintains security in production environments
+
 ### Added
+
+- **Downloadable Sample Files for Import Features** 📥
+  - **Sample File Templates** - Added downloadable example files to help users understand import formats
+    - **Batch Testing Sample CSV** - `sample_batch.csv` with 10 test scenarios
+      - Demonstrates required columns: `id`, context fields
+      - Shows optional columns: `expected_decision`, `expected_confidence`
+      - Includes realistic transaction approval examples with multiple context fields
+      - Users can download, modify, and upload for batch testing
+    - **Rules JSON Sample** - `sample_rules.json` with complete ruleset example
+      - 5 comprehensive decision rules covering transaction approval workflow
+      - Demonstrates fraud detection patterns, manual review triggers, and auto-approval scenarios
+      - Proper JSON structure with conditions and decision logic
+      - Shows best practices for rule organization and weighting
+  - **Web UI Download Links** - Integrated sample file downloads directly in the UI
+    - Batch Testing page: "Download Sample CSV" link with helpful messaging
+    - Rules Builder page: "Sample JSON" download button next to "Load Example"
+    - Clear "Not sure about the format?" guidance for new users
+    - Eliminates confusion about import file structure
+  - **Server Support for Downloads** - Enhanced static file serving
+    - Added `.csv` and `.xlsx` to supported static file extensions
+    - Added proper MIME types: `text/csv` and `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+    - Sample files served from `/public` folder with correct content types
+  - **Files Created:**
+    - `lib/decision_agent/web/public/sample_batch.csv` - Batch testing sample with 10 scenarios
+    - `lib/decision_agent/web/public/sample_rules.json` - Complete rules sample with 5 rules
+  - **Files Modified:**
+    - `lib/decision_agent/web/server.rb` - Added CSV/XLSX MIME types and static file support
+    - `lib/decision_agent/web/public/batch_testing.html` - Added sample CSV download link
+    - `lib/decision_agent/web/public/index.html` - Added sample JSON download button
+  - **Business Value:**
+    - Reduces onboarding friction for new users
+    - Eliminates guesswork about file formats
+    - Decreases support requests about import formats
+    - Provides working examples users can modify
+    - Accelerates time-to-value for batch testing features
 
 - **Complete Mathematical Expressions** 🔧
   - **Comprehensive Mathematical Operators** - Full implementation of all mathematical operators

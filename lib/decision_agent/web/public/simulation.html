@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DecisionAgent Simulation Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         .simulation-dashboard {
             max-width: 1400px;
@@ -53,20 +53,36 @@
             line-height: 1.6;
         }
 
-        .header-links {
-            margin-top: 20px;
+        .dashboard-header .header-links {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            position: static;
         }
 
-        .header-links a {
-            margin-right: 15px;
+        .dashboard-header .header-links a {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
             text-decoration: none;
-            color: var(--primary-color);
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dashboard-header .header-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
         }
     </style>
 </head>
 <body>
     <div class="simulation-dashboard">
-        <header>
+        <header class="dashboard-header">
             <h1>🧪 DecisionAgent Simulation Dashboard</h1>
             <p class="subtitle">Test rule changes, predict impact, and validate decisions before deployment</p>
             <div class="header-links">

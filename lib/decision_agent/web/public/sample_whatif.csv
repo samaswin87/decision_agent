@@ -1,0 +1,11 @@
+scenario_name,user_id,amount,transaction_type,account_age_days,risk_score,country
+low_risk_small,user_123,1000,purchase,730,0.1,US
+low_risk_large,user_123,10000,purchase,730,0.1,US
+medium_risk_small,user_456,1000,purchase,365,0.6,GB
+medium_risk_large,user_456,10000,purchase,365,0.6,GB
+high_risk_small,user_789,1000,purchase,90,0.9,NG
+high_risk_large,user_789,10000,purchase,90,0.9,NG
+new_account_small,user_321,500,purchase,30,0.3,US
+new_account_large,user_321,5000,purchase,30,0.3,US
+established_account,user_654,7500,withdrawal,1825,0.2,CA
+risky_country,user_987,3000,transfer,365,0.4,RU

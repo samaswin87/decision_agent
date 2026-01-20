@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shadow Testing</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
     <style>
         .simulation-container {
             max-width: 1400px;
@@ -155,7 +155,12 @@
         <div class="step-section">
             <h2>Production Rules</h2>
             <p>Configure the production rules (or use active version)</p>
-            
+            <p style="margin-top: 10px;">
+                <strong>Need a template?</strong> Download sample files:
+                <a href="/sample_shadow.csv" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample CSV</a> |
+                <a href="/sample_rules.json" download style="color: #007bff; text-decoration: none; margin-left: 5px;">📥 Sample Rules</a>
+            </p>
+
             <div class="form-group">
                 <label for="productionRulesJson">Production Rules JSON:</label>
                 <textarea id="productionRulesJson" class="input" rows="10" placeholder='{"version": "1.0", "ruleset": "my_ruleset", "rules": [...]}'></textarea>
@@ -258,35 +263,8 @@
     </div>
 
     <script>
-        function getBasePath() {
-            const baseTag = document.querySelector('base');
-            if (baseTag && baseTag.href) {
-                try {
-                    const baseUrl = new URL(baseTag.href, window.location.href);
-                    let path = baseUrl.pathname;
-                    if (path && !path.endsWith('/')) path += '/';
-                    return path;
-                } catch (e) {
-                    if (baseTag.href.startsWith('/')) {
-                        const match = baseTag.href.match(/^(https?:\/\/[^\/]+)?(\/.*?)\/?$/);
-                        if (match && match[2]) {
-                            return match[2].endsWith('/') ? match[2] : match[2] + '/';
-                        }
-                    }
-                }
-            }
-            const pathname = window.location.pathname;
-            if (pathname.includes('/decision_agent')) {
-                const match = pathname.match(/^(\/.*?\/decision_agent)\/?/);
-                if (match) {
-                    return match[1].endsWith('/') ? match[1] : match[1] + '/';
-                }
-            }
-            return pathname.substring(0, pathname.lastIndexOf('/') + 1) || '/';
-        }
-
-        const basePath = getBasePath();
-        let contextCount = 1;
+        // API calls use root path since all endpoints are at /api/...
+        const basePath = '/';
 
         // Load versions
         function loadVersions() {
@@ -311,16 +289,18 @@
 
         // Add context
         document.getElementById('addContextBtn').addEventListener('click', () => {
-            contextCount++;
+            const existingContexts = document.querySelectorAll('.context-item');
+            const nextNumber = existingContexts.length + 1;
+            
             const container = document.getElementById('contextsContainer');
             const context = document.createElement('div');
             context.className = 'context-item';
             context.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <strong>Context ${contextCount}</strong>
+                    <strong class="context-label">Context ${nextNumber}</strong>
                     <button class="btn btn-secondary" onclick="removeContext(this)" style="padding: 5px 10px;">Remove</button>
                 </div>
-                <div class="context-fields" id="contextFields${contextCount}">
+                <div class="context-fields">
                     <div class="field-input">
                         <label>Field Name</label>
                         <input type="text" class="input context-field-name" placeholder="e.g., credit_score">
@@ -337,6 +317,17 @@
 
         function removeContext(btn) {
             btn.closest('.context-item').remove();
+            updateContextLabels();
+        }
+
+        function updateContextLabels() {
+            const contexts = document.querySelectorAll('.context-item');
+            contexts.forEach((context, index) => {
+                const label = context.querySelector('.context-label');
+                if (label) {
+                    label.textContent = `Context ${index + 1}`;
+                }
+            });
         }
 
         function addField(btn) {

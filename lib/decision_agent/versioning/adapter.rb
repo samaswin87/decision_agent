@@ -20,6 +20,13 @@ module DecisionAgent
         raise NotImplementedError, "#{self.class} must implement #list_versions"
       end
 
+      # List all versions across all rules
+      # @param limit [Integer, nil] Optional limit for number of versions
+      # @return [Array<Hash>] Array of version hashes
+      def list_all_versions(limit: nil)
+        raise NotImplementedError, "#{self.class} must implement #list_all_versions"
+      end
+
       # Get a specific version by ID
       # @param version_id [String, Integer] The version identifier
       # @return [Hash, nil] The version hash or nil if not found

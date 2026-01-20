@@ -1,0 +1,118 @@
+{
+  "version": "1.0",
+  "ruleset": "transaction_approval",
+  "description": "Sample ruleset for transaction approval with fraud detection",
+  "rules": [
+    {
+      "id": "rule_001",
+      "name": "High Risk Country Block",
+      "if": {
+        "all": [
+          {
+            "field": "country",
+            "op": "in",
+            "value": ["NG", "RU", "CN"]
+          },
+          {
+            "field": "risk_score",
+            "op": "gte",
+            "value": 0.7
+          }
+        ]
+      },
+      "then": {
+        "decision": "reject",
+        "weight": 0.95,
+        "reason": "High risk country with elevated risk score"
+      }
+    },
+    {
+      "id": "rule_002",
+      "name": "Large Amount Manual Review",
+      "if": {
+        "field": "amount",
+        "op": "gte",
+        "value": 10000
+      },
+      "then": {
+        "decision": "manual_review",
+        "weight": 0.85,
+        "reason": "Large transaction amount requires manual review"
+      }
+    },
+    {
+      "id": "rule_003",
+      "name": "New Account Large Transaction",
+      "if": {
+        "all": [
+          {
+            "field": "account_age_days",
+            "op": "lt",
+            "value": 90
+          },
+          {
+            "field": "amount",
+            "op": "gte",
+            "value": 5000
+          }
+        ]
+      },
+      "then": {
+        "decision": "manual_review",
+        "weight": 0.80,
+        "reason": "New account with large transaction"
+      }
+    },
+    {
+      "id": "rule_004",
+      "name": "Low Risk Auto Approve",
+      "if": {
+        "all": [
+          {
+            "field": "risk_score",
+            "op": "lte",
+            "value": 0.3
+          },
+          {
+            "field": "account_age_days",
+            "op": "gte",
+            "value": 365
+          },
+          {
+            "field": "amount",
+            "op": "lte",
+            "value": 5000
+          }
+        ]
+      },
+      "then": {
+        "decision": "approve",
+        "weight": 0.95,
+        "reason": "Low risk profile, established account, reasonable amount"
+      }
+    },
+    {
+      "id": "rule_005",
+      "name": "Medium Risk Review",
+      "if": {
+        "all": [
+          {
+            "field": "risk_score",
+            "op": "gt",
+            "value": 0.5
+          },
+          {
+            "field": "risk_score",
+            "op": "lt",
+            "value": 0.7
+          }
+        ]
+      },
+      "then": {
+        "decision": "manual_review",
+        "weight": 0.75,
+        "reason": "Medium risk score requires review"
+      }
+    }
+  ]
+}
