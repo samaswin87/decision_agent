@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2026-01-14
+## [1.1.0]
 
 ### Fixed
 
@@ -77,6 +77,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Easier local development and testing of Web UI features
     - No need to set up authentication system for basic testing
     - Maintains security in production environments
+
+### Changed
+
+- **DmnEditor refactor (Metrics/ClassLength)** 📐
+  - Extracted serialization and XML building from `DmnEditor` into nested modules to resolve RuboCop `Metrics/ClassLength` (class was 375 lines; limit 322).
+  - **New modules:**
+    - `lib/decision_agent/web/dmn_editor/serialization.rb` – `DmnEditor::Serialization` with `serialize_model`, `serialize_decision`, `serialize_decision_table`, `serialize_input`, `serialize_output`, `serialize_rule`.
+    - `lib/decision_agent/web/dmn_editor/xml_builder.rb` – `DmnEditor::XmlBuilder` with `generate_dmn_xml`, `build_decision_table_xml`, and private helpers for inputs/outputs/rules.
+  - **Metrics/MethodLength:** Refactored `build_rules_xml` in `XmlBuilder` to satisfy the 31-line method limit: extracted `build_rule_xml`, `add_entry_element`, and `add_rule_description` so all methods stay short and RuboCop passes.
+  - Public API unchanged; `DecisionAgent::Web::DmnEditor` behavior and interface unchanged.
 
 ### Added
 

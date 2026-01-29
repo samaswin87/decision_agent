@@ -63,6 +63,8 @@ GEM
     minitest (5.26.1)
     mutex_m (0.3.0)
     nio4r (2.7.5)
+    nokogiri (1.17.2-arm64-darwin)
+      racc (~> 1.4)
     nokogiri (1.17.2-x86_64-darwin)
       racc (~> 1.4)
     parallel (1.27.0)
@@ -125,6 +127,7 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
+    sqlite3 (1.7.3-arm64-darwin)
     sqlite3 (1.7.3-x86_64-darwin)
     timeout (0.6.0)
     tzinfo (2.0.6)
@@ -138,6 +141,7 @@ GEM
       hashdiff (>= 0.4.0, < 2.0.0)
 
 PLATFORMS
+  arm64-darwin-23
   x86_64-darwin
 
 DEPENDENCIES
@@ -157,7 +161,6 @@ DEPENDENCIES
   rspec (~> 3.12)
   rubocop (~> 1.60)
   ruby-prof
-  securerandom (< 0.4)
   simplecov (~> 0.22)
   sqlite3 (~> 1.6)
   webmock (~> 3.18)

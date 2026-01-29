@@ -3,7 +3,7 @@
 [![Gem Version](https://badge.fury.io/rb/decision_agent.svg)](https://badge.fury.io/rb/decision_agent)
 [![CI](https://github.com/samaswin/decision_agent/actions/workflows/ci.yml/badge.svg)](https://github.com/samaswin/decision_agent/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
-[![Ruby](https://img.shields.io/badge/ruby-%3E%3D%202.7.0-red.svg)](https://www.ruby-lang.org)
+[![Ruby](https://img.shields.io/badge/ruby-%3E%3D%203.0.0-red.svg)](https://www.ruby-lang.org)
 
 A production-grade, deterministic, explainable, and auditable decision engine for Ruby.
 
@@ -129,6 +129,8 @@ decision_agent web
 ```
 
 Open [http://localhost:4567](http://localhost:4567) in your browser.
+
+> **Coming Soon:** Decision tree builder - Visual interface for building and managing decision trees.
 
 ### Integration
 

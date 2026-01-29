@@ -15,6 +15,11 @@ module DecisionAgent
     # DMN Editor Backend
     # Provides API endpoints for visual DMN modeling
     class DmnEditor
+      require_relative "dmn_editor/serialization"
+      require_relative "dmn_editor/xml_builder"
+      include DmnEditor::Serialization
+      include DmnEditor::XmlBuilder
+
       attr_reader :storage
 
       def initialize(storage: nil)
@@ -339,96 +344,6 @@ module DecisionAgent
         "dmn_#{Time.now.to_i}_#{rand(10_000)}"
       end
 
-      def generate_dmn_xml(model)
-        require "nokogiri"
-
-        builder = Nokogiri::XML::Builder.new(encoding: "UTF-8") do |xml|
-          xml.definitions(
-            "xmlns" => "https://www.omg.org/spec/DMN/20191111/MODEL/",
-            "xmlns:dmndi" => "https://www.omg.org/spec/DMN/20191111/DMNDI/",
-            "xmlns:dc" => "http://www.omg.org/spec/DMN/20180521/DC/",
-            "id" => "definitions_#{model.id}",
-            "name" => model.name,
-            "namespace" => model.namespace || "http://decision_agent.local"
-          ) do
-            model.decisions.each do |decision|
-              xml.decision(id: decision.id, name: decision.name) do
-                if decision.decision_table
-                  build_decision_table_xml(xml, decision.decision_table)
-                elsif decision.decision_tree
-                  xml.comment "Decision Tree (not fully supported in DMN XML export yet)"
-                elsif decision.instance_variable_get(:@literal_expression)
-                  xml.literalExpression do
-                    xml.text decision.instance_variable_get(:@literal_expression)
-                  end
-                end
-              end
-            end
-          end
-        end
-
-        builder.to_xml
-      end
-
-      def build_decision_table_xml(xml, table)
-        xml.decisionTable(
-          id: table.id,
-          hitPolicy: table.hit_policy || "FIRST",
-          outputLabel: "output"
-        ) do
-          # Inputs
-          table.inputs.each do |input|
-            xml.input(id: input.id, label: input.label) do
-              xml.inputExpression(typeRef: input.type_ref || "string") do
-                text_node = Nokogiri::XML::Node.new("text", xml.doc)
-                text_node.content = input.expression || input.label
-                xml.parent.add_child(text_node)
-              end
-            end
-          end
-
-          # Outputs
-          table.outputs.each do |output|
-            xml.output(
-              id: output.id,
-              label: output.label,
-              name: output.name || output.label,
-              typeRef: output.type_ref || "string"
-            )
-          end
-
-          # Rules
-          table.rules.each do |rule|
-            xml.rule(id: rule.id) do
-              # Input entries
-              rule.input_entries.each_with_index do |entry, idx|
-                xml.inputEntry(id: "#{rule.id}_input_#{idx + 1}") do
-                  text_node = Nokogiri::XML::Node.new("text", xml.doc)
-                  text_node.content = entry.to_s
-                  xml.parent.add_child(text_node)
-                end
-              end
-
-              # Output entries
-              rule.output_entries.each_with_index do |entry, idx|
-                xml.outputEntry(id: "#{rule.id}_output_#{idx + 1}") do
-                  text_node = Nokogiri::XML::Node.new("text", xml.doc)
-                  text_node.content = entry.to_s
-                  xml.parent.add_child(text_node)
-                end
-              end
-
-              # Description
-              if rule.description && !rule.description.empty?
-                xml.description do
-                  xml.text rule.description
-                end
-              end
-            end
-          end
-        end
-      end
-
       def store_model(model_id, model)
         @storage_mutex.synchronize do
           @storage[model_id] = model
@@ -446,71 +361,6 @@ module DecisionAgent
         table.instance_variable_set(:@inputs, logic[:inputs]) if logic[:inputs]
         table.instance_variable_set(:@outputs, logic[:outputs]) if logic[:outputs]
         table.instance_variable_set(:@rules, logic[:rules]) if logic[:rules]
-      end
-
-      def serialize_model(model)
-        {
-          id: model.id,
-          name: model.name,
-          namespace: model.namespace,
-          decisions: model.decisions.map { |d| serialize_decision(d) }
-        }
-      end
-
-      def serialize_decision(decision)
-        result = {
-          id: decision.id,
-          name: decision.name
-        }
-
-        if decision.decision_table
-          result[:decision_table] = serialize_decision_table(decision.decision_table)
-        elsif decision.decision_tree
-          result[:decision_tree] = decision.decision_tree.to_h
-        elsif decision.instance_variable_get(:@literal_expression)
-          result[:literal_expression] = decision.instance_variable_get(:@literal_expression)
-        end
-
-        result[:information_requirements] = decision.information_requirements if decision.information_requirements.any?
-
-        result
-      end
-
-      def serialize_decision_table(table)
-        {
-          id: table.id,
-          hit_policy: table.hit_policy,
-          inputs: table.inputs.map { |i| serialize_input(i) },
-          outputs: table.outputs.map { |o| serialize_output(o) },
-          rules: table.rules.map { |r| serialize_rule(r) }
-        }
-      end
-
-      def serialize_input(input)
-        {
-          id: input.id,
-          label: input.label,
-          type_ref: input.type_ref,
-          expression: input.expression
-        }
-      end
-
-      def serialize_output(output)
-        {
-          id: output.id,
-          label: output.label,
-          type_ref: output.type_ref,
-          name: output.name
-        }
-      end
-
-      def serialize_rule(rule)
-        {
-          id: rule.id,
-          input_entries: rule.input_entries,
-          output_entries: rule.output_entries,
-          description: rule.description
-        }
       end
     end
   end
